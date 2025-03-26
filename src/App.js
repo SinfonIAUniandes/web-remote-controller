@@ -13,6 +13,7 @@ import BreathingControl from './components/BreathingControl';
 import AutonomousLifeControl from './components/AutonomousLifeControl';
 import TrackerControl from  './components/TrackerControl';
 import ShowWordsTablet from  './components/ShowWordsTablet';
+import AudioPlayer from './components/MicrophoneListener'
 
 const App = () => {
     return (
