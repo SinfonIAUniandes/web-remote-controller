@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 
 // Las funciones para crear topics y servicios
@@ -6,7 +6,9 @@ import { createTopic, createService } from '../services/RosManager';
 
 const AudioPlayer = () => {
     const { ros } = useRos();
-    const audioRef = useRef(null); // Referencia para el elemento de audio
+    const [audioContext, setAudioContext] = useState(null);
+    const [audioSource, setAudioSource] = useState(null); // Guardamos la fuente de audio
+    const [isPlaying, setIsPlaying] = useState(false); // Estado para saber si el audio está sonando
 
     useEffect(() => {
         if (ros) {
@@ -48,14 +50,25 @@ const AudioPlayer = () => {
             // Cleanup al desmontar el componente
             return () => {
                 microphoneListener.unsubscribe();
+                if (audioSource) {
+                    audioSource.stop(); // Detenemos la reproducción si es que existe un source activo
+                }
+                if (audioContext) {
+                    audioContext.close(); // Cerramos el contexto de audio si está abierto
+                }
             };
         }
-    }, [ros]);
+    }, [ros, audioSource, audioContext]);
 
     // Función para reproducir audio desde el mensaje de ROS
     function playAudioFromROSMessage(data, frequency) {
+        // Crear el contexto de audio si no existe
+        if (!audioContext) {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            setAudioContext(context);
+        }
+
         // Crear el buffer de audio
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const audioBuffer = audioContext.createBuffer(1, data.length, frequency);
         const channel = audioBuffer.getChannelData(0);
 
@@ -69,6 +82,21 @@ const AudioPlayer = () => {
         source.buffer = audioBuffer;
         source.connect(audioContext.destination);
         source.start();
+        setAudioSource(source); // Guardamos la fuente para poder detenerla más tarde
+        setIsPlaying(true); // Marcamos que el audio está sonando
+    }
+
+    // Función para detener la reproducción del audio
+    function stopAudio() {
+        if (audioSource) {
+            audioSource.stop(); // Detenemos la fuente de audio
+            setIsPlaying(false); // Actualizamos el estado
+            setAudioSource(null); // Limpiamos la referencia del source
+        }
+        if (audioContext) {
+            audioContext.close(); // Cerramos el contexto de audio
+            setAudioContext(null); // Limpiamos el contexto
+        }
     }
 
     return (
@@ -76,8 +104,9 @@ const AudioPlayer = () => {
             <h1>Audio Player</h1>
             <div>
                 <h2>Listening to Microphone Audio</h2>
-                {/* No es necesario un elemento de audio visible, pero podemos incluirlo si se quiere hacer visible */}
-                <audio ref={audioRef} controls />
+                <button onClick={stopAudio} disabled={!isPlaying}>
+                    Stop Audio
+                </button>
             </div>
         </div>
     );
