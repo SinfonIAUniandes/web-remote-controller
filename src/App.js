@@ -6,7 +6,8 @@ import Leds from './components/Leds';
 import Base from './components/Base';
 import Navegador from './components/Navegador';
 import Imagen from './components/Imagen';
-import RobotSecurity from './components/RobotSecurity';
+import EnableRobotSecurity from './components/EnableRobotSecurity';
+import DisableRobotSecurity from './components/DisableRobotSecurity';
 import Battery from './components/Battery';
 import Volumen from './components/Volumen';
 import Texto from './components/Texto';
@@ -34,8 +35,10 @@ const App = () => {
             <Base />
             <h1>Leds</h1>
             <Leds />
-            <h1>Control de Seguridad</h1>
-            <RobotSecurity />
+            <h1>Activar control de Seguridad</h1>
+            <EnableRobotSecurity />
+            <h1>Desactivar control de Seguridad</h1>
+            <DisableRobotSecurity />
             <h1>Estado de la Batería</h1>
             <Battery />
             <h1>Texto</h1>
