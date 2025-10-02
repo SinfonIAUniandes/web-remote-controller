@@ -21,6 +21,8 @@ import HideTabletScreen from './components/HideTabletScreen';
 import Cabeza from './components/Cabeza';
 import ScriptPanel from './components/ScriptPanel'
 import PostureControl from './components/PostureControl'
+import ScriptsCreator from './components/ScriptsCreator';
+import './App.css';
 
 const App = () => {
     return (
@@ -65,6 +67,8 @@ const App = () => {
             <ScriptPanel />
             <h1>Postura control</h1>
             <PostureControl />
+            <h1>Scripts Creator</h1>
+            <ScriptsCreator />
         </div>
     );
 };
