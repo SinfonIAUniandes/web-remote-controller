@@ -22,6 +22,7 @@ import Cabeza from './components/Cabeza';
 import ScriptPanel from './components/ScriptPanel'
 import PostureControl from './components/PostureControl'
 import ScriptsCreator from './components/ScriptsCreator';
+import QuickActions from './components/QuickActions';
 import './App.css';
 
 const App = () => {
@@ -69,6 +70,8 @@ const App = () => {
             <PostureControl />
             <h1>Scripts Creator</h1>
             <ScriptsCreator />
+            <h1>Acciones rápidas</h1>
+            <QuickActions />
         </div>
     );
 };
