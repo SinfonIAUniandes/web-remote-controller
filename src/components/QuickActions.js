@@ -56,7 +56,6 @@ const QuickActions = () => {
                     await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
                 }
                 
-                // Pequeña pausa entre acciones
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
             } catch (error) {
