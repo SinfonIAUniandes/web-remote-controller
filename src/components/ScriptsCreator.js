@@ -8,7 +8,9 @@ const ScriptsCreator = () => {
     const { ros } = useRos();
     const [animations, setAnimations] = useState({});
     const [isExecuting, setIsExecuting] = useState(false);
+    const [scriptName, setScriptName] = useState("script.json");
     const [script, setScript] = useState({
+        imgUrl: "",
         subtitulos: false,
         img: false,
         speech: [],
@@ -106,7 +108,7 @@ const ScriptsCreator = () => {
         const element = document.createElement("a");
         const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = "script.json";
+        element.download = scriptName.endsWith('.json') ? scriptName : `${scriptName}.json`;
         document.body.appendChild(element);
         element.click();
     };
@@ -220,6 +222,10 @@ const ScriptsCreator = () => {
                     </div>
 
                     {/* Descargar archivo */}
+                    <div>
+                        <label>Nombre del archivo:</label>
+                        <input type="text" value={scriptName} onChange={(e) => setScriptName(e.target.value)} placeholder="script.json" style={{ padding: '8px', marginRight: '10px' }} />
+                    </div>
                     <button 
                         onClick={handleDownload}
                         disabled={script.speech.length === 0 && script.animation.length === 0}
@@ -227,7 +233,17 @@ const ScriptsCreator = () => {
                     >
                         Descargar Script
                     </button>
-                </div>
+                
+{script.img && (
+    <div style={{ marginTop: '15px' }}>
+        <ImagenComponent
+            url={script.imgUrl}
+            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+        />
+    </div>
+)}
+
+</div>
             </div>
 
             {/* EDITOR DE SCRIPTS */}
@@ -254,7 +270,17 @@ const ScriptsCreator = () => {
                         />
                         <label htmlFor='img'>Imagen</label>
                     </div>
-                </div>
+                
+{script.img && (
+    <div style={{ marginTop: '15px' }}>
+        <ImagenComponent
+            url={script.imgUrl}
+            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+        />
+    </div>
+)}
+
+</div>
             </div>
 
             {/* SECCIONES DE EDICIÓN (se mantienen igual) */}
@@ -392,7 +418,17 @@ const ScriptsCreator = () => {
                     >
                         ➕ Añadir Animación
                     </button>
-                </div>
+                
+{script.img && (
+    <div style={{ marginTop: '15px' }}>
+        <ImagenComponent
+            url={script.imgUrl}
+            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+        />
+    </div>
+)}
+
+</div>
             </div>
 
             {/* ESTADO DE EJECUCIÓN */}
