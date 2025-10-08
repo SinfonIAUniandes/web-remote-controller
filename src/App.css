@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  /* text-align: center; */
 }
 
 .App-logo {
@@ -36,3 +36,19 @@
     transform: rotate(360deg);
   }
 }
+
+.secctionCont{
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+
+
+}
+
+.secctionCont > div{
+  border: 1px solid gray;
+  border-radius: 10px;
+
+}
+
+
