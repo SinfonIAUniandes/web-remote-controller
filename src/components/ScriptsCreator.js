@@ -7,7 +7,6 @@ import animationsTxt from "../animations/animations.txt";
 const ScriptsCreator = () => {
     const { ros } = useRos();
     const [animations, setAnimations] = useState({});
-    const [scriptName, setScriptName] = useState("");
     const [isExecuting, setIsExecuting] = useState(false);
     const [script, setScript] = useState({
         subtitulos: false,
@@ -44,7 +43,7 @@ const ScriptsCreator = () => {
             console.log(`▶ Ejecutando acción ${i + 1}/${allActions.length}:`, action);
             
             try {
-                 if (action.category === 'speech') {
+                if (action.category === 'speech') {
                     if (action.tipo === "text") {
                         // Ejecutar speech
                         const speechMessage = new ROSLIB.Message({
@@ -107,7 +106,7 @@ const ScriptsCreator = () => {
         const element = document.createElement("a");
         const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = `${scriptName || 'script'}.json`;
+        element.download = "script.json";
         document.body.appendChild(element);
         element.click();
     };
@@ -170,7 +169,6 @@ const ScriptsCreator = () => {
             })
             .catch(error => console.error("Error al cargar las animaciones:", error));
     }, []);
-
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
