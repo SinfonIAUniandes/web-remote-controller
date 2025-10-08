@@ -15,400 +15,235 @@ const ScriptsCreator = () => {
         animation: [],
         pantalla: []
     });
+    const [filename, setFilename] = useState("script");
 
-    // FUNCIÓN ÚNICA QUE EJECUTA TODO EL SCRIPT
     const executeCompleteScript = async () => {
         if (!ros || isExecuting) return;
-        
         setIsExecuting(true);
-        console.log("Iniciando ejecución de script completo");
+        console.log("Iniciando ejecución del script...");
 
-        // Crear TODOS los topics UNA sola vez
         const speechTopic = createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg');
         const animationTopic = createTopic(ros, "/animations", "robot_toolkit_msgs/animation_msg");
+        const subtituloTopic = createTopic(ros, "/tablet_say", "std_msgs/String");
 
-        // Combinar todas las acciones en una sola secuencia
         const allActions = [
             ...script.speech.map(action => ({ ...action, category: 'speech' })),
             ...script.animation.map(action => ({ ...action, category: 'animation' })),
             ...script.pantalla.map(action => ({ ...action, category: 'pantalla' }))
         ];
 
-        // Ordenar por índice para mantener el orden de creación
-        allActions.sort((a, b) => allActions.indexOf(a) - allActions.indexOf(b));
-
-        // Ejecutar cada acción en secuencia
         for (let i = 0; i < allActions.length; i++) {
             const action = allActions[i];
-            console.log(`▶ Ejecutando acción ${i + 1}/${allActions.length}:`, action);
-            
             try {
                 if (action.category === 'speech') {
                     if (action.tipo === "text") {
-                        // Ejecutar speech
-                        const speechMessage = new ROSLIB.Message({
+                        const msg = new ROSLIB.Message({
                             language: 'Spanish',
                             text: action.info,
                             animated: true
                         });
-                        speechTopic.publish(speechMessage);
-                        console.log(`Diciendo: "${action.info}"`);
-                        
-                        // Esperar según longitud del texto
-                        const speechTime = Math.max(2000, action.info.length * 100);
-                        await new Promise(resolve => setTimeout(resolve, speechTime));
-                        
+                        speechTopic.publish(msg);
+                        if (script.subtitulos) {
+                            subtituloTopic.publish(new ROSLIB.Message({ data: action.info }));
+                        }
+                        await new Promise(r => setTimeout(r, Math.max(2000, action.info.length * 100)));
                     } else if (action.tipo === "delay") {
-                        // Esperar tiempo específico
-                        console.log(`Delay speech: ${action.info}ms`);
-                        await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
+                        await new Promise(r => setTimeout(r, parseInt(action.info)));
                     }
-                    
                 } else if (action.category === 'animation') {
                     if (action.tipo === "movimiento") {
-                        // Ejecutar animación
-                        const animationMessage = new ROSLIB.Message({
+                        const msg = new ROSLIB.Message({
                             family: "animations",
                             animation_name: action.info
                         });
-                        animationTopic.publish(animationMessage);
-                        console.log(`Animación: ${action.info}`);
-                        
-                        // Tiempo fijo para animaciones
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        
+                        animationTopic.publish(msg);
+                        await new Promise(r => setTimeout(r, 3000));
                     } else if (action.tipo === "delay") {
-                        // Esperar tiempo específico
-                        console.log(`Delay animation: ${action.info}ms`);
-                        await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
+                        await new Promise(r => setTimeout(r, parseInt(action.info)));
                     }
-                    
                 } else if (action.category === 'pantalla') {
-                    // Acciones de pantalla (placeholder para futura implementación)
-                    console.log(`Acción de pantalla: ${action.info}`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    console.log("Pantalla:", action.info);
+                    await new Promise(r => setTimeout(r, 2000));
                 }
-                
-                // Pequeña pausa entre acciones
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-            } catch (error) {
-                console.error(`Error en acción ${i + 1}:`, error);
+                await new Promise(r => setTimeout(r, 500));
+            } catch (e) {
+                console.error("Error en acción", i, e);
             }
         }
-        
-        console.log("Script completado");
+
+        console.log("✅ Script ejecutado completamente");
         setIsExecuting(false);
     };
 
-    // FUNCIÓN PARA DESCARGAR SCRIPT
     const handleDownload = () => {
-        const element = document.createElement("a");
-        const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
-        element.href = URL.createObjectURL(file);
-        element.download = "script.json";
-        document.body.appendChild(element);
-        element.click();
+        const blob = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${filename || "script"}.json`;
+        link.click();
     };
 
-    // FUNCIÓN PARA CARGAR/SUBIR SCRIPT
-    const handleUpload = (event) => {
-        const file = event.target.files[0];
+    const handleUpload = (e) => {
+        const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
-        
-        reader.onload = (e) => {
+        reader.onload = (event) => {
             try {
-                const uploadedScript = JSON.parse(e.target.result);
-                
-                if (uploadedScript && 
-                    (Array.isArray(uploadedScript.speech) || 
-                     Array.isArray(uploadedScript.animation) || 
-                     Array.isArray(uploadedScript.pantalla))) {
-                    
-                    setScript(uploadedScript);
-                    console.log("Script cargado correctamente");
-                    alert("Script cargado exitosamente!");
+                const newScript = JSON.parse(event.target.result);
+                if (Array.isArray(newScript.speech) || Array.isArray(newScript.animation)) {
+                    setScript(newScript);
                 } else {
-                    throw new Error("Estructura de script inválida");
+                    alert("Estructura inválida");
                 }
-            } catch (error) {
-                console.error("Error al cargar el script:", error);
-                alert("Error: El archivo no es un script válido");
+            } catch {
+                alert("Archivo no válido");
             }
         };
-
         reader.readAsText(file);
     };
 
-    // Cargar animaciones disponibles
     useEffect(() => {
         fetch(animationsTxt)
-            .then(response => response.text())
+            .then(res => res.text())
             .then(text => {
-                const parsedAnimations = {};
-
-                text.split("\n").forEach(animation => {
-                    const parts = animation.trim().split("/");
-
+                const anims = {};
+                text.split("\n").forEach(line => {
+                    const parts = line.trim().split("/");
                     if (parts.length === 3) {
-                        const [category, subcategory, anim] = parts;
-                        if (!parsedAnimations[category]) parsedAnimations[category] = {};
-                        if (!parsedAnimations[category][subcategory]) parsedAnimations[category][subcategory] = [];
-                        parsedAnimations[category][subcategory].push(anim);
+                        const [cat, sub, name] = parts;
+                        if (!anims[cat]) anims[cat] = {};
+                        if (!anims[cat][sub]) anims[cat][sub] = [];
+                        anims[cat][sub].push(name);
                     } else if (parts.length === 2) {
-                        const [category, anim] = parts;
-                        if (!parsedAnimations[category]) parsedAnimations[category] = {};
-                        if (!parsedAnimations[category]["_no_subcategory"]) parsedAnimations[category]["_no_subcategory"] = [];
-                        parsedAnimations[category]["_no_subcategory"].push(anim);
+                        const [cat, name] = parts;
+                        if (!anims[cat]) anims[cat] = {};
+                        if (!anims[cat]["_no_sub"]) anims[cat]["_no_sub"] = [];
+                        anims[cat]["_no_sub"].push(name);
                     }
                 });
-
-                setAnimations(parsedAnimations);
-            })
-            .catch(error => console.error("Error al cargar las animaciones:", error));
+                setAnimations(anims);
+            });
     }, []);
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h2>🎭 Creador de Scripts para Pepper</h2>
-            
-            {/* BOTÓN DE EJECUCIÓN ÚNICA */}
-            <div style={{ 
-                marginBottom: '20px', 
-                padding: '15px', 
-                border: '2px solid #28a745', 
-                borderRadius: '8px',
-                backgroundColor: '#f8fff9',
-                textAlign: 'center'
-            }}>
-                <button 
-                    onClick={executeCompleteScript}
-                    disabled={isExecuting || (script.speech.length === 0 && script.animation.length === 0)}
-                    style={executeButtonStyle}
-                >
-                    {isExecuting ? 'Ejecutando Script...' : 'Ejecutar Script Completo'}
+        <div style={{ padding: "20px" }}>
+            <h2>🎭 Creador de Scripts</h2>
+
+            <div>
+                <button onClick={executeCompleteScript} disabled={isExecuting}>
+                    {isExecuting ? "Ejecutando..." : "▶ Ejecutar script completo"}
                 </button>
-                <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
-                    Un solo botón ejecuta TODAS las acciones del script en secuencia
-                </p>
             </div>
 
-            {/* SECCIÓN DE CARGA/SUBIDA DE SCRIPTS */}
-            <div style={{ 
-                marginBottom: '20px', 
-                padding: '15px', 
-                border: '2px dashed #007BFF', 
-                borderRadius: '8px',
-                backgroundColor: '#f8f9fa'
-            }}>
-                <h3>Gestionar Scripts</h3>
-                
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    {/* Subir archivo */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                            Subir script:
-                        </label>
-                        <input 
-                            type="file" 
-                            accept=".json" 
-                            onChange={handleUpload}
-                            style={{ padding: '8px' }}
-                        />
-                    </div>
-
-                    {/* Descargar archivo */}
-                    <button 
-                        onClick={handleDownload}
-                        disabled={script.speech.length === 0 && script.animation.length === 0}
-                        style={downloadButtonStyle}
-                    >
-                        Descargar Script
-                    </button>
-                </div>
+            <div style={{ marginTop: "20px" }}>
+                <label>Nombre de archivo: </label>
+                <input value={filename} onChange={(e) => setFilename(e.target.value)} />
+                <button onClick={handleDownload}>💾 Descargar script</button>
+                <input type="file" accept=".json" onChange={handleUpload} />
             </div>
 
-            {/* EDITOR DE SCRIPTS */}
-            <div style={{ marginBottom: '20px' }}>
-                <h3>Configuración</h3>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div>
-                        <input 
-                            disabled={script.img} 
-                            id='subtitulos' 
-                            type="checkbox" 
-                            checked={script.subtitulos} 
-                            onChange={() => setScript({ ...script, subtitulos: !script.subtitulos })} 
-                        />
-                        <label htmlFor='subtitulos'>Subtítulos</label>
-                    </div>
-                    <div>
-                        <input 
-                            disabled={script.subtitulos} 
-                            id='img' 
-                            type="checkbox" 
-                            checked={script.img} 
-                            onChange={() => setScript({ ...script, img: !script.img })} 
-                        />
-                        <label htmlFor='img'>Imagen</label>
-                    </div>
-                </div>
+            <div>
+                <input type="checkbox" id="sub" checked={script.subtitulos} disabled={script.img}
+                    onChange={() => setScript({ ...script, subtitulos: !script.subtitulos })} />
+                <label htmlFor="sub">Subtítulos</label>
+
+                <input type="checkbox" id="img" checked={script.img} disabled={script.subtitulos}
+                    onChange={() => setScript({ ...script, img: !script.img })} />
+                <label htmlFor="img">Imagen</label>
             </div>
 
-            {/* SECCIONES DE EDICIÓN (se mantienen igual) */}
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-                
-                {/* SECCIÓN SPEECH */}
-                <div style={sectionStyle}>
-                    <h4>🎙️ Speech ({script.speech.length})</h4>
-                    {script.speech.map((item, index) => (
-                        <div key={index} style={actionItemStyle}>
-                            <select 
-                                value={item.tipo} 
-                                onChange={(e) => {
-                                    const newSpeech = [...script.speech];
-                                    newSpeech[index].tipo = e.target.value;
-                                    setScript({ ...script, speech: newSpeech });
-                                }}
-                                style={selectStyle}
-                            >
-                                <option value="text">Texto</option>
-                                <option value="delay">Delay</option>
-                            </select>
-                            {item.tipo === "text" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="Texto para hablar"
-                                    style={inputStyle}
-                                />
-                            ) : (
-                                <input 
-                                    type="number" 
-                                    min="0" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="ms"
-                                    style={inputStyle}
-                                />
-                            )}
-                            <button 
-                                onClick={() => {
-                                    const newSpeech = script.speech.filter((item, i) => i !== index);
-                                    setScript({ ...script, speech: newSpeech });
-                                }}
-                                style={deleteButtonStyle}
-                            >
-                                ❌
-                            </button>
-                        </div>
-                    ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, speech: [...script.speech, {
-                                tipo: "text",
-                                info: "Hola, soy Pepper",
-                            }]
+            {script.img && (
+                <div>
+                    <label>URL Imagen: </label>
+                    <input
+                        type="text"
+                        value={script.pantalla[0]?.info || ""}
+                        onChange={(e) => setScript({
+                            ...script,
+                            pantalla: [{ tipo: "imagen", info: e.target.value }]
                         })}
-                        style={addButtonStyle}
-                    >
-                        ➕ Añadir Speech
-                    </button>
-                </div>
-
-                {/* SECCIÓN ANIMACIÓN */}
-                <div style={sectionStyle}>
-                    <h4>Animaciones ({script.animation.length})</h4>
-                    {script.animation.map((item, index) => (
-                        <div key={index} style={actionItemStyle}>
-                            <select 
-                                value={item.tipo} 
-                                onChange={(e) => {
-                                    const newAnimation = [...script.animation];
-                                    newAnimation[index].tipo = e.target.value;
-                                    setScript({ ...script, animation: newAnimation });
-                                }}
-                                style={selectStyle}
-                            >
-                                <option value="movimiento">Animación</option>
-                                <option value="delay">Delay</option>
-                            </select>
-                            {item.tipo === "movimiento" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newAnimation = [...script.animation];
-                                        newAnimation[index].info = e.target.value;
-                                        setScript({ ...script, animation: newAnimation });
-                                    }}
-                                    placeholder="Ruta de animación"
-                                    style={inputStyle}
-                                />
-                            ) : (
-                                <input 
-                                    type="number" 
-                                    min="0" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newAnimation = [...script.animation];
-                                        newAnimation[index].info = e.target.value;
-                                        setScript({ ...script, animation: newAnimation });
-                                    }}
-                                    placeholder="ms"
-                                    style={inputStyle}
-                                />
-                            )}
-                            <button 
-                                onClick={() => {
-                                    const newAnimation = script.animation.filter((item, i) => i !== index);
-                                    setScript({ ...script, animation: newAnimation });
-                                }}
-                                style={deleteButtonStyle}
-                            >
-                                ❌
-                            </button>
-                        </div>
-                    ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, animation: [...script.animation, {
-                                tipo: "movimiento",
-                                info: "Gestures/Hey_1",
-                            }]
-                        })}
-                        style={addButtonStyle}
-                    >
-                        ➕ Añadir Animación
-                    </button>
-                </div>
-            </div>
-
-            {/* ESTADO DE EJECUCIÓN */}
-            {isExecuting && (
-                <div style={{ 
-                    color: '#007BFF', 
-                    fontWeight: 'bold',
-                    padding: '10px',
-                    backgroundColor: '#e7f3ff',
-                    borderRadius: '5px',
-                    marginTop: '20px',
-                    textAlign: 'center'
-                }}>
-                Ejecutando script completo... ({script.speech.length + script.animation.length} acciones)
+                    />
                 </div>
             )}
+
+            <div>
+                <h3>🎙️ Speech</h3>
+                {script.speech.map((item, i) => (
+                    <div key={i}>
+                        <select value={item.tipo} onChange={(e) => {
+                            const s = [...script.speech];
+                            s[i].tipo = e.target.value;
+                            setScript({ ...script, speech: s });
+                        }}>
+                            <option value="text">Texto</option>
+                            <option value="delay">Delay</option>
+                        </select>
+                        <input value={item.info} onChange={(e) => {
+                            const s = [...script.speech];
+                            s[i].info = e.target.value;
+                            setScript({ ...script, speech: s });
+                        }} />
+                        <button onClick={() => {
+                            const s = script.speech.filter((_, idx) => idx !== i);
+                            setScript({ ...script, speech: s });
+                        }}>🗑</button>
+                    </div>
+                ))}
+                <button onClick={() => setScript({
+                    ...script,
+                    speech: [...script.speech, { tipo: "text", info: "Hola, soy Pepper" }]
+                })}>➕ Añadir speech</button>
+            </div>
+
+            <div>
+                <h3>🕺 Animaciones</h3>
+                {script.animation.map((item, i) => (
+                    <div key={i}>
+                        <select value={item.tipo} onChange={(e) => {
+                            const a = [...script.animation];
+                            a[i].tipo = e.target.value;
+                            setScript({ ...script, animation: a });
+                        }}>
+                            <option value="movimiento">Movimiento</option>
+                            <option value="delay">Delay</option>
+                        </select>
+                        {item.tipo === "movimiento" ? (
+                            <select value={item.info} onChange={(e) => {
+                                const a = [...script.animation];
+                                a[i].info = e.target.value;
+                                setScript({ ...script, animation: a });
+                            }}>
+                                <option value="">Seleccionar animación</option>
+                                {Object.entries(animations).flatMap(([cat, subs]) =>
+                                    Object.entries(subs).flatMap(([sub, names]) =>
+                                        names.map(name => {
+                                            const path = sub === "_no_sub"
+                                                ? `${cat}/${name}`
+                                                : `${cat}/${sub}/${name}`;
+                                            return <option key={path} value={path}>{path}</option>;
+                                        })
+                                    )
+                                )}
+                            </select>
+                        ) : (
+                            <input type="number" value={item.info} onChange={(e) => {
+                                const a = [...script.animation];
+                                a[i].info = e.target.value;
+                                setScript({ ...script, animation: a });
+                            }} />
+                        )}
+                        <button onClick={() => {
+                            const a = script.animation.filter((_, idx) => idx !== i);
+                            setScript({ ...script, animation: a });
+                        }}>🗑</button>
+                    </div>
+                ))}
+                <button onClick={() => setScript({
+                    ...script,
+                    animation: [...script.animation, { tipo: "movimiento", info: "Gestures/Hey_1" }]
+                })}>➕ Añadir animación</button>
+            </div>
         </div>
     );
 };

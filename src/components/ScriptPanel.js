@@ -1,12 +1,11 @@
 import { useState } from 'react';
-
 import { useRos } from '../contexts/RosContext';
 import { createTopic } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
 
 function parseContent(text) {
     try {
-        const lines = text.split('\n').filter(line => line.trim() !== ''); // Separar líneas y eliminar líneas vacías
+        const lines = text.split('\n').filter(line => line.trim() !== '');
         const result = { config: {}, actions: [] };
         let currentSection = null;
 
@@ -21,7 +20,7 @@ function parseContent(text) {
             } else {
                 const parts = line.split(',');
                 if (parts.length >= 3) {
-                    const [id, action, text] = parts.map(part => part.trim().replace(/^"|"$/g, '')); // Elimina comillas al inicio y final
+                    const [id, action, text] = parts.map(part => part.trim().replace(/^"|"$/g, ''));
                     result.actions.push({
                         id,
                         action: action || null,
@@ -38,115 +37,134 @@ function parseContent(text) {
 }
 
 const ScriptPanel = () => {
-    const [file, setFile] = useState({'name': ''});
-    const [state, setState] = useState([]);
+    const [file, setFile] = useState({ name: '' });
+    const [state, setState] = useState({ config: {}, actions: [] });
     const [selectedAction, setSelectedAction] = useState(0);
     const [logMessages, setLogMessages] = useState([]);
-    
+
     const { ros } = useRos();
     const speechTopic = createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg');
     const animationTopic = createTopic(ros, "/animations", "robot_toolkit_msgs/animation_msg");
+    const subtitleTopic = createTopic(ros, '/tablet_say', 'std_msgs/String');
 
-    function handleOnChange(event) {
-        if(event.target.files.length > 1)
-            alert('Solo se puede seleccionar un archivo!');
+    const handleOnChange = (event) => {
+        if (event.target.files.length > 1) {
+            alert('Solo se puede seleccionar un archivo');
+            return;
+        }
 
         const file = event.target.files[0];
         setFile(file);
 
         const reader = new FileReader();
 
-        reader.onload = (event) => {
-            const result = event.target.result;
-            const parsedFile = parseContent(result);
-            setState(parsedFile);
-            setLogMessages([...logMessages, "Archivo cargado!"])
-        }
+        reader.onload = (e) => {
+            const parsed = parseContent(e.target.result);
+            setState(parsed);
+            setLogMessages([...logMessages, "✅ Archivo cargado con éxito"]);
+        };
 
-        reader.onerror = (error) => {
-            console.error("Error al leer el archivo: ", error);
-            setLogMessages([...logMessages, "Error al cargar el archivo!"])
-        }
+        reader.onerror = (err) => {
+            console.error("Error al leer el archivo:", err);
+            setLogMessages([...logMessages, "❌ Error al cargar el archivo"]);
+        };
 
         reader.readAsText(file);
-    }
+    };
 
-    function handleClicSelectAction(event) {
-        if(file.name === '') return;
+    const handleClicSelectAction = (event) => {
         const todo = event.target.id;
+        const limit = state.actions.length;
 
-        if(selectedAction <= state.actions.length && selectedAction >= 0) {
-            if(todo === 'before') {
-                setSelectedAction(selectedAction - 1);
-                return;
-            }
-
+        if (todo === 'before' && selectedAction > 0) {
+            setSelectedAction(selectedAction - 1);
+        } else if (todo === 'after' && selectedAction < limit - 1) {
             setSelectedAction(selectedAction + 1);
         }
-    }
+    };
 
-    function handleExecuteAction(event) {
-        if(!ros) return;
+    const handleExecuteAction = () => {
+        if (!ros || !state.actions.length) return;
+
         const action = state.actions[selectedAction];
+        const lang = state.config.language || "Spanish";
+        const subtitulos = state.config.subtitulos === "true";
+        const mostrarImagen = state.config.img === "true";
 
-        if(action.text !== null) {
-            const animate = action.action === null ? true : false;
-            const message = new ROSLIB.Message({
-                language: state.config.language,
+        if (action.text) {
+            const speechMsg = new ROSLIB.Message({
+                language: lang,
                 text: action.text,
-                animated: animate
+                animated: !action.action // animado solo si no hay acción
             });
-            if(speechTopic) {
-                setLogMessages([...logMessages, "Publicando el mensaje en el topico"]);
-                speechTopic.publish(message);
-            } else {
-                console.error("El publicador de speech no está disponible.");
+            speechTopic.publish(speechMsg);
+            setLogMessages(log => [...log, `🗣️ Speech: ${action.text}`]);
+
+            if (subtitulos && subtitleTopic) {
+                const subtitleMsg = new ROSLIB.Message({ data: action.text });
+                subtitleTopic.publish(subtitleMsg);
             }
         }
 
-        if(action.action !== null) {
-            const message = new ROSLIB.Message({
+        if (action.action) {
+            const animMsg = new ROSLIB.Message({
                 family: "animations",
                 animation_name: action.action
             });
-            if (animationTopic) {
-                animationTopic.publish(message);
-            } else {
-                console.error("El publicador de animaciones no está disponible.");
-            }
+            animationTopic.publish(animMsg);
+            setLogMessages(log => [...log, `🤖 Animación: ${action.action}`]);
         }
-    }
+    };
 
     return (
-        <div>
-            <h2>Script</h2>
-            <input type="file" onChange={handleOnChange}/>
-            <div className="status">
-                <p><b>Nombre del script:</b> {file.name}</p>
-                <p><b>Lenguaje del script:</b> {state.config?.language}</p>
-                <p><b>Estado actual:</b> {selectedAction + 1}</p>
+        <div style={{ padding: '20px' }}>
+            <h2>📜 Script (formato .txt)</h2>
+            <input type="file" onChange={handleOnChange} />
+
+            <div className="status" style={{ marginTop: '10px' }}>
+                <p><b>Archivo:</b> {file.name}</p>
+                <p><b>Idioma:</b> {state.config?.language || 'N/A'}</p>
+                <p><b>Acción actual:</b> {selectedAction + 1} / {state.actions.length}</p>
             </div>
 
-            <div className="actions" style={{height: "150px", overflowY: "scroll", border: "solid 1px #000"}}>
-                {state.actions?.map(({id, title, action}, i) => {
-                    return <h3 onClick={(e) => { setSelectedAction(i) }} style={{backgroundColor: selectedAction === i ? "red" : ""}} key={id}>{id}</h3>
-                })}
+            {/* Mostrar imagen si está activo img=true en config */}
+            {state.config.img === "true" && state.actions[selectedAction]?.text && (
+                <div style={{ margin: '10px 0' }}>
+                    <p>🖼 Imagen actual:</p>
+                    <img src={state.actions[selectedAction].text} alt="Imagen" style={{ maxHeight: '200px' }} />
+                </div>
+            )}
+
+            <div className="actions" style={{ height: "150px", overflowY: "scroll", border: "1px solid #000", marginTop: '10px' }}>
+                {state.actions.map(({ id, action }, i) => (
+                    <div
+                        key={id}
+                        onClick={() => setSelectedAction(i)}
+                        style={{
+                            backgroundColor: selectedAction === i ? "#cce5ff" : "white",
+                            padding: "5px",
+                            cursor: "pointer"
+                        }}
+                    >
+                        <b>{id}</b> - {action || "🗣️ Texto"}
+                    </div>
+                ))}
             </div>
 
-            <div className="button-group">
-                <button id="before" onClick={ handleClicSelectAction }> &lt; &lt; </button>
-                <button onClick={ handleExecuteAction }>Iniciar</button>
-                <button id="after" onClick={ handleClicSelectAction }> &gt; &gt; </button>
+            <div className="button-group" style={{ marginTop: '10px' }}>
+                <button id="before" onClick={handleClicSelectAction}> ⬅ </button>
+                <button onClick={handleExecuteAction}>▶ Ejecutar</button>
+                <button id="after" onClick={handleClicSelectAction}> ➡ </button>
             </div>
 
-            <h2>Console</h2>
-            <div className="console" style={{height: "150px", overflowY: "scroll", border: "solid 1px #000"}}>
-                {logMessages.map((item, i) => {
-                    return <p key={i}>{item}</p>
-                })}
+            <h3>📋 Consola</h3>
+            <div className="console" style={{ height: "150px", overflowY: "scroll", border: "solid 1px #000", padding: '5px' }}>
+                {logMessages.map((msg, i) => (
+                    <p key={i}>{msg}</p>
+                ))}
             </div>
         </div>
     );
-}
+};
 
 export default ScriptPanel;
