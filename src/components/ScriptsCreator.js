@@ -3,7 +3,7 @@ import { useRos } from '../contexts/RosContext';
 import { createTopic } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
 import animationsTxt from "../animations/animations.txt";
-import ServicioImagen from './ServicioImagen';
+import ServicioImagen from './Imagen';
 import ShowWordsTablet from './ShowWordsTablet';
 
 const ScriptsCreator = () => {
