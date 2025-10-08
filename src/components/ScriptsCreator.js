@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
+import ImagenComponent from './Imagen';
 import animationsTxt from "../animations/animations.txt";
-import ImagenComponent from '../components/Imagen';
+import RobotAnimationControl from './Animaciones';
 
 const ScriptsCreator = () => {
     const { ros } = useRos();
@@ -234,18 +235,24 @@ const ScriptsCreator = () => {
                     >
                         Descargar Script
                     </button>
-                
+                </div>
+            </div>
+
+{/* SECCIÓN IMAGEN */}
 {script.img && (
-    <div style={{ marginTop: '15px' }}>
-        <ImagenComponent
-            url={script.imgUrl}
-            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+    <div style={sectionStyle}>
+        <h4>🖼️ Imagen</h4>
+        <input 
+            type="text" 
+            placeholder="https://url-de-la-imagen.com/img.png" 
+            value={script.imgUrl} 
+            onChange={(e) => setScript({ ...script, imgUrl: e.target.value })}
+            style={inputStyle}
         />
+        <p style={{ fontSize: '12px', color: '#888' }}>La imagen será enviada automáticamente cuando se ejecute el script</p>
     </div>
 )}
 
-</div>
-            </div>
 
             {/* EDITOR DE SCRIPTS */}
             <div style={{ marginBottom: '20px' }}>
@@ -271,18 +278,24 @@ const ScriptsCreator = () => {
                         />
                         <label htmlFor='img'>Imagen</label>
                     </div>
-                
+                </div>
+            </div>
+
+{/* SECCIÓN IMAGEN */}
 {script.img && (
-    <div style={{ marginTop: '15px' }}>
-        <ImagenComponent
-            url={script.imgUrl}
-            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+    <div style={sectionStyle}>
+        <h4>🖼️ Imagen</h4>
+        <input 
+            type="text" 
+            placeholder="https://url-de-la-imagen.com/img.png" 
+            value={script.imgUrl} 
+            onChange={(e) => setScript({ ...script, imgUrl: e.target.value })}
+            style={inputStyle}
         />
+        <p style={{ fontSize: '12px', color: '#888' }}>La imagen será enviada automáticamente cuando se ejecute el script</p>
     </div>
 )}
 
-</div>
-            </div>
 
             {/* SECCIONES DE EDICIÓN (se mantienen igual) */}
             <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
@@ -305,84 +318,16 @@ const ScriptsCreator = () => {
                                 <option value="delay">Delay</option>
                             </select>
                             {item.tipo === "text" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="Texto para hablar"
-                                    style={inputStyle}
-                                />
-                            ) : (
-                                <input 
-                                    type="number" 
-                                    min="0" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="ms"
-                                    style={inputStyle}
-                                />
-                            )}
-                            <button 
-                                onClick={() => {
-                                    const newSpeech = script.speech.filter((item, i) => i !== index);
-                                    setScript({ ...script, speech: newSpeech });
-                                }}
-                                style={deleteButtonStyle}
-                            >
-                                ❌
-                            </button>
-                        </div>
-                    ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, speech: [...script.speech, {
-                                tipo: "text",
-                                info: "Hola, soy Pepper",
-                            }]
-                        })}
-                        style={addButtonStyle}
-                    >
-                        ➕ Añadir Speech
-                    </button>
-                </div>
+                                
+<RobotAnimationControl
+    selected={item.info}
+    onSelect={(value) => {
+        const newAnimation = [...script.animation];
+        newAnimation[index].info = value;
+        setScript({ ...script, animation: newAnimation });
+    }}
+/>
 
-                {/* SECCIÓN ANIMACIÓN */}
-                <div style={sectionStyle}>
-                    <h4>Animaciones ({script.animation.length})</h4>
-                    {script.animation.map((item, index) => (
-                        <div key={index} style={actionItemStyle}>
-                            <select 
-                                value={item.tipo} 
-                                onChange={(e) => {
-                                    const newAnimation = [...script.animation];
-                                    newAnimation[index].tipo = e.target.value;
-                                    setScript({ ...script, animation: newAnimation });
-                                }}
-                                style={selectStyle}
-                            >
-                                <option value="movimiento">Animación</option>
-                                <option value="delay">Delay</option>
-                            </select>
-                            {item.tipo === "movimiento" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newAnimation = [...script.animation];
-                                        newAnimation[index].info = e.target.value;
-                                        setScript({ ...script, animation: newAnimation });
-                                    }}
-                                    placeholder="Ruta de animación"
-                                    style={inputStyle}
-                                />
                             ) : (
                                 <input 
                                     type="number" 
@@ -419,18 +364,24 @@ const ScriptsCreator = () => {
                     >
                         ➕ Añadir Animación
                     </button>
-                
+                </div>
+            </div>
+
+{/* SECCIÓN IMAGEN */}
 {script.img && (
-    <div style={{ marginTop: '15px' }}>
-        <ImagenComponent
-            url={script.imgUrl}
-            setUrl={(val) => setScript({ ...script, imgUrl: val })}
+    <div style={sectionStyle}>
+        <h4>🖼️ Imagen</h4>
+        <input 
+            type="text" 
+            placeholder="https://url-de-la-imagen.com/img.png" 
+            value={script.imgUrl} 
+            onChange={(e) => setScript({ ...script, imgUrl: e.target.value })}
+            style={inputStyle}
         />
+        <p style={{ fontSize: '12px', color: '#888' }}>La imagen será enviada automáticamente cuando se ejecute el script</p>
     </div>
 )}
 
-</div>
-            </div>
 
             {/* ESTADO DE EJECUCIÓN */}
             {isExecuting && (
