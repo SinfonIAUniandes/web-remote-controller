@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
+import ShowWordsTablet from './ShowWordsTablet';
 
 function parseContent(text) {
     try {
@@ -38,18 +39,19 @@ function parseContent(text) {
 
 const ScriptPanel = () => {
     const [file, setFile] = useState({ name: '' });
-    const [state, setState] = useState({ config: {}, actions: [] });
+    const [state, setState] = useState([]);
     const [selectedAction, setSelectedAction] = useState(0);
     const [logMessages, setLogMessages] = useState([]);
+    const [showSubtitle, setShowSubtitle] = useState('');
 
     const { ros } = useRos();
     const speechTopic = createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg');
     const animationTopic = createTopic(ros, "/animations", "robot_toolkit_msgs/animation_msg");
-    const subtitleTopic = createTopic(ros, '/tablet_say', 'std_msgs/String');
+    const pantallaTopic = createTopic(ros, "/tablet_text", "std_msgs/String");
 
-    const handleOnChange = (event) => {
+    function handleOnChange(event) {
         if (event.target.files.length > 1) {
-            alert('Solo se puede seleccionar un archivo');
+            alert('Solo se puede seleccionar un archivo!');
             return;
         }
 
@@ -58,109 +60,123 @@ const ScriptPanel = () => {
 
         const reader = new FileReader();
 
-        reader.onload = (e) => {
-            const parsed = parseContent(e.target.result);
-            setState(parsed);
-            setLogMessages([...logMessages, "✅ Archivo cargado con éxito"]);
+        reader.onload = (event) => {
+            const result = event.target.result;
+            const parsedFile = parseContent(result);
+            setState(parsedFile);
+            setLogMessages(prev => [...prev, "Archivo cargado!"]);
         };
 
-        reader.onerror = (err) => {
-            console.error("Error al leer el archivo:", err);
-            setLogMessages([...logMessages, "❌ Error al cargar el archivo"]);
+        reader.onerror = (error) => {
+            console.error("Error al leer el archivo: ", error);
+            setLogMessages(prev => [...prev, "Error al cargar el archivo!"]);
         };
 
         reader.readAsText(file);
-    };
+    }
 
-    const handleClicSelectAction = (event) => {
+    function handleClicSelectAction(event) {
+        if (file.name === '') return;
         const todo = event.target.id;
-        const limit = state.actions.length;
 
-        if (todo === 'before' && selectedAction > 0) {
-            setSelectedAction(selectedAction - 1);
-        } else if (todo === 'after' && selectedAction < limit - 1) {
+        if (selectedAction <= state.actions.length && selectedAction >= 0) {
+            if (todo === 'before') {
+                setSelectedAction(selectedAction - 1);
+                return;
+            }
+
             setSelectedAction(selectedAction + 1);
         }
-    };
+    }
 
-    const handleExecuteAction = () => {
-        if (!ros || !state.actions.length) return;
-
+    function handleExecuteAction(event) {
+        if (!ros) return;
         const action = state.actions[selectedAction];
-        const lang = state.config.language || "Spanish";
-        const subtitulos = state.config.subtitulos === "true";
-        const mostrarImagen = state.config.img === "true";
 
-        if (action.text) {
-            const speechMsg = new ROSLIB.Message({
-                language: lang,
+        // Mostrar subtítulo en tablet si está activo en <config>
+        if (action.text && state.config.subtitulos === "true") {
+            setShowSubtitle(action.text);
+            const msg = new ROSLIB.Message({ data: action.text });
+            pantallaTopic.publish(msg);
+        } else {
+            setShowSubtitle('');
+        }
+
+        if (action.text !== null) {
+            const animate = action.action === null ? true : false;
+            const message = new ROSLIB.Message({
+                language: state.config.language || 'Spanish',
                 text: action.text,
-                animated: !action.action // animado solo si no hay acción
+                animated: animate
             });
-            speechTopic.publish(speechMsg);
-            setLogMessages(log => [...log, `🗣️ Speech: ${action.text}`]);
-
-            if (subtitulos && subtitleTopic) {
-                const subtitleMsg = new ROSLIB.Message({ data: action.text });
-                subtitleTopic.publish(subtitleMsg);
+            if (speechTopic) {
+                setLogMessages(prev => [...prev, "🗣️ Publicando texto en /speech"]);
+                speechTopic.publish(message);
+            } else {
+                console.error("El publicador de speech no está disponible.");
             }
         }
 
-        if (action.action) {
-            const animMsg = new ROSLIB.Message({
+        if (action.action !== null) {
+            const message = new ROSLIB.Message({
                 family: "animations",
                 animation_name: action.action
             });
-            animationTopic.publish(animMsg);
-            setLogMessages(log => [...log, `🤖 Animación: ${action.action}`]);
+            if (animationTopic) {
+                setLogMessages(prev => [...prev, `🕺 Animación enviada: ${action.action}`]);
+                animationTopic.publish(message);
+            } else {
+                console.error("El publicador de animaciones no está disponible.");
+            }
         }
-    };
+    }
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>📜 Script (formato .txt)</h2>
+        <div>
+            <h2>Script</h2>
             <input type="file" onChange={handleOnChange} />
 
-            <div className="status" style={{ marginTop: '10px' }}>
-                <p><b>Archivo:</b> {file.name}</p>
-                <p><b>Idioma:</b> {state.config?.language || 'N/A'}</p>
-                <p><b>Acción actual:</b> {selectedAction + 1} / {state.actions.length}</p>
+            <div className="status">
+                <p><b>Nombre del script:</b> {file.name}</p>
+                <p><b>Lenguaje del script:</b> {state.config?.language}</p>
+                <p><b>Subtítulos:</b> {state.config?.subtitulos === "true" ? "Sí" : "No"}</p>
+                <p><b>Estado actual:</b> {selectedAction + 1}</p>
             </div>
 
-            {/* Mostrar imagen si está activo img=true en config */}
-            {state.config.img === "true" && state.actions[selectedAction]?.text && (
-                <div style={{ margin: '10px 0' }}>
-                    <p>🖼 Imagen actual:</p>
-                    <img src={state.actions[selectedAction].text} alt="Imagen" style={{ maxHeight: '200px' }} />
-                </div>
-            )}
-
-            <div className="actions" style={{ height: "150px", overflowY: "scroll", border: "1px solid #000", marginTop: '10px' }}>
-                {state.actions.map(({ id, action }, i) => (
-                    <div
-                        key={id}
+            <div className="actions" style={{ height: "150px", overflowY: "scroll", border: "solid 1px #000" }}>
+                {state.actions?.map(({ id }, i) => (
+                    <h3
                         onClick={() => setSelectedAction(i)}
-                        style={{
-                            backgroundColor: selectedAction === i ? "#cce5ff" : "white",
-                            padding: "5px",
-                            cursor: "pointer"
-                        }}
+                        style={{ backgroundColor: selectedAction === i ? "red" : "" }}
+                        key={id}
                     >
-                        <b>{id}</b> - {action || "🗣️ Texto"}
-                    </div>
+                        {id}
+                    </h3>
                 ))}
             </div>
 
-            <div className="button-group" style={{ marginTop: '10px' }}>
-                <button id="before" onClick={handleClicSelectAction}> ⬅ </button>
-                <button onClick={handleExecuteAction}>▶ Ejecutar</button>
-                <button id="after" onClick={handleClicSelectAction}> ➡ </button>
+            <div className="button-group">
+                <button id="before" onClick={handleClicSelectAction}> &lt;&lt; </button>
+                <button onClick={handleExecuteAction}>Iniciar</button>
+                <button id="after" onClick={handleClicSelectAction}> &gt;&gt; </button>
             </div>
 
-            <h3>📋 Consola</h3>
-            <div className="console" style={{ height: "150px", overflowY: "scroll", border: "solid 1px #000", padding: '5px' }}>
-                {logMessages.map((msg, i) => (
-                    <p key={i}>{msg}</p>
+            {showSubtitle && (
+                <div style={{
+                    marginTop: '20px',
+                    padding: '10px',
+                    backgroundColor: '#ffffcc',
+                    borderRadius: '5px',
+                    textAlign: 'center'
+                }}>
+                    <ShowWordsTablet text={showSubtitle} />
+                </div>
+            )}
+
+            <h2>Consola</h2>
+            <div className="console" style={{ height: "150px", overflowY: "scroll", border: "solid 1px #000" }}>
+                {logMessages.map((item, i) => (
+                    <p key={i}>{item}</p>
                 ))}
             </div>
         </div>
