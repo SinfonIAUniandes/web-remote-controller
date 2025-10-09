@@ -8,6 +8,7 @@ const ScriptsCreator = () => {
     const { ros } = useRos();
     const [animations, setAnimations] = useState({});
     const [isExecuting, setIsExecuting] = useState(false);
+    const [scriptName, setScriptName] = useState("mi_script");
     const [script, setScript] = useState({
         subtitulos: false,
         img: false,
@@ -29,13 +30,13 @@ const ScriptsCreator = () => {
 
         // Combinar todas las acciones en una sola secuencia
         const allActions = [
-            ...script.speech.map(action => ({ ...action, category: 'speech' })),
-            ...script.animation.map(action => ({ ...action, category: 'animation' })),
-            ...script.pantalla.map(action => ({ ...action, category: 'pantalla' }))
+            ...script.speech.map((action, index) => ({ ...action, category: 'speech', originalIndex: index })),
+            ...script.animation.map((action, index) => ({ ...action, category: 'animation', originalIndex: index })),
+            ...script.pantalla.map((action, index) => ({ ...action, category: 'pantalla', originalIndex: index }))
         ];
 
-        // Ordenar por índice para mantener el orden de creación
-        allActions.sort((a, b) => allActions.indexOf(a) - allActions.indexOf(b));
+        // Ordenar por índice original para mantener el orden
+        allActions.sort((a, b) => a.originalIndex - b.originalIndex);
 
         // Ejecutar cada acción en secuencia
         for (let i = 0; i < allActions.length; i++) {
@@ -54,8 +55,8 @@ const ScriptsCreator = () => {
                         speechTopic.publish(speechMessage);
                         console.log(`Diciendo: "${action.info}"`);
                         
-                        // Esperar según longitud del texto
-                        const speechTime = Math.max(2000, action.info.length * 100);
+                        // Reducir tiempo de espera
+                        const speechTime = Math.max(1500, action.info.length * 80);
                         await new Promise(resolve => setTimeout(resolve, speechTime));
                         
                     } else if (action.tipo === "delay") {
@@ -74,8 +75,8 @@ const ScriptsCreator = () => {
                         animationTopic.publish(animationMessage);
                         console.log(`Animación: ${action.info}`);
                         
-                        // Tiempo fijo para animaciones
-                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        // Reducir tiempo de animaciones
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                         
                     } else if (action.tipo === "delay") {
                         // Esperar tiempo específico
@@ -84,13 +85,13 @@ const ScriptsCreator = () => {
                     }
                     
                 } else if (action.category === 'pantalla') {
-                    // Acciones de pantalla (placeholder para futura implementación)
+                    // Acciones de pantalla
                     console.log(`Acción de pantalla: ${action.info}`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
                 
-                // Pequeña pausa entre acciones
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Reducir pausa entre acciones
+                await new Promise(resolve => setTimeout(resolve, 300));
                 
             } catch (error) {
                 console.error(`Error en acción ${i + 1}:`, error);
@@ -101,12 +102,12 @@ const ScriptsCreator = () => {
         setIsExecuting(false);
     };
 
-    // FUNCIÓN PARA DESCARGAR SCRIPT
+    //FUNCIÓN PARA DESCARGAR SCRIPT
     const handleDownload = () => {
         const element = document.createElement("a");
         const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
         element.href = URL.createObjectURL(file);
-        element.download = "script.json";
+        element.download = `${scriptName}.json`;
         document.body.appendChild(element);
         element.click();
     };
@@ -128,6 +129,9 @@ const ScriptsCreator = () => {
                      Array.isArray(uploadedScript.pantalla))) {
                     
                     setScript(uploadedScript);
+                    // Extraer nombre del archivo sin extensión
+                    const fileName = file.name.replace('.json', '');
+                    setScriptName(fileName);
                     console.log("Script cargado correctamente");
                     alert("Script cargado exitosamente!");
                 } else {
@@ -140,6 +144,23 @@ const ScriptsCreator = () => {
         };
 
         reader.readAsText(file);
+    };
+
+    // FUNCIÓN PARA OBTENER TODAS LAS ANIMACIONES EN FORMATO PLANO
+    const getAllAnimations = () => {
+        const allAnimations = [];
+        Object.keys(animations).forEach(category => {
+            Object.keys(animations[category]).forEach(subcategory => {
+                animations[category][subcategory].forEach(animation => {
+                    if (subcategory === "_no_subcategory") {
+                        allAnimations.push(`${category}/${animation}`);
+                    } else {
+                        allAnimations.push(`${category}/${subcategory}/${animation}`);
+                    }
+                });
+            });
+        });
+        return allAnimations;
     };
 
     // Cargar animaciones disponibles
@@ -172,7 +193,7 @@ const ScriptsCreator = () => {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h2>🎭 Creador de Scripts para Pepper</h2>
+            <h2>Creador de Scripts para Pepper</h2>
             
             {/* BOTÓN DE EJECUCIÓN ÚNICA */}
             <div style={{ 
@@ -205,7 +226,21 @@ const ScriptsCreator = () => {
             }}>
                 <h3>Gestionar Scripts</h3>
                 
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '15px' }}>
+                    {/* Nombre del script */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                            Nombre del script:
+                        </label>
+                        <input 
+                            type="text" 
+                            value={scriptName}
+                            onChange={(e) => setScriptName(e.target.value)}
+                            placeholder="nombre_del_script"
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                    </div>
+
                     {/* Subir archivo */}
                     <div>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
@@ -225,44 +260,42 @@ const ScriptsCreator = () => {
                         disabled={script.speech.length === 0 && script.animation.length === 0}
                         style={downloadButtonStyle}
                     >
-                        Descargar Script
+                        Descargar {scriptName}.json
                     </button>
                 </div>
             </div>
 
-            {/* EDITOR DE SCRIPTS */}
+            {/* CONFIGURACIÓN */}
             <div style={{ marginBottom: '20px' }}>
                 <h3>Configuración</h3>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                     <div>
                         <input 
-                            disabled={script.img} 
                             id='subtitulos' 
                             type="checkbox" 
                             checked={script.subtitulos} 
                             onChange={() => setScript({ ...script, subtitulos: !script.subtitulos })} 
                         />
-                        <label htmlFor='subtitulos'>Subtítulos</label>
+                        <label htmlFor='subtitulos'>Subtítulos (próximamente)</label>
                     </div>
                     <div>
                         <input 
-                            disabled={script.subtitulos} 
                             id='img' 
                             type="checkbox" 
                             checked={script.img} 
                             onChange={() => setScript({ ...script, img: !script.img })} 
                         />
-                        <label htmlFor='img'>Imagen</label>
+                        <label htmlFor='img'>Mostrar sección Pantalla</label>
                     </div>
                 </div>
             </div>
 
-            {/* SECCIONES DE EDICIÓN (se mantienen igual) */}
+            {/* SECCIONES DE EDICIÓN */}
             <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 
                 {/* SECCIÓN SPEECH */}
                 <div style={sectionStyle}>
-                    <h4>🎙️ Speech ({script.speech.length})</h4>
+                    <h4>Speech ({script.speech.length})</h4>
                     {script.speech.map((item, index) => (
                         <div key={index} style={actionItemStyle}>
                             <select 
@@ -323,7 +356,7 @@ const ScriptsCreator = () => {
                         })}
                         style={addButtonStyle}
                     >
-                        ➕ Añadir Speech
+                        Añadir Speech
                     </button>
                 </div>
 
@@ -344,18 +377,24 @@ const ScriptsCreator = () => {
                                 <option value="movimiento">Animación</option>
                                 <option value="delay">Delay</option>
                             </select>
+
                             {item.tipo === "movimiento" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
+                                <select
+                                    value={item.info}
                                     onChange={(e) => {
                                         const newAnimation = [...script.animation];
                                         newAnimation[index].info = e.target.value;
                                         setScript({ ...script, animation: newAnimation });
                                     }}
-                                    placeholder="Ruta de animación"
-                                    style={inputStyle}
-                                />
+                                    style={selectStyle}
+                                >
+                                    <option value="">Seleccionar animación</option>
+                                    {getAllAnimations().map((animPath, idx) => (
+                                        <option key={idx} value={animPath}>
+                                            {animPath}
+                                        </option>
+                                    ))}
+                                </select>
                             ) : (
                                 <input 
                                     type="number" 
@@ -390,9 +429,78 @@ const ScriptsCreator = () => {
                         })}
                         style={addButtonStyle}
                     >
-                        ➕ Añadir Animación
+                        Añadir Animación
                     </button>
                 </div>
+
+                {/* SECCIÓN PANTALLA - SOLO SE MUESTRA SI img ESTÁ ACTIVADO */}
+                {script.img && (
+                    <div style={sectionStyle}>
+                        <h4>Pantalla ({script.pantalla.length})</h4>
+                        {script.pantalla.map((item, index) => (
+                            <div key={index} style={actionItemStyle}>
+                                <select 
+                                    value={item.tipo} 
+                                    onChange={(e) => {
+                                        const newPantalla = [...script.pantalla];
+                                        newPantalla[index].tipo = e.target.value;
+                                        setScript({ ...script, pantalla: newPantalla });
+                                    }}
+                                    style={selectStyle}
+                                >
+                                    <option value="video">URL Video/Imagen</option>
+                                    <option value="delay">Delay</option>
+                                </select>
+                                {item.tipo === "video" ? (
+                                    <input 
+                                        type="text" 
+                                        value={item.info} 
+                                        onChange={(e) => {
+                                            const newPantalla = [...script.pantalla];
+                                            newPantalla[index].info = e.target.value;
+                                            setScript({ ...script, pantalla: newPantalla });
+                                        }}
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                        style={inputStyle}
+                                    />
+                                ) : (
+                                    <input 
+                                        type="number" 
+                                        min="0" 
+                                        value={item.info} 
+                                        onChange={(e) => {
+                                            const newPantalla = [...script.pantalla];
+                                            newPantalla[index].info = e.target.value;
+                                            setScript({ ...script, pantalla: newPantalla });
+                                        }}
+                                        placeholder="ms"
+                                        style={inputStyle}
+                                    />
+                                )}
+                                <button 
+                                    onClick={() => {
+                                        const newPantalla = script.pantalla.filter((item, i) => i !== index);
+                                        setScript({ ...script, pantalla: newPantalla });
+                                    }}
+                                    style={deleteButtonStyle}
+                                >
+                                    ❌
+                                </button>
+                            </div>
+                        ))}
+                        <button 
+                            onClick={() => setScript({
+                                ...script, pantalla: [...script.pantalla, {
+                                    tipo: "video",
+                                    info: "https://ejemplo.com/imagen.jpg",
+                                }]
+                            })}
+                            style={addButtonStyle}
+                        >
+                            Añadir a Pantalla
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ESTADO DE EJECUCIÓN */}
@@ -406,14 +514,14 @@ const ScriptsCreator = () => {
                     marginTop: '20px',
                     textAlign: 'center'
                 }}>
-                Ejecutando script completo... ({script.speech.length + script.animation.length} acciones)
+                    Ejecutando script completo... ({script.speech.length + script.animation.length + script.pantalla.length} acciones)
                 </div>
             )}
         </div>
     );
 };
 
-// Estilos
+// Estilos (los mismos que antes)
 const executeButtonStyle = {
     padding: '15px 30px',
     fontSize: '18px',
