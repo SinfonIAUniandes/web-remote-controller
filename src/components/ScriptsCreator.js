@@ -17,6 +17,11 @@ const ScriptsCreator = () => {
         pantalla: []
     });
 
+    // Estados para el selector de animaciones con subcategorías
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedSubcategory, setSelectedSubcategory] = useState("");
+    const [selectedAnimation, setSelectedAnimation] = useState("");
+
     // FUNCIÓN ÚNICA QUE EJECUTA TODO EL SCRIPT
     const executeCompleteScript = async () => {
         if (!ros || isExecuting) return;
@@ -60,7 +65,6 @@ const ScriptsCreator = () => {
                         await new Promise(resolve => setTimeout(resolve, speechTime));
                         
                     } else if (action.tipo === "delay") {
-                        // Esperar tiempo específico
                         console.log(`Delay speech: ${action.info}ms`);
                         await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
                     }
@@ -102,7 +106,22 @@ const ScriptsCreator = () => {
         setIsExecuting(false);
     };
 
-    //FUNCIÓN PARA DESCARGAR SCRIPT
+    const handleCheckboxChange = (type) => {
+        if (type === 'subtitulos') {
+            setScript({ 
+                ...script, 
+                subtitulos: !script.subtitulos,
+                img: false // Desactivar el otro
+            });
+        } else if (type === 'img') {
+            setScript({ 
+                ...script, 
+                img: !script.img,
+                subtitulos: false // Desactivar el otro
+            });
+        }
+    };
+
     const handleDownload = () => {
         const element = document.createElement("a");
         const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
@@ -112,7 +131,6 @@ const ScriptsCreator = () => {
         element.click();
     };
 
-    // FUNCIÓN PARA CARGAR/SUBIR SCRIPT
     const handleUpload = (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -146,24 +164,31 @@ const ScriptsCreator = () => {
         reader.readAsText(file);
     };
 
-    // FUNCIÓN PARA OBTENER TODAS LAS ANIMACIONES EN FORMATO PLANO
-    const getAllAnimations = () => {
-        const allAnimations = [];
-        Object.keys(animations).forEach(category => {
-            Object.keys(animations[category]).forEach(subcategory => {
-                animations[category][subcategory].forEach(animation => {
-                    if (subcategory === "_no_subcategory") {
-                        allAnimations.push(`${category}/${animation}`);
-                    } else {
-                        allAnimations.push(`${category}/${subcategory}/${animation}`);
-                    }
-                });
-            });
+    const handleAddAnimation = () => {
+        if (!selectedCategory || !selectedAnimation) {
+            alert("Por favor seleccione una animación completa");
+            return;
+        }
+
+        const fullAnimationPath = selectedSubcategory === "_no_subcategory" || !selectedSubcategory
+            ? `${selectedCategory}/${selectedAnimation}`
+            : `${selectedCategory}/${selectedSubcategory}/${selectedAnimation}`;
+
+        const newAnimation = {
+            tipo: "movimiento",
+            info: fullAnimationPath,
+        };
+
+        setScript({
+            ...script,
+            animation: [...script.animation, newAnimation]
         });
-        return allAnimations;
+
+        setSelectedCategory("");
+        setSelectedSubcategory("");
+        setSelectedAnimation("");
     };
 
-    // Cargar animaciones disponibles
     useEffect(() => {
         fetch(animationsTxt)
             .then(response => response.text())
@@ -265,7 +290,7 @@ const ScriptsCreator = () => {
                 </div>
             </div>
 
-            {/* CONFIGURACIÓN */}
+            {/* CONFIGURACIÓN CON CHECKBOXES EXCLUSIVOS */}
             <div style={{ marginBottom: '20px' }}>
                 <h3>Configuración</h3>
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -274,18 +299,24 @@ const ScriptsCreator = () => {
                             id='subtitulos' 
                             type="checkbox" 
                             checked={script.subtitulos} 
-                            onChange={() => setScript({ ...script, subtitulos: !script.subtitulos })} 
+                            onChange={() => handleCheckboxChange('subtitulos')}
+                            disabled={script.img} // Deshabilitar si el otro está activo
                         />
-                        <label htmlFor='subtitulos'>Subtítulos (próximamente)</label>
+                        <label htmlFor='subtitulos' style={{ color: script.img ? '#999' : '#000' }}>
+                            Subtítulos (próximamente)
+                        </label>
                     </div>
                     <div>
                         <input 
                             id='img' 
                             type="checkbox" 
                             checked={script.img} 
-                            onChange={() => setScript({ ...script, img: !script.img })} 
+                            onChange={() => handleCheckboxChange('img')}
+                            disabled={script.subtitulos} // Deshabilitar si el otro está activo
                         />
-                        <label htmlFor='img'>Mostrar sección Pantalla</label>
+                        <label htmlFor='img' style={{ color: script.subtitulos ? '#999' : '#000' }}>
+                            Mostrar sección Pantalla
+                        </label>
                     </div>
                 </div>
             </div>
@@ -360,9 +391,94 @@ const ScriptsCreator = () => {
                     </button>
                 </div>
 
-                {/* SECCIÓN ANIMACIÓN */}
+                {/* SECCIÓN ANIMACIÓN CON SUBCATEGORÍAS */}
                 <div style={sectionStyle}>
                     <h4>Animaciones ({script.animation.length})</h4>
+                    
+                    {/* Selector de animaciones con subcategorías */}
+                    <div style={{ 
+                        padding: '15px', 
+                        backgroundColor: '#f0f8ff', 
+                        borderRadius: '8px', 
+                        marginBottom: '15px',
+                        border: '1px dashed #007BFF'
+                    }}>
+                        <h5 style={{ marginTop: '0', marginBottom: '10px' }}>Agregar Nueva Animación</h5>
+                        
+                        {/* Categoría */}
+                        <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                                Categoría:
+                            </label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => {
+                                    setSelectedCategory(e.target.value);
+                                    setSelectedSubcategory("");
+                                    setSelectedAnimation("");
+                                }}
+                                style={selectStyle}
+                            >
+                                <option value="">Seleccione una categoría</option>
+                                {Object.keys(animations).map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Subcategoría (solo si tiene) */}
+                        {selectedCategory && Object.keys(animations[selectedCategory] || {}).length > 1 && (
+                            <div style={{ marginBottom: '10px' }}>
+                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                                    Subcategoría:
+                                </label>
+                                <select
+                                    value={selectedSubcategory}
+                                    onChange={(e) => {
+                                        setSelectedSubcategory(e.target.value);
+                                        setSelectedAnimation("");
+                                    }}
+                                    style={selectStyle}
+                                >
+                                    <option value="">Seleccione una subcategoría</option>
+                                    {Object.keys(animations[selectedCategory] || {}).map(subcategory => (
+                                        <option key={subcategory} value={subcategory}>
+                                            {subcategory === "_no_subcategory" ? "General" : subcategory}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Animación */}
+                        {selectedCategory && (
+                            <div style={{ marginBottom: '10px' }}>
+                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                                    Animación:
+                                </label>
+                                <select
+                                    value={selectedAnimation}
+                                    onChange={(e) => setSelectedAnimation(e.target.value)}
+                                    style={selectStyle}
+                                >
+                                    <option value="">Seleccione una animación</option>
+                                    {(animations[selectedCategory]?.[selectedSubcategory] || animations[selectedCategory]?._no_subcategory || []).map(anim => (
+                                        <option key={anim} value={anim}>{anim}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        <button 
+                            onClick={handleAddAnimation}
+                            disabled={!selectedAnimation}
+                            style={addButtonStyle}
+                        >
+                            Agregar Animación Seleccionada
+                        </button>
+                    </div>
+
+                    {/* Lista de animaciones agregadas */}
                     {script.animation.map((item, index) => (
                         <div key={index} style={actionItemStyle}>
                             <select 
@@ -379,22 +495,18 @@ const ScriptsCreator = () => {
                             </select>
 
                             {item.tipo === "movimiento" ? (
-                                <select
-                                    value={item.info}
+                                <input 
+                                    type="text" 
+                                    value={item.info} 
                                     onChange={(e) => {
                                         const newAnimation = [...script.animation];
                                         newAnimation[index].info = e.target.value;
                                         setScript({ ...script, animation: newAnimation });
                                     }}
-                                    style={selectStyle}
-                                >
-                                    <option value="">Seleccionar animación</option>
-                                    {getAllAnimations().map((animPath, idx) => (
-                                        <option key={idx} value={animPath}>
-                                            {animPath}
-                                        </option>
-                                    ))}
-                                </select>
+                                    placeholder="Ruta de animación"
+                                    style={inputStyle}
+                                    readOnly // Hacerlo de solo lectura para mantener la integridad
+                                />
                             ) : (
                                 <input 
                                     type="number" 
@@ -420,17 +532,6 @@ const ScriptsCreator = () => {
                             </button>
                         </div>
                     ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, animation: [...script.animation, {
-                                tipo: "movimiento",
-                                info: "Gestures/Hey_1",
-                            }]
-                        })}
-                        style={addButtonStyle}
-                    >
-                        Añadir Animación
-                    </button>
                 </div>
 
                 {/* SECCIÓN PANTALLA - SOLO SE MUESTRA SI img ESTÁ ACTIVADO */}
