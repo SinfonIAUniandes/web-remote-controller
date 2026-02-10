@@ -1,52 +1,109 @@
-// src/components/Servicio.js
-import React, { useState } from 'react';
-import { useRos } from '../contexts/RosContext';
-import { createService } from '../services/RosManager';
+/**
+ * navegador.js
+ * Componente que permite mostrar páginas web en la tablet del robot Pepper.
+ * Utiliza el servicio de ROS para mostrar URLs en la pantalla del robot.
+ */
+import RosManager from '../services/RosManager.js'; 
+const NavegadorComponent = (function() {
+    let containerId = null;
 
-const Servicio = () => {
-    const { ros } = useRos(); // Obtener la instancia de ROS del contexto
-    const [url, setUrl] = useState(""); // URL predeterminada para el servicio
+    /**
+     * Inicializa el componente
+     */
+    function init(elementId) {
+        containerId = elementId;
+        render();
+    }
 
-    // Función para manejar cambios en el campo de entrada de la URL
-    const handleUrlChange = (event) => {
-        setUrl(event.target.value);
-    };
+    /**
+     * Renderiza el HTML del componente
+     */
+    function render() {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    // Función para llamar al servicio ROS para mostrar la URL en la tablet del robot
-    const showWebViewOnRobot = () => {
-        if (ros) {
-            // Crear el servicio de ROS
-            const showWebViewService = createService(ros, '/pytoolkit/ALTabletService/show_web_view_srv', 'robot_toolkit_msgs/tablet_service_srv');
-
-            // Crear la solicitud con la URL actual
-            const request = { url };
-
-            // Llamar al servicio en el robot
-            showWebViewService.callService(request, (result) => {
-                console.log('Service called successfully:', result);
-            }, (error) => {
-                console.error('Error calling service:', error);
-            });
-        } else {
-            console.error('ROS is not connected');
-        }
-    };
-
-    return (
-        <div style={{ textAlign: 'center', margin: '20px' }}>
-            <h2>Enviar URL a la Tablet del Robot</h2>
-            <input 
-                type="text"
-                value={url}
-                onChange={handleUrlChange}
-                placeholder="Ingresa la URL del servicio"
-                style={{ width: '60%', padding: '8px', fontSize: '16px', marginBottom: '10px' }}
-            />
-            <button onClick={showWebViewOnRobot} style={{ padding: '10px 20px', fontSize: '16px', marginLeft: '10px' }}>
-                Enviar a la Tablet
+        container.innerHTML = `
+            <label style="display: block; margin-bottom: 10px;">
+                <strong>URL de la página web:</strong>
+                <input 
+                    type="text" 
+                    id="web-url-input" 
+                    placeholder="https://ejemplo.com"
+                    value="https://www.google.com"
+                    style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc;"
+                >
+            </label>
+            
+            <button 
+                class="btn-primary" 
+                onclick="NavegadorComponent.showWebPage()" 
+                style="width: 100%; padding: 12px;"
+            >
+                 Mostrar en Tablet
             </button>
-        </div>
-    );
-};
+            
+            <div style="margin-top: 15px;">
+                <p style="font-size: 12px; color: #666;">
+                    <strong>Sugerencias:</strong><br>
+                    • https://www.google.com<br>
+                    • https://www.youtube.com<br>
+                    • https://www.wikipedia.org
+                </p>
+            </div>
+        `;
+    }
 
-export default Servicio;
+    /**
+     * Muestra una página web en la tablet del robot
+     */
+    function showWebPage() {
+        const urlInput = document.getElementById('web-url-input');
+        if (!urlInput) {
+            console.error('Input de URL no encontrado');
+            return;
+        }
+
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            alert('Por favor, ingresa una URL válida.');
+            return;
+        }
+
+        // Validar que tenga http:// o https://
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            alert('La URL debe comenzar con http:// o https://');
+            return;
+        }
+
+        const service = RosManager.createService(
+            '/pytoolkit/ALTabletService/show_web_view_srv',
+            'robot_toolkit_msgs/tablet_service_srv'
+        );
+
+        if (!service) {
+            alert('Error: El servicio de tablet no está disponible.');
+            return;
+        }
+
+        const request = { url: url };
+
+        RosManager.callService(service, request, 
+            function(result) {
+                console.log('Página web mostrada en tablet:', url);
+                alert(' Página cargada en la tablet del robot');
+            },
+            function(error) {
+                console.error('Error mostrando página web:', error);
+                alert(' Error al cargar la página en la tablet');
+            }
+        );
+    }
+
+    // API pública
+    return {
+        init: init,
+        showWebPage: showWebPage
+    };
+})();
+

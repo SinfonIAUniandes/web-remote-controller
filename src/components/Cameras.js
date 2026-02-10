@@ -1,84 +1,127 @@
-import React, { useEffect, useRef } from 'react';
-import { useRos } from '../contexts/RosContext'
+/**
+ * cameras.js
+ * Componente que muestra las cámaras frontal e inferior del robot Pepper.
+ * Se suscribe a los tópicos de ROS para recibir las imágenes en tiempo real.
+ */
+import RosManager from '../services/RosManager.js';
+const CamerasComponent = (function() {
+    let containerId = null;
+    let frontCameraTopic = null;
+    let bottomCameraTopic = null;
 
-//Las funciones para crear topicos y servicios
-import { createTopic, createService } from '../services/RosManager';
+    /**
+     * Inicializa el componente
+     */
+    function init(elementId) {
+        containerId = elementId;
+        render();
+        enableCameras();
+        subscribeToCameras();
+    }
 
-const Cameras = () => {
-    const { ros } = useRos()
-    const frontCameraRef = useRef(null);
-    const bottomCameraRef = useRef(null);
+    /**
+     * Renderiza el HTML del componente
+     */
+    function render() {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    useEffect(() => {
-        if (ros) {
-            // Create topics for front and bottom cameras
-            const frontCameraListener = createTopic(ros, '/robot_toolkit_node/camera/front/image_raw/compressed', 'sensor_msgs/CompressedImage');
-            const bottomCameraListener = createTopic(ros, '/robot_toolkit_node/camera/bottom/image_raw/compressed', 'sensor_msgs/CompressedImage');
-
-            // Subscribe to front camera
-            frontCameraListener.subscribe((message) => {
-                frontCameraRef.current.src = "data:image/jpeg;base64," + message.data;
-            });
-
-            // Subscribe to bottom camera
-            bottomCameraListener.subscribe((message) => {
-                bottomCameraRef.current.src = "data:image/jpeg;base64," + message.data;
-            });
-
-            // Create service for enabling vision tools
-            const enableVisionService = createService(ros, '/robot_toolkit/vision_tools_srv', 'robot_toolkit_msgs/vision_tools_msg');
-
-            // Request for front camera
-            const frontRequest = {
-                data: {
-                    camera_name: "front_camera",
-                    command: "custom",
-                    resolution: 0,
-                    frame_rate: 30,
-                    color_space: 11
-                }
-            };
-
-            enableVisionService.callService(frontRequest, (result) => {
-                console.log('Front camera vision service called:', result);
-            });
-
-            // Request for bottom camera
-            const bottomRequest = {
-                data: {
-                    camera_name: "bottom_camera",
-                    command: "custom",
-                    resolution: 0,
-                    frame_rate: 30,
-                    color_space: 11
-                }
-            };
-
-            enableVisionService.callService(bottomRequest, (result) => {
-                console.log('Bottom camera vision service called:', result);
-            });
-
-            // Cleanup subscriptions on unmount
-            return () => {
-                frontCameraListener.unsubscribe();
-                bottomCameraListener.unsubscribe();
-            };
-        }
-    }, [ros]);
-
-    return (
-        <div>
-            <h1>Cameras</h1>
+        container.innerHTML = `
             <div>
-                <h2>Front Camera</h2>
-                <img id="front_camera" ref={frontCameraRef} alt="Front Camera" />
+                <h4>Cámara Frontal</h4>
+                <img id="front-camera" src="" alt="Cámara Frontal" style="width: 100%; max-width: 400px; background-color: #ecf0f1;">
             </div>
             <div>
-                <h2>Bottom Camera</h2>
-                <img id="bottom_camera" ref={bottomCameraRef} alt="Bottom Camera" />
+                <h4>Cámara Inferior</h4>
+                <img id="bottom-camera" src="" alt="Cámara Inferior" style="width: 100%; max-width: 400px; background-color: #ecf0f1;">
             </div>
-        </div>
-    );
-};
+        `;
+    }
 
-export default Cameras;
+    /**
+     * Habilita las cámaras en el robot
+     */
+    function enableCameras() {
+        const visionService = RosManager.createService(
+            '/robot_toolkit/vision_tools_srv',
+            'robot_toolkit_msgs/vision_tools_msg'
+        );
+
+        if (!visionService) return;
+
+        // Habilitar cámara frontal
+        const frontRequest = {
+            data: {
+                camera_name: "front_camera",
+                command: "custom",
+                resolution: 0,
+                frame_rate: 30,
+                color_space: 11
+            }
+        };
+
+        RosManager.callService(visionService, frontRequest, function(result) {
+            console.log('Cámara frontal habilitada:', result);
+        });
+
+        // Habilitar cámara inferior
+        const bottomRequest = {
+            data: {
+                camera_name: "bottom_camera",
+                command: "custom",
+                resolution: 0,
+                frame_rate: 30,
+                color_space: 11
+            }
+        };
+
+        RosManager.callService(visionService, bottomRequest, function(result) {
+            console.log('Cámara inferior habilitada:', result);
+        });
+    }
+
+    /**
+     * Se suscribe a los tópicos de las cámaras
+     */
+    function subscribeToCameras() {
+        // Tópico de cámara frontal
+        frontCameraTopic = RosManager.createTopic(
+            '/robot_toolkit_node/camera/front/image_raw/compressed',
+            'sensor_msgs/CompressedImage'
+        );
+
+        RosManager.subscribeToTopic(frontCameraTopic, function(message) {
+            const frontImg = document.getElementById('front-camera');
+            if (frontImg) {
+                frontImg.src = "data:image/jpeg;base64," + message.data;
+            }
+        });
+
+        // Tópico de cámara inferior
+        bottomCameraTopic = RosManager.createTopic(
+            '/robot_toolkit_node/camera/bottom/image_raw/compressed',
+            'sensor_msgs/CompressedImage'
+        );
+
+        RosManager.subscribeToTopic(bottomCameraTopic, function(message) {
+            const bottomImg = document.getElementById('bottom-camera');
+            if (bottomImg) {
+                bottomImg.src = "data:image/jpeg;base64," + message.data;
+            }
+        });
+    }
+
+    /**
+     * Limpia el componente
+     */
+    function destroy() {
+        if (frontCameraTopic) frontCameraTopic.unsubscribe();
+        if (bottomCameraTopic) bottomCameraTopic.unsubscribe();
+    }
+
+    // API pública
+    return {
+        init: init,
+        destroy: destroy
+    };
+})();

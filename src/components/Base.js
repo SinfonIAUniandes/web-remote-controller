@@ -1,121 +1,81 @@
-import React, { useEffect, useCallback } from 'react';
-import { useRos } from '../contexts/RosContext'
-import { createTopic, createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
-
-const Base = () => {
-    const { ros } = useRos();
+/**
+ * base.js
+ * Componente que controla el movimiento de la base del robot con el teclado.
+ * Teclas: W (adelante), S (atrás), A (izquierda), D (derecha), Q (rotar izq), E (rotar der)
+ */
+import RosManager from '../services/RosManager.js'; 
+const BaseComponent = (function() {
+    let containerId = null;
     const SPEED = 0.5;
 
-    useEffect(() => {
-        if (ros) {
-            const enableNavigationService = createService(ros, '/robot_toolkit/navigation_tools_srv', 'robot_toolkit_msgs/navigation_tools_srv');
-            const navRequest = {
-                data: {
-                    "command": "enable_all",
-                    "depth_to_laser_parameters": {
-                        "resolution": 0,
-                        "scan_time": 0.0,
-                        "range_min": 0.0,
-                        "range_max": 0.0,
-                        "scan_height": 0.0
-                    },
-                    "tf_enable": false,
-                    "tf_frequency": 0.0,
-                    "odom_enable": false,
-                    "odom_frequency": 0.0,
-                    "laser_enable": false,
-                    "laser_frequency": 0.0,
-                    "cmd_vel_enable": false,
-                    "security_timer": 0.0,
-                    "move_base_enable": false,
-                    "goal_enable": false,
-                    "robot_pose_suscriber_enable": false,
-                    "path_enable": false,
-                    "path_frequency": 0.0,
-                    "robot_pose_publisher_enable": false,
-                    "robot_pose_publisher_frequency": 0.0,
-                    "result_enable": false,
-                    "depth_to_laser_enable": false,
-                    "free_zone_enable": false
-                }
-
-            };
-            enableNavigationService.callService(navRequest, (result) => {
-                console.log('Navigation tools service initialized:', result);
-            }, (error) => {
-                console.error('Error initializing navigation service:', error);
-            });
-        }
-    }, [ros]);
-
-    function handleKeyPress(event) {
-        const bannedHTMLElements = ["input", "textarea"];
-        if (bannedHTMLElements.includes(event.target.localName))
-            return;
-
-        var cmdVel = new ROSLIB.Topic({
-            ros: ros,
-            name: '/cmd_vel',
-            messageType: 'geometry_msgs/Twist'
-        });
-
-        let message = {
-            linear: {
-                x: 0,
-                y: 0,
-                z: 0
-            },
-            angular: {
-                x: 0,
-                y: 0,
-                z: 0
-            }
-        };
-
-        const pressedKey = event.keyCode;
-        const keys = {
-            A: 65,
-            D: 68,
-            W: 87,
-            S: 83,
-            E: 69,
-            Q: 81
-        };
-
-        if (pressedKey === keys.A) {
-            message.linear.y = SPEED;
-        } else if (pressedKey === keys.D) {
-            message.linear.y = -SPEED;
-        } else if (pressedKey === keys.W) {
-            message.linear.x = SPEED;
-        } else if (pressedKey === keys.S) {
-            message.linear.x = -SPEED;
-        }
-
-        if (pressedKey === keys.E) {
-            message.angular.z = -SPEED;
-        } else if (pressedKey === keys.Q) {
-            message.angular.z = SPEED;
-        }
-
-        var twist = new ROSLIB.Message(message);
-        cmdVel.publish(twist);
-
-        // console.log(event);
+    function init(elementId) {
+        containerId = elementId;
+        render();
+        enableNavigationTools();
+        setupKeyboardControls();
     }
 
-    const cachedHandleKeyPess = useCallback(handleKeyPress, [ros])
+    function render() {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    useEffect(() => {
-        window.addEventListener("keydown", cachedHandleKeyPess, false);
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Controles de movimiento:</strong><br>
+                <kbd>W</kbd> Adelante | <kbd>S</kbd> Atrás | <kbd>A</kbd> Izquierda | <kbd>D</kbd> Derecha<br>
+                <kbd>Q</kbd> Rotar Izquierda | <kbd>E</kbd> Rotar Derecha
+            </div>
+            <div class="keyboard-controls">
+                <div></div>
+                <div class="key-button">W ↑</div>
+                <div></div>
+                <div class="key-button">A ←</div>
+                <div class="key-button">S ↓</div>
+                <div class="key-button">D →</div>
+                <div class="key-button">Q ↶</div>
+                <div></div>
+                <div class="key-button">E ↷</div>
+            </div>
+        `;
+    }
 
-        return () => {
-            window.removeEventListener("keydown", cachedHandleKeyPess, false);
+    function enableNavigationTools() {
+        const navService = RosManager.createService(
+            '/robot_toolkit/navigation_tools_srv',
+            'robot_toolkit_msgs/navigation_tools_srv'
+        );
+        if (!navService) return;
+        RosManager.callService(navService, { data: { command: "enable_all" } });
+    }
+
+    function setupKeyboardControls() {
+        document.addEventListener('keydown', handleKeyPress);
+    }
+
+    function handleKeyPress(e) {
+        const bannedElements = ["input", "textarea"];
+        if (bannedElements.includes(e.target.localName.toLowerCase())) return;
+
+        const cmdVelTopic = RosManager.createTopic('/cmd_vel', 'geometry_msgs/Twist');
+        if (!cmdVelTopic) return;
+
+        let message = {
+            linear: { x: 0, y: 0, z: 0 },
+            angular: { x: 0, y: 0, z: 0 }
         };
-    }, [cachedHandleKeyPess]);
 
-    return (<></>);
-}
+        switch(e.key.toLowerCase()) {
+            case 'w': message.linear.x = SPEED; break;
+            case 's': message.linear.x = -SPEED; break;
+            case 'a': message.linear.y = SPEED; break;
+            case 'd': message.linear.y = -SPEED; break;
+            case 'q': message.angular.z = SPEED; break;
+            case 'e': message.angular.z = -SPEED; break;
+            default: return;
+        }
 
-export default Base;
+        RosManager.publishMessage(cmdVelTopic, message);
+    }
+
+    return { init: init };
+})();

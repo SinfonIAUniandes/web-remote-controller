@@ -1,0 +1,14 @@
+/* 
+ * servicios.css
+ * Estilos para la vista de servicios
+ */
+
+.servicios-view h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.servicios-view .grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}

@@ -1,0 +1,57 @@
+<div class="home-view">
+    <h1>🏠 Inicio - Control del Robot Pepper</h1>
+    
+    <div class="alert alert-info">
+        <strong>Bienvenido al sistema de control del robot Pepper</strong><br>
+        Utiliza el menú lateral para navegar entre las diferentes secciones.
+    </div>
+
+    <div class="grid-container">
+        <!-- Panel de estado del sistema -->
+        <div class="section">
+            <h3> Estado del Sistema</h3>
+            <div id="system-status">
+                <p><strong>Estado de conexión:</strong> <span id="ros-status">Verificando...</span></p>
+                <p><strong>Batería:</strong> <span id="battery-status">Cargando...</span></p>
+                <p><strong>Volumen:</strong> <span id="volume-status">50%</span></p>
+            </div>
+        </div>
+
+        <!-- Accesos rápidos -->
+        <div class="section">
+            <h3>⚡ Accesos Rápidos</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-primary" onclick="Navigation.loadView('principal')">
+                    🎮 Ir a Control Principal
+                </button>
+                <button class="btn-success" onclick="Navigation.loadView('servicios')">
+                    ⚙️ Ir a Servicios
+                </button>
+                <button class="btn-warning" onclick="Navigation.loadView('scripts')">
+                    📝 Ir a Scripts
+                </button>
+            </div>
+        </div>
+
+        <!-- Información del robot -->
+        <div class="section">
+            <h3>🤖 Información del Robot</h3>
+            <p><strong>Modelo:</strong> Pepper Robot</p>
+            <p><strong>Versión:</strong> 1.0</p>
+            <p><strong>URL ROS:</strong> <span id="ros-url">ws://localhost:9090</span></p>
+            <button class="btn-primary" onclick="RosConnection.reconnect()">
+                🔄 Reconectar
+            </button>
+        </div>
+
+        <!-- Ayuda rápida -->
+        <div class="section">
+            <h3>❓ Ayuda Rápida</h3>
+            <ul style="margin-left: 20px;">
+                <li><strong>Principal:</strong> Control de cámaras, LEDs, voz y animaciones</li>
+                <li><strong>Servicios:</strong> Configuración avanzada y servicios del robot</li>
+                <li><strong>Scripts:</strong> Crear y ejecutar secuencias de acciones</li>
+            </ul>
+        </div>
+    </div>
+</div>

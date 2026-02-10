@@ -1,126 +1,68 @@
-//audio que sirve: http://audio-edge-es6pf.mia.g.radiomast.io/ref-128k-mp3-stereo
+/**
+ * audio.js
+ * Componente que permite reproducir audio en el robot desde una URL.
+ */
+import RosManager from '../services/RosManager.js'; 
+const AudioComponent = (function() {
+    let containerId = null;
 
-import React, { useState } from 'react';
-import { useRos } from '../contexts/RosContext';
-import { createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
+    function init(elementId) {
+        containerId = elementId;
+        render();
+    }
 
-const RobotAudioControl = () => {
-    const { ros } = useRos();
-    const [audioUrl, setAudioUrl] = useState("");
+    function render() {
+        const container = document.getElementById(containerId);
+        if (!container) return;
 
-    // Servicios de ROS para reproducir y detener audio
-    const audioService = ros 
-        ? createService(ros, '/pytoolkit/ALAudioPlayer/play_audio_stream_srv','/robot_toolkit_msgs/set_stiffnesses_sev')
-        : null;
-
-    const stopAudioService = ros 
-        ? createService(ros, '/pytoolkit/ALAudioPlayer/stop_audio_stream_srv', 'std_srvs/Empty') // SIN PARÁMETROS
-        : null;
-
-    // Enviar URL de audio al robot
-    const handlePlayUrl = () => {
-        if (!audioUrl.trim()) {
-            alert("Ingrese una URL de audio válida.");
-            return;
-        }
-
-        if (!audioService) {
-            alert("Error: No hay conexión con ROS.");
-            return;
-        }
-
-        // Crear mensaje ROS con la URL del audio
-        const request = new ROSLIB.ServiceRequest({
-            names: audioUrl,  
-            stiffnesses: 1.0 
-        });
-
-        // Enviar mensaje ROS al servicio
-        audioService.callService(request, (result) => {
-            console.log('Reproduciendo audio en el robot desde URL:', result);
-        }, (error) => {
-            console.error('Error al reproducir el audio desde URL:', error);
-        });
-    };
-
-    // Detener audio en el robot (SIN PARÁMETROS)
-    const handleStopAudio = () => {
-        if (!stopAudioService) {
-            alert("Error: No hay conexión con ROS.");
-            return;
-        }
-
-        const stopRequest = new ROSLIB.ServiceRequest({});
-        stopAudioService.callService(stopRequest, (result) => {
-            console.log('Deteniendo audio en el robot:', result);
-        }, (error) => {
-            console.error('Error al detener el audio:', error);
-        });
-    };
-
-    return (
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <h2>Reproducir audio en el Robot</h2>
-
-            {/* Campo para ingresar la URL */}
-            <div style={{ marginBottom: '10px' }}>
-                <label>URL del audio:</label>
-                <br />
-                <input
-                    type="text"
-                    value={audioUrl}
-                    onChange={(e) => setAudioUrl(e.target.value)}
-                    placeholder="Ingrese la URL del audio"
-                    style={{
-                        width: '60%',
-                        padding: '8px',
-                        marginTop: '5px',
-                        borderRadius: '5px',
-                        border: '1px solid #ccc',
-                    }}
-                />
-            </div>
-
-            {/* Botones para reproducir y detener audio */}
-            <div style={{ marginTop: '10px' }}>
-                <button 
-                    onClick={handlePlayUrl} 
-                    disabled={!audioUrl.trim() || !audioService}
-                    style={{
-                        padding: '10px 15px',
-                        fontSize: '16px',
-                        backgroundColor: '#007BFF',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        marginRight: '10px',
-                        opacity: !audioUrl.trim() || !audioService ? 0.5 : 1
-                    }}
-                >
-                    Reproducir Audio
+        container.innerHTML = `
+            <input 
+                type="text" 
+                id="audio-url" 
+                placeholder="http://ejemplo.com/audio.mp3"
+                style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;"
+            >
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" onclick="AudioComponent.playAudio()" style="flex: 1;">
+                    ▶ Reproducir
                 </button>
-
-                <button 
-                    onClick={handleStopAudio} 
-                    disabled={!stopAudioService}
-                    style={{
-                        padding: '10px 15px',
-                        fontSize: '16px',
-                        backgroundColor: '#DC3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        opacity: !stopAudioService ? 0.5 : 1
-                    }}
-                >
-                    Detener Audio
+                <button class="btn-danger" onclick="AudioComponent.stopAudio()" style="flex: 1;">
+                    ⏹ Detener
                 </button>
             </div>
-        </div>
-    );
-};
+        `;
+    }
 
-export default RobotAudioControl;
+    function playAudio() {
+        const urlInput = document.getElementById('audio-url');
+        if (!urlInput) return;
+
+        const audioUrl = urlInput.value.trim();
+        if (!audioUrl) {
+            alert('Ingrese una URL de audio válida.');
+            return;
+        }
+
+        const audioService = RosManager.createService(
+            '/pytoolkit/ALAudioPlayer/play_audio_stream_srv',
+            'robot_toolkit_msgs/set_stiffnesses_sev'
+        );
+
+        if (!audioService) return;
+
+        RosManager.callService(audioService, { names: audioUrl, stiffnesses: 1.0 });
+    }
+
+    function stopAudio() {
+        const stopService = RosManager.createService(
+            '/pytoolkit/ALAudioPlayer/stop_audio_stream_srv',
+            'std_srvs/Empty'
+        );
+
+        if (!stopService) return;
+
+        RosManager.callService(stopService, {});
+    }
+
+    return { init: init, playAudio: playAudio, stopAudio: stopAudio };
+})();
