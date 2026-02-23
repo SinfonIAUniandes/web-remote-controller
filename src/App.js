@@ -24,10 +24,13 @@ import PostureControl from './components/PostureControl'
 import ScriptsCreator from './components/ScriptsCreator';
 import QuickActions from './components/QuickActions';
 import './App.css';
+import './fonts.css';
+import LateralMenu from './components/MenuLateral';
 
 const App = () => {
     return (
         <div className="App">
+            <LateralMenu />
             <h1>Robot camera feed</h1>
             <Cameras />
             <h1>Servicio Web</h1>
