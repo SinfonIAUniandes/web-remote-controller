@@ -10,7 +10,7 @@ import EnableRobotSecurity from './components/EnableRobotSecurity';
 import DisableRobotSecurity from './components/DisableRobotSecurity';
 import Battery from './components/Battery';
 import Volumen from './components/Volumen';
-import Texto from './components/Texto';
+import Texto from './components/texto';
 import Animaciones from './components/Animaciones';
 import Audio from './components/Audio';
 import BreathingControl from './components/BreathingControl';
@@ -26,6 +26,7 @@ import QuickActions from './components/QuickActions';
 import './App.css';
 import './fonts.css';
 import LateralMenu from './components/MenuLateral';
+import ControlSeguridad from './components/controlSeguridad';
 
 const App = () => {
     return (
@@ -75,6 +76,8 @@ const App = () => {
             <ScriptsCreator />
             <h1>Acciones rápidas</h1>
             <QuickActions />
+            <h1>Control de seguridad</h1>
+            <ControlSeguridad />
         </div>
     );
 };
