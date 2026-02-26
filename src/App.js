@@ -10,7 +10,6 @@ import EnableRobotSecurity from './components/EnableRobotSecurity';
 import DisableRobotSecurity from './components/DisableRobotSecurity';
 import Battery from './components/Battery';
 import Volumen from './components/Volumen';
-import Texto from './components/texto';
 import Animaciones from './components/Animaciones';
 import Audio from './components/Audio';
 import BreathingControl from './components/BreathingControl';
@@ -25,8 +24,9 @@ import ScriptsCreator from './components/ScriptsCreator';
 import QuickActions from './components/QuickActions';
 import './App.css';
 import './fonts.css';
-import LateralMenu from './components/MenuLateral';
-import ControlSeguridad from './components/controlSeguridad';
+import LateralMenu from './components/MenuLateral';       
+import Texto from './components/Texto';
+import ControlSeguridad from './components/ControlSeguridad';
 
 const App = () => {
     return (
