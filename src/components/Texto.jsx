@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
+import { createService, callService } from '../services/RosManager';
 
 const LANGUAGES = ['ES', 'EN', 'FR', 'DE'];
 
-const Texto = ({ onHablar }) => {
+const Texto = () => {
+    const { ros } = useRos();
     const [text, setText] = useState('');
     const [language, setLanguage] = useState('ES');
     const [showLangDropdown, setShowLangDropdown] = useState(false);
+    const [isHoveredHablar, setIsHoveredHablar] = useState(false);
 
     const handleHablar = () => {
-        if (text.trim() && onHablar) {
-            onHablar(text.trim(), language);
+        if (!text.trim()) return;
+        try {
+            const service = createService(
+                ros,
+                '/pytoolkit/ALTextToSpeech/say_srv',
+                'robot_toolkit_msgs/speech_srv'
+            );
+            callService(service, { text: text.trim(), language: language }, (result) => {
+                console.log('Hablar result:', result);
+            });
+        } catch (e) {
+            console.error('Error al hablar:', e);
         }
     };
 
@@ -19,10 +32,10 @@ const Texto = ({ onHablar }) => {
         <div style={{
             width: '100%',
             height: '190px',
-            background: COLORS.AZUL_OSCURO,
+            background: COLORS.AZUL_PRINCIPAL,    // ← corregido
             borderRadius: '20px',
             position: 'relative',
-            overflow: 'visible',      // para que el dropdown no se corte
+            overflow: 'visible',
         }}>
             {/* Etiqueta título */}
             <div style={{
@@ -37,28 +50,30 @@ const Texto = ({ onHablar }) => {
                 borderBottomRightRadius: '25px',
                 display: 'flex',
                 alignItems: 'center',
+                zIndex: 2,
             }}>
                 <span style={{
                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                     fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                     fontSize: '16px',
-                    color: COLORS.AZUL_OSCURO,
+                    color: COLORS.AZUL_PRINCIPAL,  // ← corregido
                 }}>
                     Texto
                 </span>
             </div>
 
-            {/* Selector de idioma (esquina superior derecha) */}
-            <div style={{
-                position: 'absolute',
-                right: '20px',
-                top: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer',
-                zIndex: 10,
-            }}
+            {/* Selector de idioma */}
+            <div
+                style={{
+                    position: 'absolute',
+                    right: '20px',
+                    top: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    zIndex: 10,
+                }}
                 onClick={() => setShowLangDropdown(v => !v)}
             >
                 <span style={{
@@ -69,12 +84,10 @@ const Texto = ({ onHablar }) => {
                 }}>
                     {language}
                 </span>
-                {/* Chevron abajo */}
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <path d="M3 4.5L6 7.5L9 4.5" stroke={COLORS.CELESTE_PRINCIPAL} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
 
-                {/* Dropdown de idiomas */}
                 {showLangDropdown && (
                     <div style={{
                         position: 'absolute',
@@ -99,7 +112,7 @@ const Texto = ({ onHablar }) => {
                                     fontFamily: 'Instrument Sans, sans-serif',
                                     fontWeight: '700',
                                     fontSize: '12px',
-                                    color: COLORS.AZUL_OSCURO,
+                                    color: COLORS.AZUL_PRINCIPAL,
                                     cursor: 'pointer',
                                     background: lang === language ? 'rgba(0,33,75,0.12)' : 'transparent',
                                 }}
@@ -117,7 +130,7 @@ const Texto = ({ onHablar }) => {
                 value={text}
                 onChange={e => setText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleHablar()}
-                placeholder=""
+                placeholder="Escribe algo..."
                 style={{
                     position: 'absolute',
                     left: '30px',
@@ -132,7 +145,7 @@ const Texto = ({ onHablar }) => {
                     paddingRight: '12px',
                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                     fontSize: '14px',
-                    color: COLORS.AZUL_OSCURO,
+                    color: COLORS.AZUL_PRINCIPAL,
                     boxSizing: 'border-box',
                 }}
             />
@@ -141,32 +154,34 @@ const Texto = ({ onHablar }) => {
             <button
                 onClick={handleHablar}
                 disabled={!text.trim()}
+                onMouseEnter={() => { if (text.trim()) setIsHoveredHablar(true); }}
+                onMouseLeave={() => setIsHoveredHablar(false)}
                 style={{
                     position: 'absolute',
                     left: '30px',
                     top: '139px',
                     width: 'calc(100% - 60px)',
                     height: '32px',
-                    background: COLORS.CELESTE_PRINCIPAL,
+                    background: (isHoveredHablar && text.trim())
+                        ? COLORS.AZUL_PRINCIPAL
+                        : COLORS.CELESTE_PRINCIPAL,
                     borderRadius: '90px',
-                    border: 'none',
+                    border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
                     cursor: text.trim() ? 'pointer' : 'not-allowed',
                     opacity: text.trim() ? 1 : 0.6,
-                    transition: 'opacity 0.2s',
+                    transition: 'background 0.2s, color 0.2s',
                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                     fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                     fontSize: '12px',
-                    color: COLORS.AZUL_OSCURO,
+                    color: (isHoveredHablar && text.trim())
+                        ? COLORS.CELESTE_PRINCIPAL
+                        : COLORS.AZUL_PRINCIPAL,
                 }}
             >
                 HABLAR
             </button>
         </div>
     );
-};
-
-Texto.propTypes = {
-    onHablar: PropTypes.func.isRequired,
 };
 
 export default Texto;

@@ -1,19 +1,55 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
+import { createService, callService } from '../services/RosManager';
 import agacharse from '../assets/agacharse.svg';
 import pararse from '../assets/pararse.svg';
 
-const PostureControl = ({ onAgacharse, onPararse }) => {
+const PostureControl = () => {
+    const { ros } = useRos();
+    const [isHoveredAgacharse, setIsHoveredAgacharse] = useState(false);
+    const [isHoveredPararse, setIsHoveredPararse] = useState(false);
+
+    const handleAgacharse = () => {
+        try {
+            const service = createService(
+                ros,
+                '/pytoolkit/ALRobotPosture/go_to_posture_srv',
+                'robot_toolkit_msgs/go_to_posture_srv'
+            );
+            callService(service, { posture: 'Crouch', speed: 0.5 }, (result) => {
+                console.log('Agacharse result:', result);
+            });
+        } catch (e) {
+            console.error('Error al agacharse:', e);
+        }
+    };
+
+    const handlePararse = () => {
+        try {
+            const service = createService(
+                ros,
+                '/pytoolkit/ALRobotPosture/go_to_posture_srv',
+                'robot_toolkit_msgs/go_to_posture_srv'
+            );
+            callService(service, { posture: 'Stand', speed: 0.5 }, (result) => {
+                console.log('Pararse result:', result);
+            });
+        } catch (e) {
+            console.error('Error al pararse:', e);
+        }
+    };
+
     return (
         <div style={{
             width: '100%',
             height: '65px',
-            background: COLORS.AZUL_OSCURO,
+            background: COLORS.AZUL_PRINCIPAL,   // ← corregido
             borderRadius: '20px',
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
+            overflow: 'visible',
         }}>
             {/* Etiqueta título */}
             <div style={{
@@ -28,49 +64,30 @@ const PostureControl = ({ onAgacharse, onPararse }) => {
                 borderBottomRightRadius: '25px',
                 display: 'flex',
                 alignItems: 'center',
+                zIndex: 1,
             }}>
                 <span style={{
                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                     fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                     fontSize: '16px',
-                    color: COLORS.AZUL_OSCURO,
+                    color: COLORS.AZUL_PRINCIPAL,  // ← corregido
                     whiteSpace: 'nowrap',
                 }}>
                     Postura de control
                 </span>
             </div>
 
-            {/* Botón AGACHARSE */}
+            {/* ── AGACHARSE ── */}
             <div style={{
                 position: 'absolute',
                 left: '244px',
-                top: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 width: '120px',
                 height: '32px',
+                overflow: 'visible',
             }}>
-                <button
-                    onClick={onAgacharse}
-                    style={{
-                        width: '120px',
-                        height: '32px',
-                        background: COLORS.CELESTE_PRINCIPAL,
-                        borderRadius: '90px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
-                        fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
-                        fontSize: '12px',
-                        color: COLORS.AZUL_OSCURO,
-                        transition: 'opacity 0.2s',
-                        position: 'relative',
-                        zIndex: 1,
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                >
-                    AGACHARSE
-                </button>
-                {/* Robot agacharse */}
+                {/* Robot encima del botón */}
                 <img
                     src={agacharse}
                     alt="Agacharse"
@@ -78,46 +95,48 @@ const PostureControl = ({ onAgacharse, onPararse }) => {
                         position: 'absolute',
                         width: '57px',
                         height: '60px',
-                        left: '-30px',
-                        top: '-3px',
+                        left: '-28px',
+                        top: '-20px',
                         pointerEvents: 'none',
                         objectFit: 'contain',
-                        zIndex: 0,
+                        zIndex: 2,
                     }}
                 />
-            </div>
-
-            {/* Botón PARARSE */}
-            <div style={{
-                position: 'absolute',
-                left: '406px',
-                top: '16px',
-                width: '120px',
-                height: '32px',
-            }}>
                 <button
-                    onClick={onPararse}
+                    onClick={handleAgacharse}
+                    onMouseEnter={() => setIsHoveredAgacharse(true)}
+                    onMouseLeave={() => setIsHoveredAgacharse(false)}
                     style={{
+                        position: 'relative',
+                        zIndex: 1,
                         width: '120px',
                         height: '32px',
-                        background: COLORS.CELESTE_PRINCIPAL,
+                        background: isHoveredAgacharse ? COLORS.AZUL_PRINCIPAL : COLORS.CELESTE_PRINCIPAL,
                         borderRadius: '90px',
-                        border: 'none',
+                        border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
                         cursor: 'pointer',
                         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                         fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                         fontSize: '12px',
-                        color: COLORS.AZUL_OSCURO,
-                        transition: 'opacity 0.2s',
-                        position: 'relative',
-                        zIndex: 1,
+                        color: isHoveredAgacharse ? COLORS.CELESTE_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
+                        transition: 'background 0.2s, color 0.2s',
                     }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
-                    PARARSE
+                    AGACHARSE
                 </button>
-                {/* Robot pararse */}
+            </div>
+
+            {/* ── PARARSE ── */}
+            <div style={{
+                position: 'absolute',
+                left: '406px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '120px',
+                height: '32px',
+                overflow: 'visible',
+            }}>
+                {/* Robot encima del botón */}
                 <img
                     src={pararse}
                     alt="Pararse"
@@ -125,21 +144,38 @@ const PostureControl = ({ onAgacharse, onPararse }) => {
                         position: 'absolute',
                         width: '42px',
                         height: '79px',
-                        left: '-21px',
-                        top: '-20px',
+                        left: '-20px',
+                        top: '-44px',
                         pointerEvents: 'none',
                         objectFit: 'contain',
-                        zIndex: 0,
+                        zIndex: 2,
                     }}
                 />
+                <button
+                    onClick={handlePararse}
+                    onMouseEnter={() => setIsHoveredPararse(true)}
+                    onMouseLeave={() => setIsHoveredPararse(false)}
+                    style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        width: '120px',
+                        height: '32px',
+                        background: isHoveredPararse ? COLORS.AZUL_PRINCIPAL : COLORS.CELESTE_PRINCIPAL,
+                        borderRadius: '90px',
+                        border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
+                        cursor: 'pointer',
+                        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
+                        fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
+                        fontSize: '12px',
+                        color: isHoveredPararse ? COLORS.CELESTE_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
+                        transition: 'background 0.2s, color 0.2s',
+                    }}
+                >
+                    PARARSE
+                </button>
             </div>
         </div>
     );
-};
-
-PostureControl.propTypes = {
-    onAgacharse: PropTypes.func.isRequired,
-    onPararse: PropTypes.func.isRequired,
 };
 
 export default PostureControl;
