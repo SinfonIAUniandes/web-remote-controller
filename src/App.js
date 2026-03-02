@@ -31,37 +31,35 @@ import { COLORS } from './theme';
 
 const App = () => {
     return (
-        // CONTENEDOR RAIZ: Ocupa toda la pantalla y centra su contenido horizontalmente
         <div className="app-layout" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: COLORS.CELESTE_PRINCIPAL }}>
             
-            {/* CONTENEDOR CENTRAL: Agrupa tanto la parte de arriba (Menú+Tablero) como la parte de abajo (Extra) */}
             <main className="app-content" style={{ display: 'flex', flexDirection: 'column', width: 'fit-content', padding: '20px' }}>
                 
-                {/* ── PARTE SUPERIOR: Menú y Tablero alineados horizontalmente ── */}
                 <div className="top-section" style={{ display: 'flex', flexDirection: 'row', gap: '30px', alignItems: 'flex-start' }}>
                     
-                    {/* Menú lateral fijo a la izquierda del tablero (sticky lo mantiene en pantalla al hacer scroll) */}
                     <aside className="app-sidebar" style={{ position: 'sticky', top: '20px', height: 'fit-content' }}>
                         <LateralMenu />
                     </aside>
 
-                    {/* TABLERO PRINCIPAL — los paneles del Figma (estilos originales intactos) */}
                     <section className="tablero-principal" style={{ width: '1084px', height: '950px', display: 'flex', flexDirection: 'row', alignContent: 'space-around', justifyContent: 'space-around', flexWrap: 'wrap' }}>
-                        <div className="tablero-col-izq" style={{ flex: '1', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%' }}>
+                        
+                        {/* COLUMNA IZQUIERDA: Ancho estricto de 400px */}
+                        <div className="tablero-col-izq" style={{ flex: '0 0 400px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%' }}>
                             <ControlSeguridad />
                             <Animations />
                             <Texto />
                             <Led />
                         </div>
-                        <div className="tablero-col-der" style={{ flex: '1', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%' }}>
+                        
+                        {/* COLUMNA DERECHA: Ancho estricto de 580px */}
+                        <div className="tablero-col-der" style={{ flex: '0 0 580px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', height: '100%' }}>
                             <Cameras />
                             <PostureControl />
                         </div>
                     </section>
                 </div>
 
-                {/* ── PARTE INFERIOR: Resto de componentes (desarrollo / debug) ── */}
-                {/* Ocupa el mismo ancho del conjunto de arriba y mantiene tu lista original */}
+                {/* ── PARTE INFERIOR INTACTA ── */}
                 <section className="seccion-extra" style={{ width: '100%', marginTop: '60px' }}>
                     <Leds />
                     <h2>Servicios Web</h2>
