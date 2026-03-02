@@ -8,7 +8,7 @@ const HotWords = () => {
     const [subscribe, setSubscribe] = useState(false);
     const [noise, setNoise] = useState(false);
     const [eyes, setEyes] = useState(false);
-    const [language, setLanguage] = useState("Spanish");
+    const [url, setUrl] = useState("Spanish");
 
     // servicio que activa o desactiva hw y lo configura con los parámetros de noise y eyes
     const callSpeechRecognition = (newSubscribe, newNoise, newEyes) => {
@@ -44,7 +44,7 @@ const HotWords = () => {
     };
 
     // servicio de cambiar iidoma
-    const callLanguageService = (newLanguage) => {
+    const callUrlService = (newUrl) => {
         if (!ros) {
             console.error("ROS not connected");
             return;
@@ -57,14 +57,14 @@ const HotWords = () => {
         );
 
         const request = {
-            language: newLanguage
+            url: newUrl
         };
 
         service.callService(
             request,
             (result) => {
-                console.log("Language response:", result);
-                setLanguage(newLanguage);
+                console.log("Url response:", result);
+                setUrl(newUrl);
             },
             (error) => {
                 console.error("Error:", error);
@@ -88,9 +88,9 @@ const HotWords = () => {
     };
 
     //cambiar idioma
-    const handleLanguageChange = (event) => {
+    const handleUrlChange = (event) => {
         const newLang = event.target.value;
-        callLanguageService(newLang);
+        callUrlService(newLang);
     };
 
     return (
@@ -108,7 +108,7 @@ const HotWords = () => {
 
             {/* Language */}
             <h3>Idioma</h3>
-            <select value={language} onChange={handleLanguageChange}>
+            <select value={url} onChange={handleUrlChange}>
                 <option value="Spanish">Spanish</option>
                 <option value="English">English</option>
             </select>
