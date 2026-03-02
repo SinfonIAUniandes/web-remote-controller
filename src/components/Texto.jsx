@@ -3,7 +3,7 @@ import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createService, callService } from '../services/RosManager';
 
-const LANGUAGES = ['ES', 'EN', 'FR', 'DE'];
+const LANGUAGES = ['ES', 'EN'];
 
 const Texto = () => {
     const { ros } = useRos();
@@ -43,6 +43,7 @@ const Texto = () => {
                 left: 0,
                 top: '21px',
                 height: '30px',
+                width: '180px',
                 paddingLeft: '19px',
                 paddingRight: '19px',
                 background: COLORS.CELESTE_PRINCIPAL,
@@ -50,13 +51,17 @@ const Texto = () => {
                 borderBottomRightRadius: '25px',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 zIndex: 2,
             }}>
                 <span style={{
                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                     fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                     fontSize: '16px',
-                    color: COLORS.AZUL_PRINCIPAL,  // ← corregido
+                    color: COLORS.AZUL_PRINCIPAL,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                 }}>
                     Texto
                 </span>
@@ -114,7 +119,7 @@ const Texto = () => {
                                     fontSize: '12px',
                                     color: COLORS.AZUL_PRINCIPAL,
                                     cursor: 'pointer',
-                                    background: lang === language ? 'rgba(0,33,75,0.12)' : 'transparent',
+                                    background: lang === language ? COLORS.AZUL_SECUNDARIO : 'transparent',
                                 }}
                             >
                                 {lang}
@@ -163,10 +168,9 @@ const Texto = () => {
                     width: 'calc(100% - 60px)',
                     height: '32px',
                     background: (isHoveredHablar && text.trim())
-                        ? COLORS.AZUL_PRINCIPAL
+                        ? COLORS.AZUL_SECUNDARIO
                         : COLORS.CELESTE_PRINCIPAL,
                     borderRadius: '90px',
-                    border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
                     cursor: text.trim() ? 'pointer' : 'not-allowed',
                     opacity: text.trim() ? 1 : 0.6,
                     transition: 'background 0.2s, color 0.2s',
@@ -174,7 +178,7 @@ const Texto = () => {
                     fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                     fontSize: '12px',
                     color: (isHoveredHablar && text.trim())
-                        ? COLORS.CELESTE_PRINCIPAL
+                        ? COLORS.AZUL_PRINCIPAL
                         : COLORS.AZUL_PRINCIPAL,
                 }}
             >

@@ -42,7 +42,7 @@ const PostureControl = () => {
 
     return (
         <div style={{
-            width: '100%',
+            width: '560px',
             height: '65px',
             background: COLORS.AZUL_PRINCIPAL,   // ← corregido
             borderRadius: '20px',
@@ -96,7 +96,7 @@ const PostureControl = () => {
                         width: '57px',
                         height: '60px',
                         left: '-28px',
-                        top: '-20px',
+                        top: '-10px',
                         pointerEvents: 'none',
                         objectFit: 'contain',
                         zIndex: 2,
@@ -111,14 +111,13 @@ const PostureControl = () => {
                         zIndex: 1,
                         width: '120px',
                         height: '32px',
-                        background: isHoveredAgacharse ? COLORS.AZUL_PRINCIPAL : COLORS.CELESTE_PRINCIPAL,
+                        background: isHoveredAgacharse ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
                         borderRadius: '90px',
-                        border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
                         cursor: 'pointer',
                         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                         fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                         fontSize: '12px',
-                        color: isHoveredAgacharse ? COLORS.CELESTE_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
+                        color: isHoveredAgacharse ? COLORS.AZUL_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
                         transition: 'background 0.2s, color 0.2s',
                     }}
                 >
@@ -145,7 +144,7 @@ const PostureControl = () => {
                         width: '42px',
                         height: '79px',
                         left: '-20px',
-                        top: '-44px',
+                        top: '-15px',
                         pointerEvents: 'none',
                         objectFit: 'contain',
                         zIndex: 2,
@@ -160,14 +159,13 @@ const PostureControl = () => {
                         zIndex: 1,
                         width: '120px',
                         height: '32px',
-                        background: isHoveredPararse ? COLORS.AZUL_PRINCIPAL : COLORS.CELESTE_PRINCIPAL,
+                        background: isHoveredPararse ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
                         borderRadius: '90px',
-                        border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
                         cursor: 'pointer',
                         fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                         fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
                         fontSize: '12px',
-                        color: isHoveredPararse ? COLORS.CELESTE_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
+                        color: isHoveredPararse ? COLORS.AZUL_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
                         transition: 'background 0.2s, color 0.2s',
                     }}
                 >

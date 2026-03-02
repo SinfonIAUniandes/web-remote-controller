@@ -11,58 +11,71 @@ import IconoVolumen from "../assets/sound_icon.svg";
 import IconoSpeed from "../assets/movement_icon.svg";
 
 export default function LateralMenu() {
-    const { ros } = useRos();
+    const { ros, ipAddress } = useRos();
     const [volume, setVolume] = useState(50);
     const [speed, setSpeed] = useState(50);
     const [isHoveredPrincipal, setIsHoveredPrincipal] = useState(false);
     const [isHoveredServicios, setIsHoveredServicios] = useState(false);
     const [isHoveredScripts, setIsHoveredScripts] = useState(false); 
     
-    const IPAdress = "localhost";
-    // Refs for sliders
     const volumeSliderRef = useRef(null);
     const speedSliderRef = useRef(null);
 
-    // State for dragging sliders
     const [isVolumeDragging, setIsVolumeDragging] = useState(false);
     const [isSpeedDragging, setIsSpeedDragging] = useState(false);
 
-    // Update volume state
+    // --- Efecto para inicializar el volumen en 50 ---
+    useEffect(() => {
+        if (ros) {
+            const volumeService = createService(ros, '/pytoolkit/ALAudioDevice/set_output_volume_srv', 'robot_toolkit_msgs/set_output_volume_srv');
+            const request = { volume: 50 };
+            volumeService.callService(
+                request, 
+                (result) => { console.log('Volumen inicial establecido en 50:', result); }, 
+                (error) => { console.error('Error al establecer el volumen inicial:', error); }
+            );
+        }
+    }, [ros]);
+
+    // --- Update volume state & ROS Service ---
     const updateVolume = (newVolume) => {
         const clampedVolume = Math.max(0, Math.min(100, newVolume));
         setVolume(clampedVolume);
-        // if (ros) {
-        //     const volumeService = createService(
-        //         ros,
-        //         "/pytoolkit/ALAudioDevice/set_output_volume_srv",
-        //         "robot_toolkit_msgs/set_output_volume_srv",
-        //     );
-        //     const request = { volume: clampedVolume };
-        //     volumeService.callService(
-        //         request,
-        //         () => { },
-        //         () => { },
-        //     );
-        // }
+        
+        if (ros) {
+            const volumeService = createService(
+                ros,
+                "/pytoolkit/ALAudioDevice/set_output_volume_srv",
+                "robot_toolkit_msgs/set_output_volume_srv",
+            );
+            const request = { volume: clampedVolume };
+            volumeService.callService(
+                request,
+                (result) => { /* console.log('Volumen actualizado:', result); */ }, // Comentado para no saturar consola al arrastrar
+                (error) => { console.error('Error al actualizar volumen:', error); }
+            );
+        }
     };
 
-    // Update speed state
+    // --- Update speed state & ROS Service ---
     const updateSpeed = (newSpeed) => {
         const clampedSpeed = Math.max(0, Math.min(100, newSpeed));
         setSpeed(clampedSpeed);
-        // if (ros) {
-        //     const speedService = createService(
-        //         ros,
-        //         "/pytoolkit/ALMotion/set_speed_srv", // Example service
-        //         "robot_toolkit_msgs/set_speed_srv",   // Example message type
-        //     );
-        //     const request = { speed: clampedSpeed / 100.0 }; // Assuming speed is 0-1
-        //     speedService.callService(
-        //         request,
-        //         () => { },
-        //         () => { },
-        //     );
-        // }
+        
+        if (ros) {
+            const speedService = createService(
+                ros,
+                "/pytoolkit/ALMotion/set_speed_srv", 
+                "robot_toolkit_msgs/set_speed_srv", 
+            );
+            // Assuming speed is 0-1 for the service based on your commented code
+            const request = { speed: clampedSpeed / 100.0 }; 
+            speedService.callService(
+                request,
+                () => { },
+                (error) => { console.error('Error al actualizar velocidad:', error); }
+            );
+        }
     };
 
     // Generic slider interaction handler
@@ -105,11 +118,6 @@ export default function LateralMenu() {
         setIsSpeedDragging(false);
     };
 
-    // Effect to set initial state (backend connection removed)
-    useEffect(() => {
-        // Initial setup if needed
-    }, []);
-
     // Effect for slider drag event listeners
     useEffect(() => {
         document.addEventListener('mousemove', handleMouseMove);
@@ -123,7 +131,7 @@ export default function LateralMenu() {
             document.removeEventListener('touchmove', handleMouseMove);
             document.removeEventListener('touchend', handleMouseUp);
         };
-    }, [isVolumeDragging, isSpeedDragging]); // Rerun if dragging state changes
+    }, [isVolumeDragging, isSpeedDragging]); 
 
     return (
         <div
@@ -136,7 +144,8 @@ export default function LateralMenu() {
                 alignItems: "center",
                 display: "flex",
                 flexDirection: "column",
-                padding: "20px 20px"
+                padding: "20px 20px",
+                borderRadius: "25px",
             }}
         >
             <div
@@ -149,7 +158,7 @@ export default function LateralMenu() {
                     justifyContent: "center",
                 }}
             >
-                <BatteryIcon level={100} />
+                <BatteryIcon />
                 <img
                     src={logoSinfonia}
                     alt="Logo Sinfonia"
@@ -246,7 +255,7 @@ export default function LateralMenu() {
                     <div style={{
                         width: '100%',
                         height: '8px',
-                        background: '#00214B', // Slider track
+                        background: '#00214B', 
                         borderRadius: '90px',
                         border: '5px solid #CFDDFC'
                     }}>
@@ -295,7 +304,7 @@ export default function LateralMenu() {
                     <div style={{
                         width: '100%',
                         height: '8px',
-                        background: '#00214B', // Slider track
+                        background: '#00214B', 
                         borderRadius: '90px',
                         border: '5px solid #CFDDFC'
                     }}>
@@ -324,7 +333,7 @@ export default function LateralMenu() {
                     {speed}%
                 </div>
             </div>
-            <a style={{ color: COLORS.CELESTE_PRINCIPAL, fontSize: '16px', fontFamily: 'Nunito', fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK }}>{IPAdress}</a>
+            <a style={{ color: COLORS.CELESTE_PRINCIPAL, fontSize: '16px', fontFamily: 'Nunito', fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK }}>{ipAddress}</a>
             </div>
         </div>
     );
