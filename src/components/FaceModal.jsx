@@ -36,17 +36,17 @@ const FaceModal = ({ isOpen, onClose, onSave, initialState }) => {
                 
                 <img style={{ width: 205, height: 183, left: 248, top: 44, position: 'absolute' }} src={robotPNG} alt="Robot" />
                 
-                <InteractiveColorWheel left={27} top={20} color={leftFaceColor} onChange={setLeftFaceColor} />
-                <InteractiveColorWheel left={472} top={20} color={rightFaceColor} onChange={setRightFaceColor} />
+                <InteractiveColorWheel left={27} top={20} color={rightFaceColor} onChange={setRightFaceColor} />
+                <InteractiveColorWheel left={472} top={20} color={leftFaceColor} onChange={setLeftFaceColor} />
 
                 <div style={{ left: 27, top: 246, position: 'absolute', color: COLORS.CELESTE_PRINCIPAL, fontSize: 16, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_EXTRA_BOLD }}>HEX</div>
                 <div style={{ left: 472, top: 246, position: 'absolute', color: COLORS.CELESTE_PRINCIPAL, fontSize: 16, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_EXTRA_BOLD }}>HEX</div>
 
-                <input type="text" value={leftFaceColor} onChange={(e) => setLeftFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 72, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
-                <input type="text" value={rightFaceColor} onChange={(e) => setRightFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 517, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
+                <input type="text" value={rightFaceColor} onChange={(e) => setRightFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 72, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
+                <input type="text" value={leftFaceColor} onChange={(e) => setLeftFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 517, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
 
-                <div onClick={() => setIsLeftFaceOn(!isLeftFaceOn)} style={{ width: 51.40, height: 49.41, left: 284, top: 121.59, position: 'absolute', transform: 'rotate(-4deg)', transformOrigin: 'top left', background: isLeftFaceOn ? hexToRgba(leftFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isLeftFaceOn ? leftFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
-                <div onClick={() => setIsRightFaceOn(!isRightFaceOn)} style={{ width: 51, height: 50, left: 366, top: 118, position: 'absolute', background: isRightFaceOn ? hexToRgba(rightFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isRightFaceOn ? rightFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
+                <div onClick={() => setIsLeftFaceOn(!isLeftFaceOn)} style={{ width: 51.40, height: 49.41, left: 284, top: 121.59, position: 'absolute', transform: 'rotate(-4deg)', transformOrigin: 'top left', background: isRightFaceOn ? hexToRgba(rightFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isRightFaceOn ? rightFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
+                <div onClick={() => setIsRightFaceOn(!isRightFaceOn)} style={{ width: 51, height: 50, left: 366, top: 118, position: 'absolute', background: isLeftFaceOn ? hexToRgba(leftFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isLeftFaceOn ? leftFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
 
                 {/* BOTÓN GUARDAR CON HOVER */}
                 <div 

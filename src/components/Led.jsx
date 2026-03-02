@@ -54,8 +54,7 @@ const Led = () => {
 
     const handleChestSave = (newState) => {
         setChestState(newState);
-        publishLedColor('LeftChestLeds', newState.isLeftOn ? newState.left : '#000000');
-        publishLedColor('RightChestLeds', newState.isRightOn ? newState.right : '#000000');
+        publishLedColor('ChestLeds', newState.isLeftOn ? newState.left : '#000000');
         setIsChestModalOpen(false);
     };
 

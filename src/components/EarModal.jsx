@@ -32,10 +32,10 @@ const EarModal = ({ isOpen, onClose, onSave, initialState }) => {
                 <img style={{ width: 205, height: 183, left: 333, top: 44, position: 'absolute' }} src={robotPNG} alt="Robot" />
                 
                 {/* Oreja Izquierda */}
-                <div onClick={() => setIsLeftOn(!isLeftOn)} style={{ width: 7.26, height: 60.77, left: 341.26, top: 174.77, position: 'absolute', transform: 'rotate(180deg)', transformOrigin: 'top left', borderRadius: 180, outline: `15px ${activeLeftColor} solid`, outlineOffset: '-7.50px', cursor: 'pointer', transition: 'all 0.2s' }} />
+                <div onClick={() => setIsRightOn(!isRightOn)} style={{ width: 7.26, height: 60.77, left: 341.26, top: 174.77, position: 'absolute', transform: 'rotate(180deg)', transformOrigin: 'top left', borderRadius: 180, outline: `15px ${activeRightColor} solid`, outlineOffset: '-7.50px', cursor: 'pointer', transition: 'all 0.2s' }} />
                 
                 {/* Oreja Derecha */}
-                <div onClick={() => setIsRightOn(!isRightOn)} style={{ width: 7.26, height: 60.77, left: 528.12, top: 114, position: 'absolute', borderRadius: 180, outline: `15px ${activeRightColor} solid`, outlineOffset: '-7.50px', cursor: 'pointer', transition: 'all 0.2s' }} />
+                <div onClick={() => setIsLeftOn(!isLeftOn)} style={{ width: 7.26, height: 60.77, left: 528.12, top: 114, position: 'absolute', borderRadius: 180, outline: `15px ${activeLeftColor} solid`, outlineOffset: '-7.50px', cursor: 'pointer', transition: 'all 0.2s' }} />
 
                 {/* ALINEACIÓN PERFECTA (EJE Y EN TOP = 245) */}
                 <div style={{ position: 'absolute', left: 40, top: 245, height: 30, display: 'flex', alignItems: 'center', gap: '15px' }}>
