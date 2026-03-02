@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createService, callService } from '../services/RosManager';
@@ -9,15 +9,28 @@ const PostureControl = () => {
     const { ros } = useRos();
     const [isHoveredAgacharse, setIsHoveredAgacharse] = useState(false);
     const [isHoveredPararse, setIsHoveredPararse] = useState(false);
+    const postureService = ros
+        ? createService(
+            ros,
+            '/pytoolkit/ALRobotPosture/go_to_posture_srv',
+            'robot_toolkit_msgs/go_to_posture_srv'
+        )
+        : null;
+
+    useEffect(() => {
+        if (ros) {
+            console.log('Servicio de postura disponible.');
+        }
+    }, [ros]);
 
     const handleAgacharse = () => {
+        if (!postureService) {
+            console.error('No hay conexión con ROS.');
+            return;
+        }
+
         try {
-            const service = createService(
-                ros,
-                '/pytoolkit/ALRobotPosture/go_to_posture_srv',
-                'robot_toolkit_msgs/go_to_posture_srv'
-            );
-            callService(service, { posture: 'Crouch', speed: 0.5 }, (result) => {
+            callService(postureService, { posture: 'rest' }, (result) => {
                 console.log('Agacharse result:', result);
             });
         } catch (e) {
@@ -26,13 +39,13 @@ const PostureControl = () => {
     };
 
     const handlePararse = () => {
+        if (!postureService) {
+            console.error('No hay conexión con ROS.');
+            return;
+        }
+
         try {
-            const service = createService(
-                ros,
-                '/pytoolkit/ALRobotPosture/go_to_posture_srv',
-                'robot_toolkit_msgs/go_to_posture_srv'
-            );
-            callService(service, { posture: 'Stand', speed: 0.5 }, (result) => {
+            callService(postureService, { posture: 'stand' }, (result) => {
                 console.log('Pararse result:', result);
             });
         } catch (e) {
