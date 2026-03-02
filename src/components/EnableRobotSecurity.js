@@ -1,35 +1,52 @@
-//Componente para habilitar o deshabilitar la seguridad del robot
 import React from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createService } from '../services/RosManager';
 
-// Componente para habilitar la seguridad del robot
-const SecurityControl = () => {
-    const { ros } = useRos(); // Conexión ROS
+const ENABLED_SECURITY_DISTANCE = 0.4;
 
-    //Función para llamar al servicio
+// Activa la distancia de seguridad del robot enviando un valor mayor a 0.
+const EnableRobotSecurity = () => {
+    const { ros } = useRos();
+
     const enableSecurity = () => {
-        if (ros) {
-            const service = createService(
+        if (!ros) {
+            console.log('No hay conexión ROS disponible.');
+            return;
+        }
+
+        const enableSecurityService = createService(
+            ros,
+            '/pytoolkit/ALMotion/enable_security_srv',
+            'robot_toolkit_msgs/battery_service_srv'
+        );
+
+        enableSecurityService.callService({}, (result) => {
+            console.log('Seguridad habilitada. Respuesta:', result);
+        }, (error) => {
+            console.log('Fallo enable_security_srv, probando set_security_distance_srv:', error);
+
+            const distanceService = createService(
                 ros,
-                '/pytoolkit/ALMotion/enable_security_srv',
-                'robot_toolkit_msgs/battery_service_srv'
+                '/pytoolkit/ALMotion/set_security_distance_srv',
+                'robot_toolkit_msgs/set_security_distance_srv'
             );
 
-            const request = {}; //No tiene argumentos
+            const request = { distance: ENABLED_SECURITY_DISTANCE };
 
-            service.callService(request, (result) => {
-                console.log('Seguridad habilitada. Respuesta:', result);
+            distanceService.callService(request, (distanceResult) => {
+                console.log('Distancia de seguridad habilitada. Respuesta:', distanceResult);
+            }, (distanceError) => {
+                console.error('No fue posible habilitar la seguridad del robot:', distanceError);
             });
-        }
+        });
     };
 
     return (
         <div>
-            <h2>Control de Seguridad</h2>
+            <h2>Activar Distancia de Seguridad</h2>
             <button onClick={enableSecurity}>Habilitar Seguridad</button>
         </div>
     );
 };
 
-export default SecurityControl;
+export default EnableRobotSecurity;
