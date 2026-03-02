@@ -47,23 +47,23 @@ const Led = () => {
 
     const handleFaceSave = (newState) => {
         setFaceState(newState);
-        publishLedColor('LeftFaceLed', newState.isLeftOn ? newState.left : '#000000');
-        publishLedColor('RightFaceLed', newState.isRightOn ? newState.right : '#000000');
+        publishLedColor('LeftFaceLeds', newState.isLeftOn ? newState.left : '#000000');
+        publishLedColor('RightFaceLeds', newState.isRightOn ? newState.right : '#000000');
         setIsFaceModalOpen(false);
     };
 
     const handleChestSave = (newState) => {
         setChestState(newState);
-        publishLedColor('LeftChestLed', newState.isLeftOn ? newState.left : '#000000');
-        publishLedColor('RightChestLed', newState.isRightOn ? newState.right : '#000000');
+        publishLedColor('LeftChestLeds', newState.isLeftOn ? newState.left : '#000000');
+        publishLedColor('RightChestLeds', newState.isRightOn ? newState.right : '#000000');
         setIsChestModalOpen(false);
     };
 
     // NUEVO: Manejador para guardar OREJAS
     const handleEarSave = (newState) => {
         setEarState(newState);
-        publishLedColor('LeftEarLed', newState.isLeftOn ? newState.color : '#000000');
-        publishLedColor('RightEarLed', newState.isRightOn ? newState.color : '#000000');
+        publishLedColor('LeftEarLeds', newState.isLeftOn ? newState.color : '#000000');
+        publishLedColor('RightEarLeds', newState.isRightOn ? newState.color : '#000000');
         setIsEarModalOpen(false);
     };
 
@@ -73,12 +73,11 @@ const Led = () => {
         const finalColor = newState.isOn ? newState.color : '#000000';
         
         // Publicamos a TODOS los tópicos
-        publishLedColor('LeftFaceLed', finalColor);
-        publishLedColor('RightFaceLed', finalColor);
-        publishLedColor('LeftChestLed', finalColor);
-        publishLedColor('RightChestLed', finalColor);
-        publishLedColor('LeftEarLed', finalColor); 
-        publishLedColor('RightEarLed', finalColor); 
+        publishLedColor('LeftFaceLeds', finalColor);
+        publishLedColor('RightFaceLeds', finalColor);
+        publishLedColor('ChestLeds', finalColor);
+        publishLedColor('LeftEarLeds', finalColor); 
+        publishLedColor('RightEarLeds', finalColor); 
 
         // Sincronizamos las memorias de los otros modales
         setFaceState({ left: newState.color, right: newState.color, isLeftOn: newState.isOn, isRightOn: newState.isOn });
