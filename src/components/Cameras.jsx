@@ -104,7 +104,7 @@ const Cameras = () => {
                         id="front_camera" 
                         ref={frontCameraRef} 
                         alt="Cámara Frontal"
-                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: '#000', objectFit: 'contain' }} 
+                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain' }} 
                     />
 
                     {/* --- CÁMARA INFERIOR --- */}
@@ -133,7 +133,7 @@ const Cameras = () => {
                         id="bottom_camera" 
                         ref={bottomCameraRef} 
                         alt="Cámara Inferior"
-                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: '#000', objectFit: 'contain' }} 
+                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain' }} 
                     />
                 </div>
             </div>
