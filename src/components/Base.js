@@ -1,11 +1,10 @@
 import React, { useEffect, useCallback } from 'react';
 import { useRos } from '../contexts/RosContext'
-import { createTopic, createService } from '../services/RosManager';
+import { createService } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
 
 const Base = () => {
-    const { ros } = useRos();
-    const SPEED = 0.5;
+    const { ros, baseSpeed } = useRos();
 
     useEffect(() => {
         if (ros) {
@@ -84,19 +83,19 @@ const Base = () => {
         };
 
         if (pressedKey === keys.A) {
-            message.linear.y = SPEED;
+            message.linear.y = baseSpeed;
         } else if (pressedKey === keys.D) {
-            message.linear.y = -SPEED;
+            message.linear.y = -baseSpeed;
         } else if (pressedKey === keys.W) {
-            message.linear.x = SPEED;
+            message.linear.x = baseSpeed;
         } else if (pressedKey === keys.S) {
-            message.linear.x = -SPEED;
+            message.linear.x = -baseSpeed;
         }
 
         if (pressedKey === keys.E) {
-            message.angular.z = -SPEED;
+            message.angular.z = -baseSpeed;
         } else if (pressedKey === keys.Q) {
-            message.angular.z = SPEED;
+            message.angular.z = baseSpeed;
         }
 
         var twist = new ROSLIB.Message(message);
@@ -105,7 +104,7 @@ const Base = () => {
         // console.log(event);
     }
 
-    const cachedHandleKeyPess = useCallback(handleKeyPress, [ros])
+    const cachedHandleKeyPess = useCallback(handleKeyPress, [ros, baseSpeed])
 
     useEffect(() => {
         window.addEventListener("keydown", cachedHandleKeyPess, false);

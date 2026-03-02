@@ -11,9 +11,9 @@ import IconoVolumen from "../assets/sound_icon.svg";
 import IconoSpeed from "../assets/movement_icon.svg";
 
 export default function LateralMenu() {
-    const { ros, ipAddress } = useRos();
+    const { ros, ipAddress, baseSpeed, setBaseSpeed } = useRos();
     const [volume, setVolume] = useState(50);
-    const [speed, setSpeed] = useState(50);
+    const [speed, setSpeed] = useState(Math.round(baseSpeed * 100));
     const [isHoveredPrincipal, setIsHoveredPrincipal] = useState(false);
     const [isHoveredServicios, setIsHoveredServicios] = useState(false);
     const [isHoveredScripts, setIsHoveredScripts] = useState(false); 
@@ -57,26 +57,17 @@ export default function LateralMenu() {
         }
     };
 
-    // --- Update speed state & ROS Service ---
+    // --- Update speed state for Base movement ---
     const updateSpeed = (newSpeed) => {
         const clampedSpeed = Math.max(0, Math.min(100, newSpeed));
         setSpeed(clampedSpeed);
-        
-        if (ros) {
-            const speedService = createService(
-                ros,
-                "/pytoolkit/ALMotion/set_speed_srv", 
-                "robot_toolkit_msgs/set_speed_srv", 
-            );
-            // Assuming speed is 0-1 for the service based on your commented code
-            const request = { speed: clampedSpeed / 100.0 }; 
-            speedService.callService(
-                request,
-                () => { },
-                (error) => { console.error('Error al actualizar velocidad:', error); }
-            );
-        }
+
+        setBaseSpeed(clampedSpeed / 100.0);
     };
+
+    useEffect(() => {
+        setSpeed(Math.round(baseSpeed * 100));
+    }, [baseSpeed]);
 
     // Generic slider interaction handler
     const handleSliderInteraction = (event, sliderRef, updateFunction) => {

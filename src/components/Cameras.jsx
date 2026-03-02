@@ -3,6 +3,10 @@ import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
+const CAMERA_RESOLUTION = 2;
+const CAMERA_FRAME_RATE = 20;
+const CAMERA_COLOR_SPACE = 11;
+
 // Icono de pantalla completa reutilizable
 const FullScreenIcon = ({ onClick }) => (
     <svg 
@@ -51,14 +55,34 @@ const Cameras = () => {
 
             const enableVisionService = createService(ros, '/robot_toolkit/vision_tools_srv', 'robot_toolkit_msgs/vision_tools_msg');
 
-            const frontRequest = { data: { camera_name: "front_camera", command: "custom", resolution: 0, frame_rate: 30, color_space: 11 } };
+            const frontRequest = {
+                data: {
+                    camera_name: "front_camera",
+                    command: "custom",
+                    resolution: CAMERA_RESOLUTION,
+                    frame_rate: CAMERA_FRAME_RATE,
+                    color_space: CAMERA_COLOR_SPACE
+                }
+            };
             enableVisionService.callService(frontRequest, (result) => {
                 console.log('Front camera vision service called:', result);
+            }, (error) => {
+                console.error('Error enabling front camera vision service:', error);
             });
 
-            const bottomRequest = { data: { camera_name: "bottom_camera", command: "custom", resolution: 0, frame_rate: 30, color_space: 11 } };
+            const bottomRequest = {
+                data: {
+                    camera_name: "bottom_camera",
+                    command: "custom",
+                    resolution: CAMERA_RESOLUTION,
+                    frame_rate: CAMERA_FRAME_RATE,
+                    color_space: CAMERA_COLOR_SPACE
+                }
+            };
             enableVisionService.callService(bottomRequest, (result) => {
                 console.log('Bottom camera vision service called:', result);
+            }, (error) => {
+                console.error('Error enabling bottom camera vision service:', error);
             });
 
             return () => {
@@ -104,7 +128,7 @@ const Cameras = () => {
                         id="front_camera" 
                         ref={frontCameraRef} 
                         alt="Cámara Frontal"
-                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain' }} 
+                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain', imageRendering: 'auto' }} 
                     />
 
                     {/* --- CÁMARA INFERIOR --- */}
@@ -133,7 +157,7 @@ const Cameras = () => {
                         id="bottom_camera" 
                         ref={bottomCameraRef} 
                         alt="Cámara Inferior"
-                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain' }} 
+                        style={{ alignSelf: 'stretch', height: 284, backgroundColor: 'none', objectFit: 'contain', imageRendering: 'auto' }} 
                     />
                 </div>
             </div>
@@ -167,12 +191,12 @@ const Cameras = () => {
                         {/* Imágenes del modal */}
                         <img 
                             ref={modalFrontCameraRef} 
-                            style={{ display: fullScreenCamera === 'front' ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'contain' }} 
+                            style={{ display: fullScreenCamera === 'front' ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'auto' }} 
                             alt="Cámara Frontal Fullscreen" 
                         />
                         <img 
                             ref={modalBottomCameraRef} 
-                            style={{ display: fullScreenCamera === 'bottom' ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'contain' }} 
+                            style={{ display: fullScreenCamera === 'bottom' ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'auto' }} 
                             alt="Cámara Inferior Fullscreen" 
                         />
                     </div>

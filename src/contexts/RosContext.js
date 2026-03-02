@@ -7,7 +7,8 @@ export const RosProvider = ({ children }) => {
     const [ros, setRos] = useState(null);
     const [rosUrl, setRosUrl] = useState('ws://localhost:9090');
     // 👇 NUEVO: Creamos un estado para guardar solo la IP limpia
-    const [ipAddress, setIpAddress] = useState('localhost'); 
+    const [ipAddress, setIpAddress] = useState('localhost');
+    const [baseSpeed, setBaseSpeed] = useState(0.5);
 
     useEffect(() => {
         const userIp = prompt("Please enter the server IP address (default is localhost):", "localhost");
@@ -40,7 +41,7 @@ export const RosProvider = ({ children }) => {
     }, [rosUrl]);
 
     return (
-        <RosContext.Provider value={{ ros, ipAddress }}>
+        <RosContext.Provider value={{ ros, ipAddress, baseSpeed, setBaseSpeed }}>
             {children}
         </RosContext.Provider>
     );
