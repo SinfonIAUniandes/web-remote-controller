@@ -24,6 +24,7 @@ import Texto from './components/Texto';
 import ControlSeguridad from './components/ControlSeguridad';
 import LateralMenu from './components/MenuLateral';
 import Animations from './components/Animations';
+import HotWords from './components/HotWords';
 import './App.css';
 import './fonts.css';
 import Led from './components/Led';
