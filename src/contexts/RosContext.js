@@ -1,20 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as ROSLIB from 'roslib';
 
-//Contexto en React para manejar la conexión a ROS
-
-//RosContext: Crea un contexto de React que contendrá la conexión ROS, permitiendo su acceso desde cualquier componente.
 const RosContext = createContext();
 
-// RosProvider: Componente que configura la conexión con ROS y la almacena.
 export const RosProvider = ({ children }) => {
     const [ros, setRos] = useState(null);
-    const [rosUrl, setRosUrl] = useState('ws://localhost:9090');  // Default to localhost
+    const [rosUrl, setRosUrl] = useState('ws://localhost:9090');
+    // 👇 NUEVO: Creamos un estado para guardar solo la IP limpia
+    const [ipAddress, setIpAddress] = useState('localhost');
+    const [baseSpeed, setBaseSpeed] = useState(0.5);
 
     useEffect(() => {
         const userIp = prompt("Please enter the server IP address (default is localhost):", "localhost");
         if (userIp) {
             setRosUrl(`ws://${userIp}:9090`);
+            setIpAddress(userIp);
         }
     }, []);    
 
@@ -41,7 +41,7 @@ export const RosProvider = ({ children }) => {
     }, [rosUrl]);
 
     return (
-        <RosContext.Provider value={{ ros }}>
+        <RosContext.Provider value={{ ros, ipAddress, baseSpeed, setBaseSpeed }}>
             {children}
         </RosContext.Provider>
     );

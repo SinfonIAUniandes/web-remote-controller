@@ -1,54 +1,103 @@
-.App {
-  /* text-align: center; */
+/* ── Layout raíz ── */
+.app-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    min-height: 100vh;
+    background: #CFDDFC;
+    font-family: 'Nunito', sans-serif;
 }
 
+/* ── Sidebar fijo ── */
+.app-sidebar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── Área de contenido ── */
+.app-content {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ── Tablero Principal — replica el layout del Figma ── */
+.tablero-principal {
+    display: flex;
+    flex-direction: row;
+    gap: 22px;
+    align-items: flex-start;
+    padding: 23px 28px;
+    background: transparent;
+    border-radius: 20px;
+    outline: 5px solid #00214B;
+}
+
+/* Columna izquierda: controles (ControlSeguridad, Animaciones, Texto, Leds) */
+.tablero-col-izq {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 0 0 400px;
+    max-width: 400px;
+}
+
+/* Columna derecha: cámaras + postura */
+.tablero-col-der {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Sección extra (debug/dev) ── */
+.seccion-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    background: rgba(0, 33, 75, 0.06);
+    border-radius: 16px;
+}
+
+.seccion-extra h2 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #00214B;
+    margin: 8px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.6;
+}
+
+/* ── Reset básico ── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── Animación logo (legacy) ── */
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+    height: 40vmin;
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
-
-.secctionCont{
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-
-
-}
-
-.secctionCont > div{
-  border: 1px solid gray;
-  border-radius: 10px;
-
-}
-
-

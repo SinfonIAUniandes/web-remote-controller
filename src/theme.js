@@ -1,0 +1,22 @@
+// src/theme.js
+export const COLORS = {
+    CELESTE_PRINCIPAL: '#CFDDFC',
+    AZUL_PRINCIPAL: '#00214B',
+    AZUL_SECUNDARIO: '#8F8AF9',
+    ROJO: '#D91A5D',
+    AMARILLO: '#FFDC4F',
+    VERDE: '#28DE64'
+};
+
+export const TYPOGRAPHY = {
+    FONT_FAMILY_PRINCIPAL: "'Nunito', sans-serif",
+    // Pesos de fuente disponibles
+    FONT_WEIGHT_EXTRA_LIGHT: 200,
+    FONT_WEIGHT_LIGHT: 300,
+    FONT_WEIGHT_REGULAR: 400,
+    FONT_WEIGHT_MEDIUM: 500,
+    FONT_WEIGHT_SEMI_BOLD: 600,
+    FONT_WEIGHT_BOLD: 700,
+    FONT_WEIGHT_EXTRA_BOLD: 800,
+    FONT_WEIGHT_BLACK: 900,
+};
