@@ -10,7 +10,8 @@ import IconoScripts from "../assets/megaphone_icon.svg";
 import IconoVolumen from "../assets/sound_icon.svg";
 import IconoSpeed from "../assets/movement_icon.svg";
 
-export default function LateralMenu() {
+// 1. AÑADIMOS activeTab y setActiveTab A LAS PROPS DEL COMPONENTE
+export default function LateralMenu({ activeTab, setActiveTab }) {
     const { ros, ipAddress, baseSpeed, setBaseSpeed } = useRos();
     const [volume, setVolume] = useState(50);
     const [speed, setSpeed] = useState(Math.round(baseSpeed * 100));
@@ -51,7 +52,7 @@ export default function LateralMenu() {
             const request = { volume: clampedVolume };
             volumeService.callService(
                 request,
-                (result) => { /* console.log('Volumen actualizado:', result); */ }, // Comentado para no saturar consola al arrastrar
+                (result) => { /* console.log('Volumen actualizado:', result); */ }, 
                 (error) => { console.error('Error al actualizar volumen:', error); }
             );
         }
@@ -122,6 +123,7 @@ export default function LateralMenu() {
             document.removeEventListener('touchmove', handleMouseMove);
             document.removeEventListener('touchend', handleMouseUp);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isVolumeDragging, isSpeedDragging]); 
 
     return (
@@ -156,74 +158,86 @@ export default function LateralMenu() {
                     style={{ width: "120px", height: "39px" }}
                 />
             </div>
+            
             <div alt="Menú Navegación" style={{ height: "450px", width: "125px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around" }}>
-            <div
-                onClick={() => {}}
-                onMouseEnter={() => setIsHoveredPrincipal(true)}
-                onMouseLeave={() => setIsHoveredPrincipal(false)}
-                style={{
-                    width: '125px',
-                    height: '125px',
-                    background: isHoveredPrincipal ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
-                    borderRadius: 30,
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 3,
-                    display: 'inline-flex',
-                    cursor: 'pointer'
-                }}
-            >
-                <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Principal</div>
-                <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
-                    <img src={IconoHome} alt="Icono Principal" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                
+                {/* 2. ACTUALIZAMOS ONCLICK Y ESTILO DEL BOTÓN PRINCIPAL */}
+                <div
+                    onClick={() => setActiveTab('principal')}
+                    onMouseEnter={() => setIsHoveredPrincipal(true)}
+                    onMouseLeave={() => setIsHoveredPrincipal(false)}
+                    style={{
+                        width: '125px',
+                        height: '125px',
+                        // Si está activo o el mouse está encima, mostramos el color de realce
+                        background: (activeTab === 'principal' || isHoveredPrincipal) ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
+                        borderRadius: 30,
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 3,
+                        display: 'inline-flex',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Principal</div>
+                    <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
+                        <img src={IconoHome} alt="Icono Principal" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
                 </div>
-            </div>
-            <div
-                onClick={() => {}}
-                onMouseEnter={() => setIsHoveredServicios(true)}
-                onMouseLeave={() => setIsHoveredServicios(false)}
-                style={{
-                    width: '125px',
-                    height: '125px',
-                    background: isHoveredServicios ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
-                    borderRadius: 30,
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 3,
-                    display: 'inline-flex',
-                    cursor: 'pointer'
-                }}
-            >
-                <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Servicios</div>
-                <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
-                    <img src={IconoServicios} alt="Icono Servicios" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                {/* 3. ACTUALIZAMOS ONCLICK Y ESTILO DEL BOTÓN SERVICIOS */}
+                <div
+                    onClick={() => setActiveTab('servicios')}
+                    onMouseEnter={() => setIsHoveredServicios(true)}
+                    onMouseLeave={() => setIsHoveredServicios(false)}
+                    style={{
+                        width: '125px',
+                        height: '125px',
+                        // Si está activo o el mouse está encima, mostramos el color de realce
+                        background: (activeTab === 'servicios' || isHoveredServicios) ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
+                        borderRadius: 30,
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 3,
+                        display: 'inline-flex',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Servicios</div>
+                    <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
+                        <img src={IconoServicios} alt="Icono Servicios" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
                 </div>
-            </div>
-            <div
-                onClick={() => {}}
-                onMouseEnter={() => setIsHoveredScripts(true)}
-                onMouseLeave={() => setIsHoveredScripts(false)}
-                style={{
-                    width: '125px',
-                    height: '125px',
-                    background: isHoveredScripts ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
-                    borderRadius: 30,
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 3,
-                    display: 'inline-flex',
-                    cursor: 'pointer'
-                }}
-            >
-                <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Scripts</div>
-                <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
-                    <img src={IconoScripts} alt="Icono Scripts" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+
+                {/* 4. BOTÓN SCRIPTS (Opcional por si tienes una tercera pestaña) */}
+                <div
+                    onClick={() => setActiveTab('scripts')}
+                    onMouseEnter={() => setIsHoveredScripts(true)}
+                    onMouseLeave={() => setIsHoveredScripts(false)}
+                    style={{
+                        width: '125px',
+                        height: '125px',
+                        // Si está activo o el mouse está encima, mostramos el color de realce
+                        background: (activeTab === 'scripts' || isHoveredScripts) ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
+                        borderRadius: 30,
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 3,
+                        display: 'inline-flex',
+                        cursor: 'pointer'
+                    }}
+                >
+                    <div style={{ alignSelf: 'stretch', height: 25, textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: COLORS.AZUL_PRINCIPAL, fontSize: 16, fontFamily: 'Nunito', fontWeight: '700', wordWrap: 'break-word' }}>Scripts</div>
+                    <div style={{ width: 35, height: 35, position: 'relative', overflow: 'hidden' }}>
+                        <img src={IconoScripts} alt="Icono Scripts" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
                 </div>
+
             </div>
-            </div>
+
             {/*Sliders and IP container*/}
             <div style={{ width: '180px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             {/* Volume Slider */}
@@ -275,6 +289,7 @@ export default function LateralMenu() {
                     {volume}%
                 </div>
             </div>
+            
             {/* Speed Slider */}
             <div style={{ width: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                 <img src={IconoSpeed} alt="Icono Velocidad" style={{ width: '20px', height: '20px' }} />

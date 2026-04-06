@@ -4,8 +4,8 @@ import { COLORS, TYPOGRAPHY } from '../theme';
 import { createTopic, createService } from '../services/RosManager';
 import * as ROSLIB from 'roslib';
 
-const LANGUAGES = ['ES', 'EN', 'FR', 'DE'];
-const LANGUAGE_MAP = { 'ES': 'Spanish', 'EN': 'English', 'FR': 'French', 'DE': 'German' };
+const LANGUAGES = ['ES', 'EN'];
+const LANGUAGE_MAP = { 'ES': 'Spanish', 'EN': 'English' };
 
 const Texto = () => {
     const { ros } = useRos();
