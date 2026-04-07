@@ -4,40 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pepper Robot Controller</title>
-    <link rel="icon" href="favicon.ico">
-    
-    <!-- Estilos globales -->
-    <link rel="stylesheet" href="../src/styles/global.css">
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico">
     
     <!-- ROS Library -->
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
 </head>
 <body>
-    <div id="app">
-        <!-- La barra lateral se carga aquí -->
-        <aside id="sidebar"></aside>
-        
-        <!-- El contenido principal se carga aquí -->
-        <main id="main-content"></main>
-    </div>
-
-    <!-- Scripts de servicios ROS (deben cargarse primero) -->
-    <script src="../src/services/rosConnection.js"></script>
-    <script src="../src/services/rosManager.js"></script>
-    
-    <!-- Utilidades -->
-    <script src="../src/utils/navigation.js"></script>
-    
-    <!-- Script de inicialización -->
-    <script>
-        // Inicializar la aplicación cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            // Conectar a ROS
-            RosConnection.connect();
-            
-            // Cargar la vista HOME por defecto
-            Navigation.loadView('home');
-        });
-    </script>
+    <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicacion.</noscript>
+    <div id="root"></div>
 </body>
 </html>

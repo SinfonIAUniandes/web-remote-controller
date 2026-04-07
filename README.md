@@ -1,74 +1,164 @@
-# Getting Started with Create React App
+# Web Remote Controller - Robot Pepper
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Control remoto web para el robot Pepper usando ROS y React.
 
-## Available Scripts
+## Requisitos
 
-In the project directory, you can run:
+- Node.js instalado
+- Git Bash en Windows
+- Robot Pepper encendido y en la misma red
+- Acceso SSH al robot (usuario: nao)
 
-### `npm start`
+## Configuracion Inicial
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Edita el archivo `start.bat` y cambia estos valores con los datos de tu robot:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```batch
+set PEPPER_IP=192.168.0.208
+set PEPPER_USER=nao
+set PEPPER_PASSWORD=
+set WORKSPACE_PATH=/gentoo/startprefix
+```
 
-### `npm test`
+## Como Iniciar desde Windows
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Paso 1: Configurar
 
-### `npm run build`
+Abre `start.bat` con un editor de texto y cambia la IP del robot.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Paso 2: Ejecutar
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Haz doble clic en `start.bat`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Se abriran 5 terminales automaticamente:
 
-### `npm run eject`
+1. **Terminal 1: py_toolkit** - Toolkit base del robot
+2. **Terminal 2: manipulation_utilities** - Control de brazos
+3. **Terminal 3: speech_utilities** - Voz y habla
+4. **Terminal 4: navigation + perception** - Navegacion y sensores
+5. **Terminal 5: Web Server** - Interfaz web (npm start)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Paso 3: Usar
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Espera 20-30 segundos y abre tu navegador en: **http://localhost:3000**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Que hace cada terminal
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+El script `start.bat` ejecuta exactamente lo siguiente:
 
-## Learn More
+### TERMINAL 1
+```bash
+ssh nao@192.168.0.208
+password: ****
+cd /gentoo/startprefix
+source devel/setup.bash
+roslaunch py_toolkit start_robot_toolkit_wlan.sh
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### TERMINAL 2
+```bash
+ssh nao@192.168.0.208
+password: ****
+cd /gentoo/startprefix
+source devel/setup.bash
+rosrun manipulation_utilities manipulation_utilities
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### TERMINAL 3
+```bash
+ssh nao@192.168.0.208
+password: ****
+cd /gentoo/startprefix
+source devel/setup.bash
+rosrun speech_utilities speech_utilities.py
+```
 
-### Code Splitting
+### TERMINAL 4
+```bash
+ssh nao@192.168.0.208
+password: ****
+cd /gentoo/startprefix
+source devel/setup.bash
+rosrun navigation_utilities NavigationUtilities.py &
+rosrun perception_utilities PerceptionUtilities.py
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### TERMINAL 5
+```bash
+cd web-remote-controller/
+npm start
+```
 
-### Analyzing the Bundle Size
+## Detener los Servicios
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Cierra las ventanas de terminal o presiona Ctrl+C en cada una.
 
-### Making a Progressive Web App
+## Estructura del Proyecto
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+web-remote-controller/
+├── start.bat              # Script de inicio para Windows
+├── README.md              # Este archivo
+├── package.json           # Dependencias npm
+├── public/                # Archivos estaticos
+│   └── views/             # Vistas HTML
+└── src/
+    ├── index.js           # Punto de entrada
+    ├── components/        # Componentes del robot
+    ├── services/          # Servicios ROS
+    ├── views/             # Vistas fuente
+    ├── utils/             # Utilidades
+    └── styles/            # Estilos CSS
+```
 
-### Advanced Configuration
+## Servicios ROS
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- **py_toolkit**: ALMotion, ALTablet, ALLeds, ALAudio, etc.
+- **manipulation_utilities**: Control de brazos y manipulacion
+- **speech_utilities**: Texto a voz y reconocimiento
+- **navigation_utilities**: Navegacion y mapeo SLAM
+- **perception_utilities**: Vision por computadora y sensores
 
-### Deployment
+## Solucion de Problemas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### No se puede conectar al robot
 
-### `npm run build` fails to minify
+Verifica:
+- Robot encendido
+- Misma red WiFi
+- IP correcta en start.bat
+- Prueba: `ping 192.168.0.208`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Error de SSH
 
+Si no tienes sshpass o usas Git Bash:
+- Conectate manualmente la primera vez
+- O configura SSH keys: `ssh-keygen` y `ssh-copy-id nao@192.168.0.208`
 
+### Puerto 3000 ocupado
 
-SOLO DIOS Y YO SABÍAMOS QUE CAMBIOS SE HICIERON EN ESTE CÓDIGO, UNA VEZ QUE DEJE ESTE CÓDIGO QUIETO, SI SABES Q MODIFICAR SIN DAÑAR TODO, AUMENTAR CONTADOR : 0
+```cmd
+netstat -ano | findstr :3000
+taskkill /PID [numero] /F
+```
+
+### Git Bash no encontrado
+
+Instala Git Bash desde: https://git-scm.com/downloads
+
+El script busca Git Bash en:
+- `C:\Program Files\Git\bin\bash.exe`
+- `C:\Program Files (x86)\Git\bin\bash.exe`
+
+## Repositorios Relacionados
+
+- py_toolkit: https://github.com/SinfonIAUniandes/py_toolkit
+- robot_toolkit_msgs: https://github.com/SinfonIAUniandes/robot_toolkit_msgs
+- manipulation_utilities: https://github.com/SinfonIAUniandes/manipulation_utilities
+- speech_utilities: https://github.com/SinfonIAUniandes/speech_utilities
+- navigation_utilities: https://github.com/SinfonIAUniandes/navigation_utilities
+- perception_utilities: https://github.com/SinfonIAUniandes/perception_utilities
+
+## Equipo
+
+SinfonIA Uniandes - Grupo de investigacion en robotica social

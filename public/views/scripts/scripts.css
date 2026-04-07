@@ -1,0 +1,14 @@
+/* 
+ * scripts.css
+ * Estilos para la vista de scripts
+ */
+
+.scripts-view h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.scripts-view .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+}

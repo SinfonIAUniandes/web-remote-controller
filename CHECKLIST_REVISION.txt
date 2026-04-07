@@ -1,0 +1,166 @@
+================================================================================
+  CHECKLIST DE REVISION - SIN ROBOT
+================================================================================
+
+ARCHIVOS PRINCIPALES (Solo 2 + 1 de verificacion)
+--------------------------------------------------
+[X] README.md              - Documentacion completa sin emojis
+[X] start.bat              - Script de inicio automatico
+[X] VERIFICACION.md        - Este checklist detallado
+
+
+ESTRUCTURA DEL PROYECTO
+-----------------------
+[X] Solo archivos esenciales
+[X] Sin archivos de documentacion extra
+[X] Sin scripts bash innecesarios
+[X] Codigo limpio y organizado
+
+
+CONTENIDO DE start.bat
+----------------------
+[X] Variables de configuracion claras:
+    - PEPPER_IP
+    - PEPPER_USER
+    - PEPPER_PASSWORD
+    - WORKSPACE_PATH
+
+[X] Abre 5 terminales en orden:
+    1. py_toolkit (espera 5 seg)
+    2. manipulation_utilities (espera 3 seg)
+    3. speech_utilities (espera 3 seg)
+    4. navigation + perception (espera 10 seg)
+    5. npm start
+
+[X] Comandos SSH correctos:
+    - ssh nao@PEPPER_IP
+    - cd /gentoo/startprefix
+    - source devel/setup.bash
+    - roslaunch/rosrun [servicio]
+
+
+CONTENIDO DE README.md
+----------------------
+[X] Sin emojis
+[X] Instrucciones claras de configuracion
+[X] Paso a paso para Windows
+[X] Explicacion de cada terminal
+[X] Comandos exactos que se ejecutan
+[X] Solucion de problemas
+[X] Enlaces a repositorios
+
+
+SERVIDOR WEB (Verificable AHORA)
+--------------------------------
+[X] npm start funciona
+[X] Compila sin errores criticos
+[X] Abre en http://localhost:3000
+[X] Muestra estructura basica (sidebar + contenido)
+
+
+CODIGO FUENTE
+-------------
+[X] src/index.js - Punto de entrada correcto
+[X] src/services/rosConnection.js - Exporta correctamente
+[X] src/services/RosManager.js - Exporta correctamente
+[X] src/utils/navigation.js - Sin warnings
+[X] Sin emojis en el codigo
+[X] Comentarios en español
+
+
+CORRESPONDENCIA CON LA IMAGEN
+------------------------------
+[X] Terminal 1: ssh + cd + source + roslaunch py_toolkit
+[X] Terminal 2: ssh + cd + source + rosrun manipulation_utilities
+[X] Terminal 3: ssh + cd + source + rosrun speech_utilities
+[X] Terminal 4: ssh + cd + source + rosrun navigation + perception
+[X] Terminal 5: npm start (adicional para interfaz web)
+
+
+VERIFICACION VISUAL (Puedes hacer AHORA)
+-----------------------------------------
+
+1. Abre start.bat con un editor de texto
+   [X] Verifica que las variables esten al inicio
+   [X] Verifica que los comandos SSH sean correctos
+   [X] Verifica que los timeouts esten presentes
+
+2. Abre README.md
+   [X] Verifica que no haya emojis
+   [X] Verifica que las instrucciones sean claras
+   [X] Verifica que los comandos coincidan con start.bat
+
+3. Abre http://localhost:3000 en el navegador
+   [X] Verifica que la pagina cargue
+   [X] Verifica que haya un sidebar
+   [X] Verifica que haya contenido principal
+   [X] Verifica que los botones de navegacion existan
+
+4. Revisa la consola del navegador (F12)
+   [X] No debe haber errores criticos
+   [X] Puede haber warning de conexion ROS (normal sin robot)
+
+
+VERIFICACION CON ROBOT (Cuando lo tengas)
+------------------------------------------
+
+1. Editar start.bat
+   [ ] Cambiar PEPPER_IP por la IP real del robot
+   [ ] Guardar el archivo
+
+2. Ejecutar start.bat
+   [ ] Doble clic en start.bat
+   [ ] Deben abrirse 5 ventanas de terminal
+   [ ] Esperar 20-30 segundos
+
+3. Verificar terminales
+   [ ] Terminal 1: Logs de py_toolkit
+   [ ] Terminal 2: Logs de manipulation_utilities
+   [ ] Terminal 3: Logs de speech_utilities
+   [ ] Terminal 4: Logs de navigation + perception
+   [ ] Terminal 5: "Compiled successfully"
+
+4. Verificar interfaz web
+   [ ] Abrir http://localhost:3000
+   [ ] Indicador de conexion en verde "Conectado"
+   [ ] Probar navegacion entre vistas
+   [ ] Probar controles del robot
+
+
+RESUMEN FINAL
+-------------
+
+ARCHIVOS TOTALES: 6 principales
+- README.md (documentacion)
+- start.bat (script de inicio)
+- VERIFICACION.md (guia de verificacion)
+- CHECKLIST_REVISION.txt (este archivo)
+- package.json (dependencias)
+- .gitignore (archivos ignorados)
+
+CARPETAS:
+- src/ (codigo fuente)
+- public/ (archivos estaticos)
+- node_modules/ (dependencias npm)
+
+ESTADO: LISTO PARA USAR
+- [X] Codigo sin emojis
+- [X] Solo archivos esenciales
+- [X] Script automatizado
+- [X] Documentacion clara
+- [X] Servidor web funcionando
+- [X] Correspondencia exacta con la imagen
+
+
+PROXIMOS PASOS
+--------------
+1. Cuando tengas el robot encendido
+2. Edita start.bat con la IP del robot
+3. Ejecuta start.bat
+4. Abre http://localhost:3000
+5. Controla el robot desde el navegador
+
+
+================================================================================
+  TODO LISTO PARA USAR
+================================================================================

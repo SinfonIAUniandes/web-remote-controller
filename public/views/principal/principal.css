@@ -1,0 +1,119 @@
+/* 
+ * principal.css
+ * Estilos específicos para la vista PRINCIPAL
+ */
+
+.principal-view h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.principal-view .grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+/* Estilos para las cámaras */
+#cameras-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+#cameras-container img {
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid #3498db;
+}
+
+#cameras-container h4 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+/* Estilos para control de voz */
+#speech-container textarea {
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+#speech-container select {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Estilos para LEDs */
+#leds-container input[type="color"] {
+    width: 100%;
+    height: 50px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+/* Estilos para animaciones */
+#animations-container select {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+/* Estilos para control de cabeza */
+#head-container {
+    text-align: center;
+}
+
+#head-container .keyboard-guide {
+    background-color: #ecf0f1;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+#head-container .keyboard-guide kbd {
+    background-color: #34495e;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* Estilos para control de base */
+#base-container {
+    text-align: center;
+}
+
+#base-container .keyboard-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 300px;
+    margin: 20px auto;
+}
+
+#base-container .key-button {
+    padding: 20px;
+    background-color: #3498db;
+    color: white;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#base-container .key-button:nth-child(2) {
+    grid-column: 2;
+}
+
+#base-container .key-button:nth-child(4) {
+    grid-column: 1;
+}
+
+#base-container .key-button:nth-child(5) {
+    grid-column: 2;
+}
+
+#base-container .key-button:nth-child(6) {
+    grid-column: 3;
+}

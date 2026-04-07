@@ -1,9 +1,10 @@
 /**
  * rosConnection.js
- * Maneja la conexión WebSocket con el servidor ROS del robot Pepper.
+ * Maneja la conexion WebSocket con el servidor ROS del robot Pepper.
  * Proporciona una instancia global de ROS que puede ser utilizada por todos los componentes.
  */
 import ROSLIB from 'roslib';
+
 const RosConnection = (function() {
     let ros = null;
     let isConnected = false;
@@ -17,7 +18,7 @@ const RosConnection = (function() {
             rosUrl = customUrl;
         } else {
             // Pedir IP al usuario si no se proporciona
-            const userIp = prompt("Ingrese la dirección IP del servidor (default: localhost):", "localhost");
+            const userIp = prompt("Ingrese la direccion IP del servidor (default: localhost):", "localhost");
             if (userIp) {
                 rosUrl = `ws://${userIp}:9090`;
             }
@@ -28,26 +29,26 @@ const RosConnection = (function() {
         });
 
         ros.on('connection', function() {
-            console.log(' Conectado al servidor WebSocket ROS');
+            console.log('Conectado al servidor WebSocket ROS');
             isConnected = true;
             updateConnectionStatus(true);
         });
 
         ros.on('error', function(error) {
-            console.error(' Error conectando al servidor WebSocket:', error);
+            console.error('Error conectando al servidor WebSocket:', error);
             isConnected = false;
             updateConnectionStatus(false);
         });
 
         ros.on('close', function() {
-            console.log('🔌 Conexión con el servidor WebSocket cerrada');
+            console.log('Conexion con el servidor WebSocket cerrada');
             isConnected = false;
             updateConnectionStatus(false);
         });
     }
 
     /**
-     * Actualiza el indicador visual de estado de conexión
+     * Actualiza el indicador visual de estado de conexion
      */
     function updateConnectionStatus(connected) {
         const statusElement = document.getElementById('connection-status');
@@ -70,7 +71,7 @@ const RosConnection = (function() {
     }
 
     /**
-     * Verifica si está conectado
+     * Verifica si esta conectado
      */
     function getConnectionStatus() {
         return isConnected;
@@ -86,7 +87,7 @@ const RosConnection = (function() {
         connect(rosUrl);
     }
 
-    // API pública
+    // API publica
     return {
         connect: connect,
         getRos: getRos,
@@ -94,3 +95,7 @@ const RosConnection = (function() {
         reconnect: reconnect
     };
 })();
+
+// Exportar para uso global
+window.RosConnection = RosConnection;
+export default RosConnection;

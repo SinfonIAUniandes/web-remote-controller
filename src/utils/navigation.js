@@ -1,39 +1,38 @@
 /**
  * navigation.js
- * Sistema de navegación entre las diferentes vistas de la aplicación.
- * Carga dinámicamente HTML, CSS y JS de cada vista.
+ * Sistema de navegacion entre las diferentes vistas de la aplicacion.
+ * Carga dinamicamente HTML, CSS y JS de cada vista.
  */
 
 const Navigation = (function() {
     const views = {
         home: {
-            html: '../src/views/home/home.html',
-            css: '../src/views/home/home.css',
-            js: '../src/views/home/home.js'
+            html: '/views/home/home.html',
+            css: '/views/home/home.css',
+            js: '/views/home/home.js'
         },
         principal: {
-            html: '../src/views/principal/principal.html',
-            css: '../src/views/principal/principal.css',
-            js: '../src/views/principal/principal.js'
+            html: '/views/principal/principal.html',
+            css: '/views/principal/principal.css',
+            js: '/views/principal/principal.js'
         },
         servicios: {
-            html: '../src/views/servicios/servicios.html',
-            css: '../src/views/servicios/servicios.css',
-            js: '../src/views/servicios/servicios.js'
+            html: '/views/servicios/servicios.html',
+            css: '/views/servicios/servicios.css',
+            js: '/views/servicios/servicios.js'
         },
         scripts: {
-            html: '../src/views/scripts/scripts.html',
-            css: '../src/views/scripts/scripts.css',
-            js: '../src/views/scripts/scripts.js'
+            html: '/views/scripts/scripts.html',
+            css: '/views/scripts/scripts.css',
+            js: '/views/scripts/scripts.js'
         }
     };
 
-    let currentView = null;
     let loadedStyles = [];
     let loadedScripts = [];
 
     /**
-     * Carga una vista específica
+     * Carga una vista especifica
      */
     async function loadView(viewName) {
         if (!views[viewName]) {
@@ -59,20 +58,19 @@ const Navigation = (function() {
             // Cargar el JS de la vista
             await loadJS(view.js);
 
-            currentView = viewName;
-            console.log('✅ Vista cargada:', viewName);
+            console.log('Vista cargada:', viewName);
 
         } catch (error) {
-            console.error('❌ Error cargando vista:', error);
+            console.error('Error cargando vista:', error);
         }
     }
 
     /**
-     * Carga el sidebar con la navegación
+     * Carga el sidebar con la navegacion
      */
     async function loadSidebar(activeView) {
         const sidebarHTML = `
-            <h2>🤖 Pepper Control</h2>
+            <h2>Pepper Control</h2>
             
             <div id="connection-status" style="margin-bottom: 20px; padding: 10px; background-color: rgba(255,255,255,0.1); border-radius: 5px; text-align: center;">
                 <span class="status-indicator status-disconnected"></span>Desconectado
@@ -80,16 +78,16 @@ const Navigation = (function() {
 
             <nav>
                 <button class="${activeView === 'home' ? 'active' : ''}" onclick="Navigation.loadView('home')">
-                    🏠 Inicio
+                    Inicio
                 </button>
                 <button class="${activeView === 'principal' ? 'active' : ''}" onclick="Navigation.loadView('principal')">
-                    🎮 Principal
+                    Principal
                 </button>
                 <button class="${activeView === 'servicios' ? 'active' : ''}" onclick="Navigation.loadView('servicios')">
-                    ⚙️ Servicios
+                    Servicios
                 </button>
                 <button class="${activeView === 'scripts' ? 'active' : ''}" onclick="Navigation.loadView('scripts')">
-                    📝 Scripts
+                    Scripts
                 </button>
             </nav>
 
@@ -171,8 +169,12 @@ const Navigation = (function() {
         loadedScripts = [];
     }
 
-    // API pública
+    // API publica
     return {
         loadView: loadView
     };
 })();
+
+// Exportar para uso global
+window.Navigation = Navigation;
+export default Navigation;
