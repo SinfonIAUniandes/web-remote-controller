@@ -1,593 +1,425 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { createTopic } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
-import animationsTxt from "../animations/animations.txt";
+import { executeScript, executeStep, parseLegacyTxt } from '../services/scriptExecutor';
+import { useAnimations } from '../hooks/useAnimations';
+import { COLORS, TYPOGRAPHY } from '../theme';
+
+const LANGUAGES = ['Spanish', 'English', 'French', 'German'];
+
+const SCREEN_TYPES = [
+    { value: 'none',     label: 'Ninguna' },
+    { value: 'subtitle', label: 'Subtítulo' },
+    { value: 'image',    label: 'Imagen' },
+    { value: 'video',    label: 'Video' }
+];
+
+const createEmptyStep = () => ({
+    speech: '',
+    animation: '',
+    screen: null
+});
 
 const ScriptsCreator = () => {
     const { ros } = useRos();
-    const [animations, setAnimations] = useState({});
+    const { getAllAnimations } = useAnimations();
+
+    const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish' });
+    const [steps, setSteps] = useState([]);
     const [isExecuting, setIsExecuting] = useState(false);
-    const [scriptName, setScriptName] = useState("mi_script");
-    const [script, setScript] = useState({
-        subtitulos: false,
-        img: false,
-        speech: [],
-        animation: [],
-        pantalla: []
-    });
+    const [executingIndex, setExecutingIndex] = useState(null);
+    const abortRef = useRef(null);
 
-    // FUNCIÓN ÚNICA QUE EJECUTA TODO EL SCRIPT
-    const executeCompleteScript = async () => {
-        if (!ros || isExecuting) return;
-        
+    // ── Mutaciones de pasos ─────────────────────────────────────────────────
+
+    const addStep = () => setSteps(prev => [...prev, createEmptyStep()]);
+
+    const deleteStep = (index) =>
+        setSteps(prev => prev.filter((_, i) => i !== index));
+
+    const moveStep = (index, dir) => {
+        setSteps(prev => {
+            const next = [...prev];
+            const target = index + dir;
+            if (target < 0 || target >= next.length) return prev;
+            [next[index], next[target]] = [next[target], next[index]];
+            return next;
+        });
+    };
+
+    const updateStep = (index, field, value) =>
+        setSteps(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+
+    const updateScreenType = (index, type) => {
+        setSteps(prev => prev.map((s, i) => {
+            if (i !== index) return s;
+            return { ...s, screen: type === 'none' ? null : { type, content: '' } };
+        }));
+    };
+
+    const updateScreenContent = (index, content) =>
+        setSteps(prev => prev.map((s, i) =>
+            i === index ? { ...s, screen: { ...s.screen, content } } : s
+        ));
+
+    // ── Ejecución ───────────────────────────────────────────────────────────
+
+    const handleExecuteAll = async () => {
+        if (!ros || isExecuting || steps.length === 0) return;
+        const ctrl = new AbortController();
+        abortRef.current = ctrl;
         setIsExecuting(true);
-        console.log("Iniciando ejecución de script completo");
-
-        // Crear TODOS los topics UNA sola vez
-        const speechTopic = createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg');
-        const animationTopic = createTopic(ros, "/animations", "robot_toolkit_msgs/animation_msg");
-
-        // Combinar todas las acciones en una sola secuencia
-        const allActions = [
-            ...script.speech.map((action, index) => ({ ...action, category: 'speech', originalIndex: index })),
-            ...script.animation.map((action, index) => ({ ...action, category: 'animation', originalIndex: index })),
-            ...script.pantalla.map((action, index) => ({ ...action, category: 'pantalla', originalIndex: index }))
-        ];
-
-        // Ordenar por índice original para mantener el orden
-        allActions.sort((a, b) => a.originalIndex - b.originalIndex);
-
-        // Ejecutar cada acción en secuencia
-        for (let i = 0; i < allActions.length; i++) {
-            const action = allActions[i];
-            console.log(`▶ Ejecutando acción ${i + 1}/${allActions.length}:`, action);
-            
-            try {
-                if (action.category === 'speech') {
-                    if (action.tipo === "text") {
-                        // Ejecutar speech
-                        const speechMessage = new ROSLIB.Message({
-                            language: 'Spanish',
-                            text: action.info,
-                            animated: true
-                        });
-                        speechTopic.publish(speechMessage);
-                        console.log(`Diciendo: "${action.info}"`);
-                        
-                        // Reducir tiempo de espera
-                        const speechTime = Math.max(1500, action.info.length * 80);
-                        await new Promise(resolve => setTimeout(resolve, speechTime));
-                        
-                    } else if (action.tipo === "delay") {
-                        // Esperar tiempo específico
-                        console.log(`Delay speech: ${action.info}ms`);
-                        await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
-                    }
-                    
-                } else if (action.category === 'animation') {
-                    if (action.tipo === "movimiento") {
-                        // Ejecutar animación
-                        const animationMessage = new ROSLIB.Message({
-                            family: "animations",
-                            animation_name: action.info
-                        });
-                        animationTopic.publish(animationMessage);
-                        console.log(`Animación: ${action.info}`);
-                        
-                        // Reducir tiempo de animaciones
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        
-                    } else if (action.tipo === "delay") {
-                        // Esperar tiempo específico
-                        console.log(`Delay animation: ${action.info}ms`);
-                        await new Promise(resolve => setTimeout(resolve, parseInt(action.info)));
-                    }
-                    
-                } else if (action.category === 'pantalla') {
-                    // Acciones de pantalla
-                    console.log(`Acción de pantalla: ${action.info}`);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-                
-                // Reducir pausa entre acciones
-                await new Promise(resolve => setTimeout(resolve, 300));
-                
-            } catch (error) {
-                console.error(`Error en acción ${i + 1}:`, error);
-            }
+        try {
+            await executeScript(ros, steps, config.language, {
+                onStepStart: setExecutingIndex,
+                onStepEnd: () => {},
+                signal: ctrl.signal
+            });
+        } finally {
+            setIsExecuting(false);
+            setExecutingIndex(null);
+            abortRef.current = null;
         }
-        
-        console.log("Script completado");
-        setIsExecuting(false);
     };
 
-    //FUNCIÓN PARA DESCARGAR SCRIPT
+    const handleStop = () => abortRef.current?.abort();
+
+    const handleExecuteStep = (index) => {
+        if (!ros) return;
+        executeStep(ros, steps[index], config.language);
+    };
+
+    // ── Download / Upload ───────────────────────────────────────────────────
+
     const handleDownload = () => {
-        const element = document.createElement("a");
-        const file = new Blob([JSON.stringify(script, null, 2)], { type: 'application/json' });
-        element.href = URL.createObjectURL(file);
-        element.download = `${scriptName}.json`;
-        document.body.appendChild(element);
-        element.click();
+        // El id no se guarda — la posición en el array es el identificador
+        const cleanSteps = steps.map(({ id: _id, ...rest }) => rest);
+        const data = { config, steps: cleanSteps };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${config.name}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
-    // FUNCIÓN PARA CARGAR/SUBIR SCRIPT
-    const handleUpload = (event) => {
+    // Un solo handler para .json y .txt
+    const handleLoadScript = (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
-        
         reader.onload = (e) => {
             try {
-                const uploadedScript = JSON.parse(e.target.result);
-                
-                if (uploadedScript && 
-                    (Array.isArray(uploadedScript.speech) || 
-                     Array.isArray(uploadedScript.animation) || 
-                     Array.isArray(uploadedScript.pantalla))) {
-                    
-                    setScript(uploadedScript);
-                    // Extraer nombre del archivo sin extensión
-                    const fileName = file.name.replace('.json', '');
-                    setScriptName(fileName);
-                    console.log("Script cargado correctamente");
-                    alert("Script cargado exitosamente!");
+                let data;
+                if (file.name.endsWith('.json')) {
+                    data = JSON.parse(e.target.result);
+                    if (!data.config || !Array.isArray(data.steps)) throw new Error('Estructura inválida');
                 } else {
-                    throw new Error("Estructura de script inválida");
+                    data = parseLegacyTxt(e.target.result, file.name);
                 }
-            } catch (error) {
-                console.error("Error al cargar el script:", error);
-                alert("Error: El archivo no es un script válido");
+                setConfig(data.config);
+                // Descartar cualquier id guardado — la posición es el id
+                setSteps(data.steps.map(({ id: _id, ...rest }) => rest));
+                event.target.value = '';
+            } catch {
+                alert('Error al cargar el archivo. Verifica el formato (.json o .txt).');
             }
         };
-
         reader.readAsText(file);
     };
 
-    // FUNCIÓN PARA OBTENER TODAS LAS ANIMACIONES EN FORMATO PLANO
-    const getAllAnimations = () => {
-        const allAnimations = [];
-        Object.keys(animations).forEach(category => {
-            Object.keys(animations[category]).forEach(subcategory => {
-                animations[category][subcategory].forEach(animation => {
-                    if (subcategory === "_no_subcategory") {
-                        allAnimations.push(`${category}/${animation}`);
-                    } else {
-                        allAnimations.push(`${category}/${subcategory}/${animation}`);
-                    }
-                });
-            });
-        });
-        return allAnimations;
+    // ── Estilos helpers ─────────────────────────────────────────────────────
+
+    const inputStyle = {
+        padding: '4px 6px',
+        border: `1px solid ${COLORS.AZUL_SECUNDARIO}`,
+        borderRadius: '4px',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
+        fontSize: '13px',
+        width: '100%',
+        boxSizing: 'border-box'
     };
 
-    // Cargar animaciones disponibles
-    useEffect(() => {
-        fetch(animationsTxt)
-            .then(response => response.text())
-            .then(text => {
-                const parsedAnimations = {};
+    const selectStyle = { ...inputStyle };
 
-                text.split("\n").forEach(animation => {
-                    const parts = animation.trim().split("/");
+    const btnBase = {
+        padding: '6px 10px',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
+        fontWeight: TYPOGRAPHY.FONT_WEIGHT_SEMI_BOLD,
+        fontSize: '13px'
+    };
 
-                    if (parts.length === 3) {
-                        const [category, subcategory, anim] = parts;
-                        if (!parsedAnimations[category]) parsedAnimations[category] = {};
-                        if (!parsedAnimations[category][subcategory]) parsedAnimations[category][subcategory] = [];
-                        parsedAnimations[category][subcategory].push(anim);
-                    } else if (parts.length === 2) {
-                        const [category, anim] = parts;
-                        if (!parsedAnimations[category]) parsedAnimations[category] = {};
-                        if (!parsedAnimations[category]["_no_subcategory"]) parsedAnimations[category]["_no_subcategory"] = [];
-                        parsedAnimations[category]["_no_subcategory"].push(anim);
-                    }
-                });
+    const allAnimations = getAllAnimations();
 
-                setAnimations(parsedAnimations);
-            })
-            .catch(error => console.error("Error al cargar las animaciones:", error));
-    }, []);
+    // ── Render ──────────────────────────────────────────────────────────────
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h2>Creador de Scripts para Pepper</h2>
-            
-            {/* BOTÓN DE EJECUCIÓN ÚNICA */}
-            <div style={{ 
-                marginBottom: '20px', 
-                padding: '15px', 
-                border: '2px solid #28a745', 
-                borderRadius: '8px',
-                backgroundColor: '#f8fff9',
-                textAlign: 'center'
+        <div style={{ fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, padding: '16px' }}>
+            <h2 style={{ color: COLORS.AZUL_PRINCIPAL, marginBottom: '12px' }}>Creador de Scripts</h2>
+
+            {/* ── HEADER: config + acciones de archivo ── */}
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px',
+                alignItems: 'flex-end',
+                padding: '12px',
+                backgroundColor: COLORS.CELESTE_PRINCIPAL,
+                borderRadius: '10px',
+                marginBottom: '16px'
             }}>
-                <button 
-                    onClick={executeCompleteScript}
-                    disabled={isExecuting || (script.speech.length === 0 && script.animation.length === 0)}
-                    style={executeButtonStyle}
+                {/* Nombre */}
+                <div>
+                    <label style={labelStyle}>Nombre</label>
+                    <input
+                        type="text"
+                        value={config.name}
+                        onChange={e => setConfig({ ...config, name: e.target.value })}
+                        style={{ ...inputStyle, width: '160px' }}
+                    />
+                </div>
+
+                {/* Idioma */}
+                <div>
+                    <label style={labelStyle}>Idioma</label>
+                    <select
+                        value={config.language}
+                        onChange={e => setConfig({ ...config, language: e.target.value })}
+                        style={{ ...selectStyle, width: '120px' }}
+                    >
+                        {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                </div>
+
+                {/* Editar script existente */}
+                <div>
+                    <label style={labelStyle}>Editar Script</label>
+                    <input
+                        id="load-script-input"
+                        type="file"
+                        accept=".json,.txt"
+                        onChange={handleLoadScript}
+                        style={{ display: 'none' }}
+                    />
+                    <button
+                        onClick={() => document.getElementById('load-script-input').click()}
+                        style={{ ...btnBase, backgroundColor: COLORS.AMARILLO, color: COLORS.AZUL_PRINCIPAL }}
+                    >
+                        Cargar para editar
+                    </button>
+                </div>
+
+                {/* Download */}
+                <button
+                    onClick={handleDownload}
+                    disabled={steps.length === 0}
+                    style={{ ...btnBase, backgroundColor: COLORS.AZUL_SECUNDARIO, color: '#fff', alignSelf: 'flex-end' }}
                 >
-                    {isExecuting ? 'Ejecutando Script...' : 'Ejecutar Script Completo'}
+                    Descargar {config.name}.json
                 </button>
-                <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
-                    Un solo botón ejecuta TODAS las acciones del script en secuencia
-                </p>
             </div>
 
-            {/* SECCIÓN DE CARGA/SUBIDA DE SCRIPTS */}
-            <div style={{ 
-                marginBottom: '20px', 
-                padding: '15px', 
-                border: '2px dashed #007BFF', 
-                borderRadius: '8px',
-                backgroundColor: '#f8f9fa'
-            }}>
-                <h3>Gestionar Scripts</h3>
-                
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '15px' }}>
-                    {/* Nombre del script */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                            Nombre del script:
-                        </label>
-                        <input 
-                            type="text" 
-                            value={scriptName}
-                            onChange={(e) => setScriptName(e.target.value)}
-                            placeholder="nombre_del_script"
-                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                        />
+            {/* ── TABLA DE PASOS ── */}
+            <div style={{ overflowX: 'auto', marginBottom: '12px' }}>
+                {steps.length === 0 ? (
+                    <div style={{
+                        padding: '24px',
+                        textAlign: 'center',
+                        color: COLORS.AZUL_PRINCIPAL,
+                        opacity: 0.5,
+                        border: `2px dashed ${COLORS.AZUL_SECUNDARIO}`,
+                        borderRadius: '8px'
+                    }}>
+                        Sin pasos. Añade uno o sube un script.
                     </div>
+                ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: COLORS.AZUL_PRINCIPAL, color: '#fff' }}>
+                                <th style={th}>#</th>
+                                <th style={th}>Speech</th>
+                                <th style={th}>Animación</th>
+                                <th style={th}>Pantalla</th>
+                                <th style={th}>Contenido pantalla</th>
+                                <th style={th}>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {steps.map((step, i) => {
+                                const isActive = executingIndex === i;
+                                const screenType = step.screen?.type ?? 'none';
 
-                    {/* Subir archivo */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                            Subir script:
-                        </label>
-                        <input 
-                            type="file" 
-                            accept=".json" 
-                            onChange={handleUpload}
-                            style={{ padding: '8px' }}
-                        />
-                    </div>
-
-                    {/* Descargar archivo */}
-                    <button 
-                        onClick={handleDownload}
-                        disabled={script.speech.length === 0 && script.animation.length === 0}
-                        style={downloadButtonStyle}
-                    >
-                        Descargar {scriptName}.json
-                    </button>
-                </div>
-            </div>
-
-            {/* CONFIGURACIÓN */}
-            <div style={{ marginBottom: '20px' }}>
-                <h3>Configuración</h3>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div>
-                        <input 
-                            id='subtitulos' 
-                            type="checkbox" 
-                            checked={script.subtitulos} 
-                            onChange={() => setScript({ ...script, subtitulos: !script.subtitulos })} 
-                        />
-                        <label htmlFor='subtitulos'>Subtítulos (próximamente)</label>
-                    </div>
-                    <div>
-                        <input 
-                            id='img' 
-                            type="checkbox" 
-                            checked={script.img} 
-                            onChange={() => setScript({ ...script, img: !script.img })} 
-                        />
-                        <label htmlFor='img'>Mostrar sección Pantalla</label>
-                    </div>
-                </div>
-            </div>
-
-            {/* SECCIONES DE EDICIÓN */}
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-                
-                {/* SECCIÓN SPEECH */}
-                <div style={sectionStyle}>
-                    <h4>Speech ({script.speech.length})</h4>
-                    {script.speech.map((item, index) => (
-                        <div key={index} style={actionItemStyle}>
-                            <select 
-                                value={item.tipo} 
-                                onChange={(e) => {
-                                    const newSpeech = [...script.speech];
-                                    newSpeech[index].tipo = e.target.value;
-                                    setScript({ ...script, speech: newSpeech });
-                                }}
-                                style={selectStyle}
-                            >
-                                <option value="text">Texto</option>
-                                <option value="delay">Delay</option>
-                            </select>
-                            {item.tipo === "text" ? (
-                                <input 
-                                    type="text" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="Texto para hablar"
-                                    style={inputStyle}
-                                />
-                            ) : (
-                                <input 
-                                    type="number" 
-                                    min="0" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newSpeech = [...script.speech];
-                                        newSpeech[index].info = e.target.value;
-                                        setScript({ ...script, speech: newSpeech });
-                                    }}
-                                    placeholder="ms"
-                                    style={inputStyle}
-                                />
-                            )}
-                            <button 
-                                onClick={() => {
-                                    const newSpeech = script.speech.filter((item, i) => i !== index);
-                                    setScript({ ...script, speech: newSpeech });
-                                }}
-                                style={deleteButtonStyle}
-                            >
-                                ❌
-                            </button>
-                        </div>
-                    ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, speech: [...script.speech, {
-                                tipo: "text",
-                                info: "Hola, soy Pepper",
-                            }]
-                        })}
-                        style={addButtonStyle}
-                    >
-                        Añadir Speech
-                    </button>
-                </div>
-
-                {/* SECCIÓN ANIMACIÓN */}
-                <div style={sectionStyle}>
-                    <h4>Animaciones ({script.animation.length})</h4>
-                    {script.animation.map((item, index) => (
-                        <div key={index} style={actionItemStyle}>
-                            <select 
-                                value={item.tipo} 
-                                onChange={(e) => {
-                                    const newAnimation = [...script.animation];
-                                    newAnimation[index].tipo = e.target.value;
-                                    setScript({ ...script, animation: newAnimation });
-                                }}
-                                style={selectStyle}
-                            >
-                                <option value="movimiento">Animación</option>
-                                <option value="delay">Delay</option>
-                            </select>
-
-                            {item.tipo === "movimiento" ? (
-                                <select
-                                    value={item.info}
-                                    onChange={(e) => {
-                                        const newAnimation = [...script.animation];
-                                        newAnimation[index].info = e.target.value;
-                                        setScript({ ...script, animation: newAnimation });
-                                    }}
-                                    style={selectStyle}
-                                >
-                                    <option value="">Seleccionar animación</option>
-                                    {getAllAnimations().map((animPath, idx) => (
-                                        <option key={idx} value={animPath}>
-                                            {animPath}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input 
-                                    type="number" 
-                                    min="0" 
-                                    value={item.info} 
-                                    onChange={(e) => {
-                                        const newAnimation = [...script.animation];
-                                        newAnimation[index].info = e.target.value;
-                                        setScript({ ...script, animation: newAnimation });
-                                    }}
-                                    placeholder="ms"
-                                    style={inputStyle}
-                                />
-                            )}
-                            <button 
-                                onClick={() => {
-                                    const newAnimation = script.animation.filter((item, i) => i !== index);
-                                    setScript({ ...script, animation: newAnimation });
-                                }}
-                                style={deleteButtonStyle}
-                            >
-                                ❌
-                            </button>
-                        </div>
-                    ))}
-                    <button 
-                        onClick={() => setScript({
-                            ...script, animation: [...script.animation, {
-                                tipo: "movimiento",
-                                info: "Gestures/Hey_1",
-                            }]
-                        })}
-                        style={addButtonStyle}
-                    >
-                        Añadir Animación
-                    </button>
-                </div>
-
-                {/* SECCIÓN PANTALLA - SOLO SE MUESTRA SI img ESTÁ ACTIVADO */}
-                {script.img && (
-                    <div style={sectionStyle}>
-                        <h4>Pantalla ({script.pantalla.length})</h4>
-                        {script.pantalla.map((item, index) => (
-                            <div key={index} style={actionItemStyle}>
-                                <select 
-                                    value={item.tipo} 
-                                    onChange={(e) => {
-                                        const newPantalla = [...script.pantalla];
-                                        newPantalla[index].tipo = e.target.value;
-                                        setScript({ ...script, pantalla: newPantalla });
-                                    }}
-                                    style={selectStyle}
-                                >
-                                    <option value="video">URL Video/Imagen</option>
-                                    <option value="delay">Delay</option>
-                                </select>
-                                {item.tipo === "video" ? (
-                                    <input 
-                                        type="text" 
-                                        value={item.info} 
-                                        onChange={(e) => {
-                                            const newPantalla = [...script.pantalla];
-                                            newPantalla[index].info = e.target.value;
-                                            setScript({ ...script, pantalla: newPantalla });
+                                return (
+                                    <tr
+                                        key={i}
+                                        style={{
+                                            backgroundColor: isActive ? '#e8fff3' : (i % 2 === 0 ? '#fff' : '#f7f9ff'),
+                                            borderLeft: isActive ? `4px solid ${COLORS.VERDE}` : '4px solid transparent',
+                                            transition: 'background-color 0.3s'
                                         }}
-                                        placeholder="https://ejemplo.com/imagen.jpg"
-                                        style={inputStyle}
-                                    />
-                                ) : (
-                                    <input 
-                                        type="number" 
-                                        min="0" 
-                                        value={item.info} 
-                                        onChange={(e) => {
-                                            const newPantalla = [...script.pantalla];
-                                            newPantalla[index].info = e.target.value;
-                                            setScript({ ...script, pantalla: newPantalla });
-                                        }}
-                                        placeholder="ms"
-                                        style={inputStyle}
-                                    />
-                                )}
-                                <button 
-                                    onClick={() => {
-                                        const newPantalla = script.pantalla.filter((item, i) => i !== index);
-                                        setScript({ ...script, pantalla: newPantalla });
-                                    }}
-                                    style={deleteButtonStyle}
-                                >
-                                    ❌
-                                </button>
-                            </div>
-                        ))}
-                        <button 
-                            onClick={() => setScript({
-                                ...script, pantalla: [...script.pantalla, {
-                                    tipo: "video",
-                                    info: "https://ejemplo.com/imagen.jpg",
-                                }]
+                                    >
+                                        {/* # */}
+                                        <td style={{ ...td, textAlign: 'center', fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, color: COLORS.AZUL_PRINCIPAL }}>{i + 1}</td>
+
+                                        {/* Speech */}
+                                        <td style={td}>
+                                            <textarea
+                                                value={step.speech}
+                                                onChange={e => updateStep(i, 'speech', e.target.value)}
+                                                placeholder="Texto a hablar..."
+                                                rows={2}
+                                                style={{ ...inputStyle, minWidth: '180px', resize: 'vertical' }}
+                                            />
+                                        </td>
+
+                                        {/* Animación */}
+                                        <td style={td}>
+                                            <select
+                                                value={step.animation}
+                                                onChange={e => updateStep(i, 'animation', e.target.value)}
+                                                style={{ ...selectStyle, minWidth: '140px' }}
+                                            >
+                                                <option value="">Ninguna</option>
+                                                {allAnimations.map((path, idx) => (
+                                                    <option key={idx} value={path}>{path}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+
+                                        {/* Tipo pantalla */}
+                                        <td style={td}>
+                                            <select
+                                                value={screenType}
+                                                onChange={e => updateScreenType(i, e.target.value)}
+                                                style={{ ...selectStyle, width: '110px' }}
+                                            >
+                                                {SCREEN_TYPES.map(({ value, label }) => (
+                                                    <option key={value} value={value}>{label}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+
+                                        {/* Contenido pantalla */}
+                                        <td style={td}>
+                                            {screenType === 'none' && (
+                                                <span style={{ color: '#aaa', fontSize: '12px' }}>—</span>
+                                            )}
+                                            {screenType === 'subtitle' && (
+                                                <span style={{ color: '#888', fontSize: '12px', fontStyle: 'italic' }}>
+                                                    (usa el texto del speech)
+                                                </span>
+                                            )}
+                                            {(screenType === 'image' || screenType === 'video') && (
+                                                <input
+                                                    type="text"
+                                                    value={step.screen?.content ?? ''}
+                                                    onChange={e => updateScreenContent(i, e.target.value)}
+                                                    placeholder="https://url.com/archivo"
+                                                    style={{ ...inputStyle, minWidth: '180px' }}
+                                                />
+                                            )}
+                                        </td>
+
+                                        {/* Acciones */}
+                                        <td style={{ ...td, whiteSpace: 'nowrap' }}>
+                                            <button
+                                                onClick={() => handleExecuteStep(i)}
+                                                disabled={isExecuting}
+                                                title="Ejecutar este paso"
+                                                style={{ ...btnBase, backgroundColor: COLORS.VERDE, color: '#fff', marginRight: '3px' }}
+                                            >▶</button>
+                                            <button
+                                                onClick={() => moveStep(i, -1)}
+                                                disabled={i === 0}
+                                                title="Subir"
+                                                style={{ ...btnBase, backgroundColor: '#e0e0e0', color: '#333', marginRight: '3px' }}
+                                            >↑</button>
+                                            <button
+                                                onClick={() => moveStep(i, 1)}
+                                                disabled={i === steps.length - 1}
+                                                title="Bajar"
+                                                style={{ ...btnBase, backgroundColor: '#e0e0e0', color: '#333', marginRight: '3px' }}
+                                            >↓</button>
+                                            <button
+                                                onClick={() => deleteStep(i)}
+                                                title="Eliminar"
+                                                style={{ ...btnBase, backgroundColor: COLORS.ROJO, color: '#fff' }}
+                                            >×</button>
+                                        </td>
+                                    </tr>
+                                );
                             })}
-                            style={addButtonStyle}
-                        >
-                            Añadir a Pantalla
-                        </button>
-                    </div>
+                        </tbody>
+                    </table>
                 )}
             </div>
 
-            {/* ESTADO DE EJECUCIÓN */}
-            {isExecuting && (
-                <div style={{ 
-                    color: '#007BFF', 
-                    fontWeight: 'bold',
-                    padding: '10px',
-                    backgroundColor: '#e7f3ff',
-                    borderRadius: '5px',
-                    marginTop: '20px',
-                    textAlign: 'center'
-                }}>
-                    Ejecutando script completo... ({script.speech.length + script.animation.length + script.pantalla.length} acciones)
-                </div>
-            )}
+            {/* ── FOOTER ── */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                    onClick={addStep}
+                    style={{ ...btnBase, backgroundColor: COLORS.VERDE, color: '#fff' }}
+                >
+                    + Agregar paso
+                </button>
+
+                <button
+                    onClick={handleExecuteAll}
+                    disabled={isExecuting || steps.length === 0}
+                    style={{
+                        ...btnBase,
+                        backgroundColor: isExecuting ? '#999' : COLORS.AZUL_SECUNDARIO,
+                        color: '#fff',
+                        padding: '8px 16px'
+                    }}
+                >
+                    {isExecuting ? `Ejecutando... (paso ${(executingIndex ?? 0) + 1}/${steps.length})` : 'Ejecutar Script Completo'}
+                </button>
+
+                {isExecuting && (
+                    <button
+                        onClick={handleStop}
+                        style={{ ...btnBase, backgroundColor: COLORS.ROJO, color: '#fff', padding: '8px 16px' }}
+                    >
+                        Detener
+                    </button>
+                )}
+
+                {steps.length > 0 && (
+                    <span style={{ fontSize: '13px', color: COLORS.AZUL_PRINCIPAL, opacity: 0.6, marginLeft: 'auto' }}>
+                        {steps.length} paso{steps.length !== 1 ? 's' : ''}
+                    </span>
+                )}
+            </div>
         </div>
     );
 };
 
-// Estilos (los mismos que antes)
-const executeButtonStyle = {
-    padding: '15px 30px',
-    fontSize: '18px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    minWidth: '250px'
+// ── Estilos de tabla ──────────────────────────────────────────────────────────
+
+const th = {
+    padding: '8px 10px',
+    textAlign: 'left',
+    fontWeight: TYPOGRAPHY.FONT_WEIGHT_SEMI_BOLD,
+    fontSize: '13px',
+    whiteSpace: 'nowrap'
 };
 
-const downloadButtonStyle = {
-    padding: '10px 15px',
-    backgroundColor: '#007BFF',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer'
+const td = {
+    padding: '6px 8px',
+    verticalAlign: 'middle',
+    borderBottom: '1px solid #e0e6f0'
 };
 
-const sectionStyle = {
-    border: '1px solid #ddd',
-    padding: '15px',
-    borderRadius: '8px',
-    backgroundColor: '#fafafa'
-};
-
-const actionItemStyle = {
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'center',
-    marginBottom: '10px'
-};
-
-const selectStyle = {
-    padding: '5px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    minWidth: '100px'
-};
-
-const inputStyle = {
-    padding: '5px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    flex: '1'
-};
-
-const deleteButtonStyle = {
-    padding: '5px 10px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-};
-
-const addButtonStyle = {
-    padding: '8px 15px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginTop: '10px'
+const labelStyle = {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: TYPOGRAPHY.FONT_WEIGHT_SEMI_BOLD,
+    color: COLORS.AZUL_PRINCIPAL,
+    marginBottom: '3px'
 };
 
 export default ScriptsCreator;
