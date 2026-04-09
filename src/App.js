@@ -74,7 +74,7 @@ const App = () => {
             <h1>Acciones rápidas</h1>
             <QuickActions />
             <h1>Hot Words</h1>
-            <HotWords />
+            <hot_w_completo_prueba/>
         </div>
     );
 };
