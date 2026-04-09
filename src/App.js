@@ -23,7 +23,7 @@ import ScriptPanel from './components/ScriptPanel'
 import PostureControl from './components/PostureControl'
 import ScriptsCreator from './components/ScriptsCreator';
 import QuickActions from './components/QuickActions';
-import HotWords from './components/HotWords';
+import HotWords from './components/hot_w_completo_prueba';
 import './App.css';
 
 const App = () => {
@@ -74,7 +74,7 @@ const App = () => {
             <h1>Acciones rápidas</h1>
             <QuickActions />
             <h1>Hot Words</h1>
-            <hot_w_completo_prueba/>
+            <HotWords/>
         </div>
     );
 };
