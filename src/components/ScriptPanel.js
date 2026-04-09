@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { executeScript, executeStep, parseLegacyTxt } from '../services/scriptExecutor';
+import { executeScript, executeStep, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
 const ScriptPanel = () => {
@@ -62,7 +62,7 @@ const ScriptPanel = () => {
         }
     };
 
-    const handleStop = () => abortRef.current?.abort();
+    const handleStop = () => { abortRef.current?.abort(); stopSpeech(ros); };
 
     // ── Navegación ──────────────────────────────────────────────────────────
 
