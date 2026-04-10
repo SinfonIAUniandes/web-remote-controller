@@ -72,6 +72,9 @@ const HotWords = () => {
         );
     };
 
+    //FALTA: Topic donde se publican las palabras
+
+
     //para hacerlo desplehable
     const toggleSubscribe = () => {
         callSpeechRecognition(!subscribe, noise, eyes);

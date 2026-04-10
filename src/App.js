@@ -23,7 +23,7 @@ import ScriptPanel from './components/ScriptPanel'
 import PostureControl from './components/PostureControl'
 import ScriptsCreator from './components/ScriptsCreator';
 import QuickActions from './components/QuickActions';
-import HotWords from './components/hot_w_completo_prueba';
+import HotWords from './components/HotWords2';
 import './App.css';
 
 const App = () => {
