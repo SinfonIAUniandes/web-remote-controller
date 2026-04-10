@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { createService } from '../services/RosManager';
+import { createTopic, createService } from '../services/RosManager';
 
 //  Palabras predeterminadas y threshold para cada una
 const HOTWORDS = [
