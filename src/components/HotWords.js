@@ -205,29 +205,32 @@ const HotWords = () => {
         callUrlService(newLang);
     };
 
+    const thStyle = {
+        border: '1px solid #ccc',
+        padding: '8px 16px',
+        backgroundColor: '#f0f0f0',
+    };
+    
+    const tdStyle = {
+        border: '1px solid #ccc',
+        padding: '6px 16px',
+    };
+
+    
     return (
         <div style={{ textAlign: 'center' }}>
             <h2>Speech Recognition Control</h2>
-
-            {/* ON / OFF */}
-            <button onClick={toggleSubscribe}>
-                {subscribe ? "Desactivar HotWords" : "Activar HotWords"}
-            </button>
-
-            <p>Estado: {subscribe ? "ACTIVO" : "INACTIVO"}</p>
-
-            <hr />
-
+    
             {/* Language */}
             <h3>Idioma</h3>
             <select value={url} onChange={handleUrlChange}>
                 <option value="Spanish">Spanish</option>
                 <option value="English">English</option>
             </select>
-
+    
             <hr />
-
-            {/* Noise */}
+    
+            {/* Noise y Eyes primero */}
             <label>
                 <input
                     type="checkbox"
@@ -236,10 +239,9 @@ const HotWords = () => {
                 />
                 Activar Noise
             </label>
-
+    
             <br />
-
-            {/* Eyes */}
+    
             <label>
                 <input
                     type="checkbox"
@@ -248,6 +250,38 @@ const HotWords = () => {
                 />
                 Activar Eyes
             </label>
+    
+            <hr />
+    
+            {/* ON / OFF al final */}
+            <button onClick={toggleSubscribe}>
+                {subscribe ? "Desactivar HotWords" : "Activar HotWords"}
+            </button>
+    
+            <p>Estado: {subscribe ? "ACTIVO" : "INACTIVO"}</p>
+    
+            <hr />
+    
+            {/* Tabla de hotwords */}
+            <h3>Palabras configuradas</h3>
+            <table style={{ margin: '0 auto', borderCollapse: 'collapse' }}>
+                <thead>
+                    <tr>
+                        <th style={thStyle}>Palabra</th>
+                        <th style={thStyle}>Respuesta</th>
+                        <th style={thStyle}>Threshold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {HOTWORDS.map(({ word, threshold }) => (
+                        <tr key={word}>
+                            <td style={tdStyle}>{word}</td>
+                            <td style={tdStyle}>{RESPONSES[word]}</td>
+                            <td style={tdStyle}>{threshold}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
