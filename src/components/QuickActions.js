@@ -58,7 +58,7 @@ const QuickActions = () => {
         setCurrentScript(key);
 
         try {
-            await executeScript(ros, script.steps, script.config.language, { signal: ctrl.signal });
+            await executeScript(ros, script.steps, script.config.language, { signal: ctrl.signal, stepDelay: 500 });
         } finally {
             setIsExecuting(false);
             setCurrentScript('');

@@ -25,9 +25,8 @@ const ScriptsCreator = () => {
     const { ros } = useRos();
     const { getAllAnimations } = useAnimations();
 
-    const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish' });
+    const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish', stepDelay: 3000 });
     const [steps, setSteps] = useState([]);
-    const [stepDelay, setStepDelay] = useState(3000); // ms entre pasos
 
     // Estado de ejecución completa
     const [isExecuting, setIsExecuting] = useState(false);
@@ -100,7 +99,7 @@ const ScriptsCreator = () => {
                 onStepStart: setExecutingIndex,
                 onStepEnd: () => {},
                 signal: ctrl.signal,
-                stepDelay
+                stepDelay: config.stepDelay
             });
         } finally {
             setIsExecuting(false);
@@ -250,8 +249,8 @@ const ScriptsCreator = () => {
                         type="number"
                         min="0"
                         step="500"
-                        value={stepDelay}
-                        onChange={e => setStepDelay(Math.max(0, parseInt(e.target.value) || 0))}
+                        value={config.stepDelay}
+                        onChange={e => setConfig({ ...config, stepDelay: Math.max(0, parseInt(e.target.value) || 0) })}
                         style={{ ...inputStyle, width: '110px' }}
                     />
                 </div>
@@ -506,7 +505,7 @@ const ScriptsCreator = () => {
 
                 {steps.length > 0 && (
                     <span style={{ fontSize: '13px', color: COLORS.AZUL_PRINCIPAL, opacity: 0.6, marginLeft: 'auto' }}>
-                        {steps.length} paso{steps.length !== 1 ? 's' : ''} · {stepDelay / 1000}s entre pasos
+                        {steps.length} paso{steps.length !== 1 ? 's' : ''} · {config.stepDelay / 1000}s entre pasos
                     </span>
                 )}
             </div>
