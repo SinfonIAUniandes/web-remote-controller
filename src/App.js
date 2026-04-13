@@ -25,7 +25,7 @@ import ControlSeguridad from "./components/ControlSeguridad";
 import LateralMenu from "./components/MenuLateral";
 import Animations from "./components/Animations";
 import WebService from "./components/WebService";
-import HotWords from "./components/HotWords";
+//import HotWords from "./components/HotWords";
 import "./App.css";
 import "./fonts.css";
 import Led from "./components/Led";
