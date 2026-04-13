@@ -3,9 +3,9 @@ import { useRos } from '../contexts/RosContext';
 import { createService, createTopic, publishMessage } from '../services/RosManager';
 
 const HOTWORDS = [
-    { word: 'hola', threshold: 0.4 },
-    { word: 'ayuda', threshold: 0.4 },
-    { word: 'baila', threshold: 0.4 },
+    { word: 'hola', threshold: 0.35 },
+    { word: 'ayuda', threshold: 0.35 },
+    { word: 'baila', threshold: 0.35 },
 ];
 
 const RESPONSES = {
