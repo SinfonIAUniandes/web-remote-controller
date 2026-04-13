@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { executeScript, executeStep, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
+import { createTopic } from '../services/RosManager';
 import { useAnimations } from '../hooks/useAnimations';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
@@ -122,7 +123,13 @@ const ScriptsCreator = () => {
         setSingleStepIndex(index);
         setCompletedStepIndex(null);
         try {
-            await executeStep(ros, steps[index], config.language, ctrl.signal);
+            // Crear topics y hacer warmup igual que executeScript para evitar el problema de timing
+            const topics = {
+                speechTopic: createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg'),
+                animTopic:   createTopic(ros, '/animations', 'robot_toolkit_msgs/animation_msg')
+            };
+            await new Promise(r => setTimeout(r, 150)); // warmup
+            await executeStep(ros, steps[index], config.language, ctrl.signal, topics);
             if (!ctrl.signal.aborted) {
                 setCompletedStepIndex(index);
             }
