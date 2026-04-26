@@ -58,7 +58,7 @@ const hashPassword = (password) => {
     return (h >>> 0).toString(16);
 };
 
-// Hash corregido y "pesado" para "SinfonIA_2024"
+
 const TARGET_HASH = "ad5ac8e6";
 
 // Función para verificar si la red es local (localhost o rangos privados)
