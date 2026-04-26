@@ -134,12 +134,12 @@ const App = () => {
                                     position: "absolute",
                                     top: 0,
                                     left: 0,
-                                    padding: "20px", // <- Movimos el padding aquí
+                                    padding: "30px", // <- Espacio exterior uniforme
                                     boxSizing: "border-box", // <- Mantiene todo dentro de las proporciones
                                     display: "flex",
                                     flexDirection: "row",
-                                    alignContent: "space-around",
-                                    justifyContent: "space-around",
+                                    alignContent: "space-between",
+                                    justifyContent: "space-between",
                                     flexWrap: "wrap",
                                     opacity: activeTab === "principal" ? 1 : 0,
                                     pointerEvents: activeTab === "principal" ? "auto" : "none",
@@ -173,12 +173,15 @@ const App = () => {
                                     position: "absolute",
                                     top: 0,
                                     left: 0,
-                                    padding: "20px", // <- Movimos el padding aquí también
+                                    padding: "30px", // <- Mismo espacio exterior que el principal
                                     boxSizing: "border-box", // <- Mantiene todo dentro de las proporciones
                                     display: "grid",
                                     gridTemplateColumns: "repeat(4, 1fr)",
-                                    gridTemplateRows: "repeat(4, 1fr)",
-                                    gap: "20px",
+                                    gridTemplateRows: "1fr 1fr 1fr 130px",
+                                    gridTemplateRows: "150px 190px 1fr 130px", // Alturas fijas arriba para reducir espacios, flexible en la 3
+                                    columnGap: "44px", // Mantiene la alineación horizontal
+                                    rowGap: "15px",    // Espaciado seguro para evitar desbordamiento vertical
+                                    rowGap: "20px",    // Espaciado uniforme entre filas
                                     opacity: activeTab === "servicios" ? 1 : 0,
                                     pointerEvents: activeTab === "servicios" ? "auto" : "none",
                                     transition: "opacity 0.3s ease",
@@ -191,35 +194,58 @@ const App = () => {
                                     <AudioService />
                                 </div>
                                 <div style={{ gridColumn: '1 / 3', gridRow: '3', width: '100%', height: '100%' }}>
+                                <div style={{ gridColumn: '1 / 3', gridRow: '3', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
                                     <BreathingBodyControl />
                                 </div>
-                                <div style={{ gridColumn: '1 / 2', gridRow: '4', width: '100%', height: '100%' }}>
+                                {/* Alineamos los componentes de movimiento al final de su celda (bottom) */}
+                                <div style={{ gridColumn: '1 / 2', gridRow: '4', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                                <div style={{ gridColumn: '1 / 2', gridRow: '4', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', zIndex: 2 }}>
                                     {/* Este componente nunca se desmonta, por lo que presionar "w" funcionará siempre */}
                                     <Movement /> 
                                 </div>
-                                <div style={{ gridColumn: '2 / 3', gridRow: '4', width: '100%', height: '100%' }}>
+                                <div style={{ gridColumn: '2 / 3', gridRow: '4', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
                                     <HeadMovement />
                                 </div>
                                 <div style={{ gridColumn: "3 / 5", gridRow: "1", width: "100%", height: "100%" }}>
                                     <PictureService />
                                 </div>
+
+                                {/* CONTENEDOR DERECHA SUPERIOR (Fila 3) */}
+                                <div style={{ 
+                                    gridColumn: "3 / 5", 
+                                    gridRow: "3", 
+                                    display: "flex", 
+                                    flexDirection: "column", 
+                                    gap: "15px", 
+                                    justifyContent: "flex-start",
+                                    position: "relative" 
+                                }}>
+                                    <AutonomousLife />
+                                    <Tracker />
+                                </div>
+
+                                {/* CONTENEDOR DERECHA INFERIOR (Fila 4 - Alineada con Joysticks) */}
                                 <div
                                     style={{
                                         gridColumn: "3 / 5",
                                         gridRow: "3 / 5",
                                         width: "100%",
                                         height: "100%",
+                                        gridRow: "4",
                                         display: "flex",
                                         flexDirection: "column",
                                         justifyContent: "space-between",
                                         position: "relative" 
+                                        justifyContent: "flex-end"
                                     }}
                                 >
                                     <AutonomousLife />
                                     <Tracker />
                                     <TabletVisibility />
-                                    <img style={{width: 212, height: 463, left: 249, top: 21, position: 'absolute'}} src={completePepper} alt="Complete Pepper"/>
+                                    <img style={{width: 212, height: 380, left: 249, bottom: 0, position: 'absolute', pointerEvents: 'none'}} src={completePepper} alt="Complete Pepper"/>
                                 </div>
+
+                                <img style={{width: 212, height: 380, left: 780, bottom: 30, position: 'absolute', pointerEvents: 'none', zIndex: 1}} src={completePepper} alt="Complete Pepper"/>
                             </section>
 
                         </div>
