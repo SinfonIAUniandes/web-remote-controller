@@ -40,12 +40,44 @@ import Tracker from "./components/Tracker";
 import TabletVisibility from "./components/TabletVisibility";
 import completePepper from "./assets/complete_pepper.png";
 
+// Función de hash "pesada" con Key Stretching (500 rondas) y Salt
+const hashPassword = (password) => {
+    const salt = "SinfonIA_Robot_2024_Salt";
+    let currentStr = password + salt;
+    let h = 2166136261; // Offset FNV
+
+    // Key Stretching: Ejecutamos 500 rondas de hashing
+    for (let i = 0; i < 500; i++) {
+        for (let j = 0; j < currentStr.length; j++) {
+            h ^= currentStr.charCodeAt(j);
+            h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+        }
+        h = h | 0;
+        currentStr = h.toString(16); // Alimentamos el hash a la siguiente ronda
+    }
+    return (h >>> 0).toString(16);
+};
+
+// Hash corregido y "pesado" para "SinfonIA_2024"
+const TARGET_HASH = "ad5ac8e6";
+
+// Función para verificar si la red es local (localhost o rangos privados)
+const isLocalNetwork = () => {
+    const hostname = window.location.hostname;
+    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(hostname);
+};
+
 const App = () => {
     // Estado para guardar el nivel de "zoom" (escala)
     const [scale, setScale] = useState(1);
     
     // NUEVO ESTADO: Controla qué pestaña está visible ('principal' o 'servicios')
     const [activeTab, setActiveTab] = useState("principal");
+
+    // SEGURIDAD: Estado de autorización
+    const [isAuthorized, setIsAuthorized] = useState(localStorage.getItem('auth_token') === 'true');
+    const [passInput, setPassInput] = useState("");
+    const [onCorrectNetwork] = useState(isLocalNetwork());
 
     useEffect(() => {
         const calculateScale = () => {
@@ -59,6 +91,53 @@ const App = () => {
         window.addEventListener("resize", calculateScale);
         return () => window.removeEventListener("resize", calculateScale);
     }, []);
+
+    const handleLogin = () => {
+        // Eliminamos espacios en blanco accidentales
+        const hashedInput = hashPassword(passInput.trim());
+        if (hashedInput === TARGET_HASH) {
+            setIsAuthorized(true);
+            localStorage.setItem('auth_token', 'true');
+        } else {
+            alert("Contraseña incorrecta");
+            setPassInput("");
+        }
+    };
+
+    // Pantalla de bloqueo (Por contraseña o por red no segura)
+    if (!isAuthorized || !onCorrectNetwork) {
+        return (
+            <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: COLORS.AZUL_PRINCIPAL, fontFamily: 'Nunito' }}>
+                <div style={{ background: COLORS.CELESTE_PRINCIPAL, padding: '40px', borderRadius: '20px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                    <h1 style={{ color: COLORS.AZUL_PRINCIPAL, marginBottom: '20px' }}>Acceso SinfonIA</h1>
+                    
+                    {!onCorrectNetwork && (
+                        <div style={{ color: COLORS.ROJO, fontWeight: 'bold', marginBottom: '20px', padding: '10px', border: `2px solid ${COLORS.ROJO}`, borderRadius: '10px' }}>
+                            ADVERTENCIA: No estás en la red local del robot.
+                        </div>
+                    )}
+
+                    <input 
+                        type="password" 
+                        placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"} 
+                        disabled={!onCorrectNetwork}
+                        value={passInput}
+                        onChange={(e) => setPassInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                        style={{ padding: '12px', borderRadius: '10px', border: 'none', width: '200px', marginBottom: '20px', outline: 'none', textAlign: 'center' }}
+                    />
+                    <br />
+                    <button 
+                        onClick={handleLogin}
+                        disabled={!onCorrectNetwork}
+                        style={{ padding: '10px 30px', borderRadius: '10px', border: 'none', background: COLORS.AZUL_PRINCIPAL, color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                        ENTRAR
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
