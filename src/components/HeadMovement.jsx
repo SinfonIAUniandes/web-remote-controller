@@ -42,75 +42,57 @@ const HeadMovement = () => {
             );
         }
     }, [ros]);
-
-    // Función para publicar los ángulos
-    const publishHead = useCallback((newPitch, newYaw) => {
-        if (!ros) return;
-
-        const headTopic = createTopic(ros, '/set_angles', 'robot_toolkit_msgs/set_angles_msg');
-
-        const message = new ROSLIB.Message({
-            names: ["HeadPitch", "HeadYaw"],
-            angles: [newPitch, newYaw],
-            fraction_max_speed: [speed, speed]
-        });
-
-        headTopic.publish(message);
-    }, [ros]);
+    
 
     const clamp = (value) => Math.max(-MAX, Math.min(MAX, value));
+    
+    const moveHead = useCallback((key) => {
+        const char = key.toLowerCase();
+        if (!['i', 'j', 'k', 'l'].includes(char)) return;
 
-    // Lógica cuando se PRESIONA una tecla (Mover cabeza e iluminar)
-    const handleKeyDown = useCallback((event) => {
-        const bannedHTMLElements = ["input", "textarea"];
-        if (bannedHTMLElements.includes(event.target.localName)) return;
-
-        const pressedKey = event.keyCode;
-        const keyChar = event.key.toLowerCase();
-        
-        // Si no es una tecla de movimiento de cabeza, ignoramos
-        if (!['i', 'j', 'k', 'l'].includes(keyChar)) return;
-
-        // Activamos visualmente la tecla
-        setActiveKeys(prev => ({ ...prev, [pressedKey]: true }));
+        // Activamos visualmente la tecla (usando el mapeo de KEYS para el estado)
+        const code = KEYS[char.toUpperCase()];
+        setActiveKeys(prev => ({ ...prev, [code]: true }));
 
         let newPitch = pitchRef.current;
         let newYaw = yawRef.current;
 
-        switch (keyChar) {
-            case 'i': // arriba
-                newPitch = clamp(pitchRef.current - STEP);
-                break;
-            case 'k': // abajo
-                newPitch = clamp(pitchRef.current + STEP);
-                break;
-            case 'j': // izquierda
-                newYaw = clamp(yawRef.current + STEP);
-                break;
-            case 'l': // derecha
-                newYaw = clamp(yawRef.current - STEP);
-                break;
-            default:
-                return;
+        switch (char) {
+            case 'i': newPitch = clamp(pitchRef.current - STEP); break;
+            case 'k': newPitch = clamp(pitchRef.current + STEP); break;
+            case 'j': newYaw = clamp(yawRef.current + STEP); break;
+            case 'l': newYaw = clamp(yawRef.current - STEP); break;
+            default: return;
         }
 
-        // Actualizamos las referencias
         pitchRef.current = newPitch;
         yawRef.current = newYaw;
 
-        // Publicamos el movimiento
-        publishHead(newPitch, newYaw);
-    }, [publishHead]);
+        if (ros) {
+            const headTopic = createTopic(ros, '/set_angles', 'robot_toolkit_msgs/set_angles_msg');
+            headTopic.publish(new ROSLIB.Message({
+                names: ["HeadPitch", "HeadYaw"],
+                angles: [newPitch, newYaw],
+                fraction_max_speed: [speed, speed]
+            }));
+        }
+    }, [ros]);
+
+    const stopHead = useCallback((key) => {
+        const code = KEYS[key.toUpperCase()];
+        setActiveKeys(prev => ({ ...prev, [code]: false }));
+    }, []);
+
+    // Lógica cuando se PRESIONA una tecla (Mover cabeza e iluminar)
+    const handleKeyDown = useCallback((event) => {
+        if (["input", "textarea"].includes(event.target.localName)) return;
+        moveHead(event.key);
+    }, [moveHead]);
 
     // Lógica cuando se SUELTA una tecla (Apagar luz)
     const handleKeyUp = useCallback((event) => {
-        const pressedKey = event.keyCode;
-        
-        if (!Object.values(KEYS).includes(pressedKey)) return;
-
-        // Desactivamos visualmente la tecla
-        setActiveKeys(prev => ({ ...prev, [pressedKey]: false }));
-    }, []);
+        stopHead(event.key);
+    }, [stopHead]);
 
     // Registro de los event listeners
     useEffect(() => {
@@ -138,7 +120,12 @@ const HeadMovement = () => {
             {/* Fila superior (Solo la tecla I centrada) */}
             <div style={{width: 180, left: 20, top: 88, position: 'absolute', justifyContent: 'center', alignItems: 'center', display: 'inline-flex'}}>
                 {/* Tecla I */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.I), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => moveHead('i')}
+                    onPointerUp={() => stopHead('i')}
+                    onPointerLeave={() => stopHead('i')}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.I), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>I</div>
                 </div>
             </div>
@@ -146,15 +133,30 @@ const HeadMovement = () => {
             {/* Fila inferior (Teclas J, K, L) */}
             <div style={{width: 180, left: 20, top: 149, position: 'absolute', justifyContent: 'space-between', alignItems: 'center', display: 'inline-flex'}}>
                 {/* Tecla J */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.J), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => moveHead('j')}
+                    onPointerUp={() => stopHead('j')}
+                    onPointerLeave={() => stopHead('j')}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.J), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>J</div>
                 </div>
                 {/* Tecla K */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.K), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => moveHead('k')}
+                    onPointerUp={() => stopHead('k')}
+                    onPointerLeave={() => stopHead('k')}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.K), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>K</div>
                 </div>
                 {/* Tecla L */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.L), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => moveHead('l')}
+                    onPointerUp={() => stopHead('l')}
+                    onPointerLeave={() => stopHead('l')}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.L), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>L</div>
                 </div>
             </div>

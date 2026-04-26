@@ -62,43 +62,34 @@ const Movement = () => {
         }
     }, [ros]);
 
-    // Lógica cuando se PRESIONA una tecla (Mover e iluminar)
-    const handleKeyDown = useCallback((event) => {
-        const bannedHTMLElements = ["input", "textarea"];
-        if (bannedHTMLElements.includes(event.target.localName)) return;
-
-        const pressedKey = event.keyCode;
-        
-        // Si no es una tecla de movimiento, ignoramos
-        if (!Object.values(KEYS).includes(pressedKey)) return;
-
-        // Activamos visualmente la tecla
-        setActiveKeys(prev => ({ ...prev, [pressedKey]: true }));
+    const startMove = useCallback((keyCode) => {
+        if (!ros) return;
+        setActiveKeys(prev => ({ ...prev, [keyCode]: true }));
 
         const cmdVel = new ROSLIB.Topic({
-            ros: ros,
+            ros,
             name: '/cmd_vel',
             messageType: 'geometry_msgs/Twist'
         });
 
-        let message = {
+        const message = {
             linear: { x: 0, y: 0, z: 0 },
             angular: { x: 0, y: 0, z: 0 }
         };
 
-        if (pressedKey === KEYS.A) {
+        if (keyCode === KEYS.A) {
             message.linear.y = baseSpeed;
-        } else if (pressedKey === KEYS.D) {
+        } else if (keyCode === KEYS.D) {
             message.linear.y = -baseSpeed;
-        } else if (pressedKey === KEYS.W) {
+        } else if (keyCode === KEYS.W) {
             message.linear.x = baseSpeed;
-        } else if (pressedKey === KEYS.S) {
+        } else if (keyCode === KEYS.S) {
             message.linear.x = -baseSpeed;
         }
 
-        if (pressedKey === KEYS.E) {
+        if (keyCode === KEYS.E) {
             message.angular.z = -baseSpeed;
-        } else if (pressedKey === KEYS.Q) {
+        } else if (keyCode === KEYS.Q) {
             message.angular.z = baseSpeed;
         }
 
@@ -106,14 +97,10 @@ const Movement = () => {
         cmdVel.publish(twist);
     }, [ros, baseSpeed]);
 
-    // Lógica cuando se SUELTA una tecla (Detener y apagar luz)
-    const handleKeyUp = useCallback((event) => {
-        const pressedKey = event.keyCode;
-        
-        if (!Object.values(KEYS).includes(pressedKey)) return;
-
+    const stopMove = useCallback((keyCode) => {
+        if (!ros) return;
         // Desactivamos visualmente la tecla
-        setActiveKeys(prev => ({ ...prev, [pressedKey]: false }));
+        setActiveKeys(prev => ({ ...prev, [keyCode]: false }));
 
         // Publicamos Twist en 0 para detener el robot por seguridad
         const cmdVel = new ROSLIB.Topic({
@@ -126,9 +113,22 @@ const Movement = () => {
             linear: { x: 0, y: 0, z: 0 },
             angular: { x: 0, y: 0, z: 0 }
         });
-        
         cmdVel.publish(stopMessage);
     }, [ros]);
+
+    const handleKeyDown = useCallback((event) => {
+        const bannedHTMLElements = ["input", "textarea"];
+        if (bannedHTMLElements.includes(event.target.localName)) return;
+        if (Object.values(KEYS).includes(event.keyCode)) {
+            startMove(event.keyCode);
+        }
+    }, [startMove]);
+
+    const handleKeyUp = useCallback((event) => {
+        if (Object.values(KEYS).includes(event.keyCode)) {
+            stopMove(event.keyCode);
+        }
+    }, [stopMove]);
 
     // Registro de los event listeners
     useEffect(() => {
@@ -154,30 +154,60 @@ const Movement = () => {
             
             <div style={{width: 160, left: 30, top: 88, position: 'absolute', justifyContent: 'space-between', alignItems: 'flex-end', display: 'inline-flex'}}>
                 {/* Tecla Q */}
-                <div style={{width: 45, height: 45, background: getKeyBackground(KEYS.Q), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.Q)}
+                    onPointerUp={() => stopMove(KEYS.Q)}
+                    onPointerLeave={() => stopMove(KEYS.Q)}
+                    style={{width: 45, height: 45, background: getKeyBackground(KEYS.Q), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 20, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>Q</div>
                 </div>
                 {/* Tecla W */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.W), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.W)}
+                    onPointerUp={() => stopMove(KEYS.W)}
+                    onPointerLeave={() => stopMove(KEYS.W)}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.W), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>W</div>
                 </div>
                 {/* Tecla E */}
-                <div style={{width: 45, height: 45, background: getKeyBackground(KEYS.E), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.E)}
+                    onPointerUp={() => stopMove(KEYS.E)}
+                    onPointerLeave={() => stopMove(KEYS.E)}
+                    style={{width: 45, height: 45, background: getKeyBackground(KEYS.E), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 20, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>E</div>
                 </div>
             </div>
 
             <div style={{width: 180, left: 20, top: 149, position: 'absolute', justifyContent: 'space-between', alignItems: 'center', display: 'inline-flex'}}>
                 {/* Tecla A */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.A), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.A)}
+                    onPointerUp={() => stopMove(KEYS.A)}
+                    onPointerLeave={() => stopMove(KEYS.A)}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.A), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>A</div>
                 </div>
                 {/* Tecla S */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.S), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.S)}
+                    onPointerUp={() => stopMove(KEYS.S)}
+                    onPointerLeave={() => stopMove(KEYS.S)}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.S), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>S</div>
                 </div>
                 {/* Tecla D */}
-                <div style={{width: 55, height: 55, background: getKeyBackground(KEYS.D), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease'}}>
+                <div 
+                    onPointerDown={() => startMove(KEYS.D)}
+                    onPointerUp={() => stopMove(KEYS.D)}
+                    onPointerLeave={() => stopMove(KEYS.D)}
+                    style={{width: 55, height: 55, background: getKeyBackground(KEYS.D), borderRadius: 15, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 10, display: 'inline-flex', transition: 'background 0.1s ease', cursor: 'pointer', touchAction: 'none'}}
+                >
                     <div style={{alignSelf: 'stretch', textAlign: 'center', justifyContent: 'center', display: 'flex', flexDirection: 'column', color: '#00214B', fontSize: 24, fontFamily: 'Nunito', fontWeight: '900', wordWrap: 'break-word'}}>D</div>
                 </div>
             </div>
