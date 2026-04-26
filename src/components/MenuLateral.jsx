@@ -12,7 +12,7 @@ import IconoSpeed from "../assets/movement_icon.svg";
 
 // 1. AÑADIMOS activeTab y setActiveTab A LAS PROPS DEL COMPONENTE
 export default function LateralMenu({ activeTab, setActiveTab }) {
-    const { ros, ipAddress, baseSpeed, setBaseSpeed } = useRos();
+    const { ros, ipAddress, setIpAddress, baseSpeed, setBaseSpeed } = useRos();
     const [volume, setVolume] = useState(50);
     const [speed, setSpeed] = useState(Math.round(baseSpeed * 100));
     const [isHoveredPrincipal, setIsHoveredPrincipal] = useState(false);
@@ -125,6 +125,15 @@ export default function LateralMenu({ activeTab, setActiveTab }) {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isVolumeDragging, isSpeedDragging]); 
+
+    const handleIpClick = () => {
+        const newIp = prompt("Introduce la nueva dirección IP del servidor ROS:", ipAddress);
+        if (newIp && newIp.trim() !== "") {
+            if (setIpAddress) {
+                setIpAddress(newIp.trim());
+            }
+        }
+    };
 
     return (
         <div
@@ -339,7 +348,18 @@ export default function LateralMenu({ activeTab, setActiveTab }) {
                     {speed}%
                 </div>
             </div>
-            <a style={{ color: COLORS.CELESTE_PRINCIPAL, fontSize: '16px', fontFamily: 'Nunito', fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK }}>{ipAddress}</a>
+            <div 
+                onClick={handleIpClick}
+                style={{ 
+                    color: COLORS.CELESTE_PRINCIPAL, 
+                    fontSize: '16px', 
+                    fontFamily: 'Nunito', 
+                    fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK,
+                    cursor: 'pointer' 
+                }}
+            >
+                {ipAddress}
+            </div>
             </div>
         </div>
     );
