@@ -21,20 +21,15 @@ const createEmptyStep = () => ({
     screen: null
 });
 
-const ScriptsCreator = () => {
+const ScriptsCreator = ({ sessionScripts, setSessionScripts }) => {
     const { ros } = useRos();
     const { getAllAnimations } = useAnimations();
 
     const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish', stepDelay: 3000 });
     const [steps, setSteps] = useState([]);
-    const [sessionScripts, setSessionScripts] = useState([]);
     const [activeSessionIdx, setActiveSessionIdx] = useState(null);
 
-    useEffect(() => {
-        setSessionScripts([{ config, steps }]);
-        setActiveSessionIdx(0);
-    }, []);
-
+    // Estados de ejecución
     const [isExecuting, setIsExecuting] = useState(false);
     const [executingIndex, setExecutingIndex] = useState(null);
     const abortRef = useRef(null);
@@ -56,6 +51,36 @@ const ScriptsCreator = () => {
     const [hoverBtn, setHoveredBtn] = useState(null);
     const [hoverModal, setHoverModal] = useState(null);
 
+    // Inicializa un script por defecto si no hay ninguno en la sesión
+    useEffect(() => {
+        if (sessionScripts.length === 0) {
+            const defaultScript = {
+                config: { name: 'mi_script', language: 'Spanish', stepDelay: 3000 },
+                steps: []
+            };
+            setSessionScripts([defaultScript]);
+            setActiveSessionIdx(0);
+            setConfig(defaultScript.config);
+            setSteps(defaultScript.steps);
+        } else if (activeSessionIdx === null && sessionScripts.length > 0) {
+            setActiveSessionIdx(0);
+            setConfig(sessionScripts[0].config);
+            setSteps(sessionScripts[0].steps);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Sincroniza el script activo con la sesión en tiempo real
+    useEffect(() => {
+        if (activeSessionIdx !== null && activeSessionIdx < sessionScripts.length) {
+            setSessionScripts(prev => {
+                const newList = [...prev];
+                newList[activeSessionIdx] = { config, steps };
+                return newList;
+            });
+        }
+    }, [config, steps, activeSessionIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Carga el árbol de animaciones
     useEffect(() => {
         const list = getAllAnimations();
         const tree = {};
@@ -191,19 +216,6 @@ const ScriptsCreator = () => {
         const a = document.createElement('a'); a.href = url; a.download = `${config.name}.json`; a.click(); URL.revokeObjectURL(url);
     };
 
-    // Sincronizar el script activo con la biblioteca de la sesión en tiempo real
-    useEffect(() => {
-        if (activeSessionIdx !== null) {
-            setSessionScripts(prev => {
-                const newList = [...prev];
-                if (newList[activeSessionIdx]) {
-                    newList[activeSessionIdx] = { config, steps };
-                }
-                return newList;
-            });
-        }
-    }, [config, steps, activeSessionIdx]);
-
     const handleLoadScript = (event) => {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
@@ -236,10 +248,9 @@ const ScriptsCreator = () => {
     };
 
     const handleSelectFromSession = (idx) => {
-        const selected = sessionScripts[idx];
         setActiveSessionIdx(idx);
-        setConfig(selected.config);
-        setSteps(selected.steps);
+        setConfig(sessionScripts[idx].config);
+        setSteps(sessionScripts[idx].steps);
     };
 
     // Estilos reutilizables
@@ -515,7 +526,7 @@ const ScriptsCreator = () => {
         <ScriptPanel 
             scripts={sessionScripts} 
             activeIdx={activeSessionIdx} 
-            onSelect={(idx) => handleSelectFromSession(idx)} 
+            onSelect={handleSelectFromSession} 
         />
         </div>
     );

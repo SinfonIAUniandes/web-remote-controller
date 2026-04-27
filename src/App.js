@@ -59,24 +59,29 @@ const hashPassword = (password) => {
     return (h >>> 0).toString(16);
 };
 
-
 const TARGET_HASH = "ad5ac8e6";
 
 // Función para verificar si la red es local (localhost o rangos privados)
 const isLocalNetwork = () => {
     const hostname = window.location.hostname;
-    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(hostname);
+    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(
+        hostname,
+    );
 };
 
 const App = () => {
     // Estado para guardar el nivel de "zoom" (escala)
     const [scale, setScale] = useState(1);
-    
+
     // NUEVO ESTADO: Controla qué pestaña está visible ('principal' o 'servicios')
     const [activeTab, setActiveTab] = useState("principal");
 
+    const [sessionScripts, setSessionScripts] = useState([]);
+
     // SEGURIDAD: Estado de autorización
-    const [isAuthorized, setIsAuthorized] = useState(localStorage.getItem('auth_token') === 'true');
+    const [isAuthorized, setIsAuthorized] = useState(
+        localStorage.getItem("auth_token") === "true",
+    );
     const [passInput, setPassInput] = useState("");
     const [onCorrectNetwork] = useState(isLocalNetwork());
 
@@ -98,7 +103,7 @@ const App = () => {
         const hashedInput = hashPassword(passInput.trim());
         if (hashedInput === TARGET_HASH) {
             setIsAuthorized(true);
-            localStorage.setItem('auth_token', 'true');
+            localStorage.setItem("auth_token", "true");
         } else {
             alert("Contraseña incorrecta");
             setPassInput("");
@@ -108,30 +113,74 @@ const App = () => {
     // Pantalla de bloqueo (Por contraseña o por red no segura)
     if (!isAuthorized || !onCorrectNetwork) {
         return (
-            <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: COLORS.AZUL_PRINCIPAL, fontFamily: 'Nunito' }}>
-                <div style={{ background: COLORS.CELESTE_PRINCIPAL, padding: '40px', borderRadius: '20px', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                    <h1 style={{ color: COLORS.AZUL_PRINCIPAL, marginBottom: '20px' }}>Acceso SinfonIA</h1>
-                    
+            <div
+                style={{
+                    height: "100vh",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    background: COLORS.AZUL_PRINCIPAL,
+                    fontFamily: "Nunito",
+                }}
+            >
+                <div
+                    style={{
+                        background: COLORS.CELESTE_PRINCIPAL,
+                        padding: "40px",
+                        borderRadius: "20px",
+                        textAlign: "center",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                    }}
+                >
+                    <h1 style={{ color: COLORS.AZUL_PRINCIPAL, marginBottom: "20px" }}>
+                        Acceso SinfonIA
+                    </h1>
+
                     {!onCorrectNetwork && (
-                        <div style={{ color: COLORS.ROJO, fontWeight: 'bold', marginBottom: '20px', padding: '10px', border: `2px solid ${COLORS.ROJO}`, borderRadius: '10px' }}>
+                        <div
+                            style={{
+                                color: COLORS.ROJO,
+                                fontWeight: "bold",
+                                marginBottom: "20px",
+                                padding: "10px",
+                                border: `2px solid ${COLORS.ROJO}`,
+                                borderRadius: "10px",
+                            }}
+                        >
                             ADVERTENCIA: No estás en la red local del robot.
                         </div>
                     )}
 
-                    <input 
-                        type="password" 
-                        placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"} 
+                    <input
+                        type="password"
+                        placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"}
                         disabled={!onCorrectNetwork}
                         value={passInput}
                         onChange={(e) => setPassInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                        style={{ padding: '12px', borderRadius: '10px', border: 'none', width: '200px', marginBottom: '20px', outline: 'none', textAlign: 'center' }}
+                        onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                        style={{
+                            padding: "12px",
+                            borderRadius: "10px",
+                            border: "none",
+                            width: "200px",
+                            marginBottom: "20px",
+                            outline: "none",
+                            textAlign: "center",
+                        }}
                     />
                     <br />
-                    <button 
+                    <button
                         onClick={handleLogin}
                         disabled={!onCorrectNetwork}
-                        style={{ padding: '10px 30px', borderRadius: '10px', border: 'none', background: COLORS.AZUL_PRINCIPAL, color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
+                        style={{
+                            padding: "10px 30px",
+                            borderRadius: "10px",
+                            border: "none",
+                            background: COLORS.AZUL_PRINCIPAL,
+                            color: "white",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                        }}
                     >
                         ENTRAR
                     </button>
@@ -195,16 +244,17 @@ const App = () => {
                         </aside>
 
                         {/* ── CONTENEDOR APILADO PARA AMBOS TABLEROS ── */}
-                        <div style={{ 
-                            position: "relative", 
-                            flex: "1", 
-                            width: "1084px", 
-                            height: "950px",
-                            border: `5px solid ${COLORS.AZUL_PRINCIPAL}`, 
-                            borderRadius: '25px',
-                            overflow: 'hidden' // <- IMPORTANTE: Evita que las esquinas de los tableros se salgan del borde redondeado
-                        }}>
-                            
+                        <div
+                            style={{
+                                position: "relative",
+                                flex: "1",
+                                width: "1084px",
+                                height: "950px",
+                                border: `5px solid ${COLORS.AZUL_PRINCIPAL}`,
+                                borderRadius: "25px",
+                                overflow: "hidden", // <- IMPORTANTE: Evita que las esquinas de los tableros se salgan del borde redondeado
+                            }}
+                        >
                             {/* TABLERO 1: PRINCIPAL */}
                             <section
                                 className="tablero-principal"
@@ -228,7 +278,13 @@ const App = () => {
                             >
                                 <div
                                     className="tablero-col-izq"
-                                    style={{ flex: "0 0 400px", display: "flex", flexDirection: "column", justifyContent: "space-around", height: "100%" }}
+                                    style={{
+                                        flex: "0 0 400px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-around",
+                                        height: "100%",
+                                    }}
                                 >
                                     <ControlSeguridad />
                                     <Animations />
@@ -237,7 +293,13 @@ const App = () => {
                                 </div>
                                 <div
                                     className="tablero-col-der"
-                                    style={{ flex: "0 0 580px", display: "flex", flexDirection: "column", justifyContent: "space-around", height: "100%" }}
+                                    style={{
+                                        flex: "0 0 580px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-around",
+                                        height: "100%",
+                                    }}
                                 >
                                     <Cameras />
                                     <PostureControl />
@@ -259,47 +321,122 @@ const App = () => {
                                     gridTemplateColumns: "repeat(4, 1fr)",
                                     gridTemplateRows: "190px 190px 190px 240px", // Alturas fijas arriba para reducir espacios, flexible en la 3
                                     columnGap: "44px", // Mantiene la alineación horizontal
-                                    rowGap: "20px",    // Espaciado uniforme entre filas
+                                    rowGap: "20px", // Espaciado uniforme entre filas
                                     opacity: activeTab === "servicios" ? 1 : 0,
                                     pointerEvents: activeTab === "servicios" ? "auto" : "none",
                                     transition: "opacity 0.3s ease",
                                 }}
                             >
-                                <div style={{ gridColumn: "1 / 3", gridRow: "1", width: "100%", height: "100%" }}>
+                                <div
+                                    style={{
+                                        gridColumn: "1 / 3",
+                                        gridRow: "1",
+                                        width: "100%",
+                                        height: "100%",
+                                    }}
+                                >
                                     <WebService />
                                 </div>
-                                <div style={{ gridColumn: '1 / 5', gridRow: '2', width: '100%', height: '100%' }}>
+                                <div
+                                    style={{
+                                        gridColumn: "1 / 5",
+                                        gridRow: "2",
+                                        width: "100%",
+                                        height: "100%",
+                                    }}
+                                >
                                     <AudioService />
                                 </div>
-                                <div style={{ gridColumn: '1 / 3', gridRow: '3', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                                <div
+                                    style={{
+                                        gridColumn: "1 / 3",
+                                        gridRow: "3",
+                                        width: "100%",
+                                        height: "100%",
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                    }}
+                                >
                                     <BreathingBodyControl />
                                 </div>
                                 {/* Alineamos los componentes de movimiento al final de su celda (bottom) */}
-                                <div style={{ gridColumn: '1 / 2', gridRow: '4', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', zIndex: 2 }}>
+                                <div
+                                    style={{
+                                        gridColumn: "1 / 2",
+                                        gridRow: "4",
+                                        width: "100%",
+                                        height: "100%",
+                                        display: "flex",
+                                        alignItems: "flex-end",
+                                        zIndex: 2,
+                                    }}
+                                >
                                     {/* Este componente nunca se desmonta, por lo que presionar "w" funcionará siempre */}
-                                    <Movement /> 
+                                    <Movement />
                                 </div>
-                                <div style={{ gridColumn: '2 / 3', gridRow: '4', width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                                <div
+                                    style={{
+                                        gridColumn: "2 / 3",
+                                        gridRow: "4",
+                                        width: "100%",
+                                        height: "100%",
+                                        display: "flex",
+                                        alignItems: "flex-end",
+                                    }}
+                                >
                                     <HeadMovement />
                                 </div>
-                                <div style={{ gridColumn: "3 / 5", gridRow: "1", width: "100%", height: "100%" }}>
+                                <div
+                                    style={{
+                                        gridColumn: "3 / 5",
+                                        gridRow: "1",
+                                        width: "100%",
+                                        height: "100%",
+                                    }}
+                                >
                                     <PictureService />
                                 </div>
 
                                 {/* CONTENEDOR DERECHA UNIFICADO (Dividido en 3 partes iguales) */}
-                                <div style={{ 
-                                    gridColumn: "3 / 5", 
-                                    gridRow: "3 / 5", 
-                                    display: "flex", 
-                                    flexDirection: "column", 
-                                    height: "100%" 
-                                }}>
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}><AutonomousLife /></div>
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}><Tracker /></div>
-                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}><TabletVisibility /></div>
+                                <div
+                                    style={{
+                                        gridColumn: "3 / 5",
+                                        gridRow: "3 / 5",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        height: "100%",
+                                    }}
+                                >
+                                    <div
+                                        style={{ flex: 1, display: "flex", alignItems: "center" }}
+                                    >
+                                        <AutonomousLife />
+                                    </div>
+                                    <div
+                                        style={{ flex: 1, display: "flex", alignItems: "center" }}
+                                    >
+                                        <Tracker />
+                                    </div>
+                                    <div
+                                        style={{ flex: 1, display: "flex", alignItems: "center" }}
+                                    >
+                                        <TabletVisibility />
+                                    </div>
                                 </div>
 
-                                <img style={{width: 212, height: 420, left: 780, bottom: 30, position: 'absolute', pointerEvents: 'none', zIndex: 1}} src={completePepper} alt="Complete Pepper"/>
+                                <img
+                                    style={{
+                                        width: 212,
+                                        height: 420,
+                                        left: 780,
+                                        bottom: 30,
+                                        position: "absolute",
+                                        pointerEvents: "none",
+                                        zIndex: 1,
+                                    }}
+                                    src={completePepper}
+                                    alt="Complete Pepper"
+                                />
                             </section>
                             <section
                                 className="Scripts"
@@ -309,8 +446,8 @@ const App = () => {
                                     position: "absolute",
                                     top: 0,
                                     left: 0,
-                                    padding: "30px", // <- Mismo espacio exterior que el principal
-                                    boxSizing: "border-box", // <- Mantiene todo dentro de las proporciones
+                                    padding: "30px",
+                                    boxSizing: "border-box",
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "30px",
@@ -321,8 +458,11 @@ const App = () => {
                             >
                                 <QuickAction />
                                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <HotWords />
-                                    <ScriptsCreator />
+                                    <HotWords scripts={sessionScripts} />
+                                    <ScriptsCreator
+                                        sessionScripts={sessionScripts}
+                                        setSessionScripts={setSessionScripts}
+                                    />
                                 </div>
                             </section>
                         </div>
@@ -363,10 +503,6 @@ const App = () => {
                     <Cabeza />
                     <h2>Ocultar pantalla tablet</h2>
                     <HideTabletScreen />
-                    <h2>Panel de script</h2>
-                    <ScriptPanel />
-                    <h2>Scripts Creator</h2>
-                    <ScriptsCreator />
                     <h2>Acciones rápidas</h2>
                     <QuickAction />
                 </section>
