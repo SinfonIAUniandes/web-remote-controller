@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { executeStep, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
-import { createService, createTopic, publishMessage } from '../services/RosManager';
+import { executeScript, executeStep, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
+import { createService, createTopic } from '../services/RosManager';
 import { useAnimations } from '../hooks/useAnimations';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
@@ -21,8 +21,6 @@ const createEmptyStep = () => ({
     speech:    '',
     animation: '',
     screen:    null,
-    isHotword: false,
-    hotword:   '',
 });
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -32,12 +30,18 @@ const ScriptHotWords = () => {
     const { getAllAnimations } = useAnimations();
 
     // Config del script
-    const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish' });
-    const [steps, setSteps]   = useState([]);
+    const [config,   setConfig] = useState({ name: 'mi_script', language: 'Spanish' });
+    const [steps,    setSteps]  = useState([]);
 
-    // Ejecución de paso individual
-    const [singleStepIndex,    setSingleStepIndex]    = useState(null);
+    // Hotword global (una sola que dispara todos los pasos)
+    const [hotword, setHotword] = useState('');
+
+    // Ejecución de pasos
+    const [isExecuting,      setIsExecuting]      = useState(false);
+    const [executingIndex,   setExecutingIndex]   = useState(null);
+    const [singleStepIndex,  setSingleStepIndex]  = useState(null);
     const [completedStepIndex, setCompletedStepIndex] = useState(null);
+    const abortRef       = useRef(null);
     const singleAbortRef = useRef(null);
 
     // Estado HotWords
@@ -74,13 +78,9 @@ const ScriptHotWords = () => {
             const detected = msg.status.toLowerCase().trim();
             console.log('HotWord detected:', detected);
 
-            // Buscar el paso que tiene esa hotword
-            const matchedStep = steps.find(
-                s => s.isHotword && s.hotword.toLowerCase().trim() === detected
-            );
-
-            if (matchedStep) {
-                handleExecuteStep(steps.indexOf(matchedStep));
+            if (detected === hotword.toLowerCase().trim()) {
+                // Ejecutar todos los pasos en secuencia
+                handleExecuteAll();
             }
         });
 
@@ -92,7 +92,7 @@ const ScriptHotWords = () => {
                 hwTopicRef.current = null;
             }
         };
-    }, [ros, hwActive, steps, config.language]);
+    }, [ros, hwActive, hotword, steps, config.language]);
 
     // ── Servicios HotWords ────────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ const ScriptHotWords = () => {
             );
         });
 
-    const sendVocabulary = (hotwordSteps) =>
+    const sendVocabulary = (word) =>
         new Promise((resolve, reject) => {
             if (!ros) return reject(new Error('ROS not connected'));
             const service = createService(
@@ -136,8 +136,8 @@ const ScriptHotWords = () => {
             );
             service.callService(
                 {
-                    words:     hotwordSteps.map(s => s.hotword.toLowerCase().trim()),
-                    threshold: hotwordSteps.map(() => 0.35),
+                    words:     [word.toLowerCase().trim()],
+                    threshold: [0.35],
                 },
                 (result) => { console.log('Vocabulary sent:', result); resolve(result); },
                 (err)    => { console.error(err); reject(err); }
@@ -156,9 +156,13 @@ const ScriptHotWords = () => {
             return;
         }
 
-        const hotwordSteps = steps.filter(s => s.isHotword && s.hotword.trim() !== '');
-        if (hotwordSteps.length === 0) {
-            alert('No hay pasos marcados como hotword con palabra definida.');
+        if (hotword.trim() === '') {
+            alert('Escribe una hotword antes de activar.');
+            return;
+        }
+
+        if (steps.length === 0) {
+            alert('Agrega al menos un paso al script antes de activar.');
             return;
         }
 
@@ -166,12 +170,12 @@ const ScriptHotWords = () => {
             await callSpeechRecognition(true, noise, eyes);
             await callUrlService(config.language);
             try {
-                await sendVocabulary(hotwordSteps);
+                await sendVocabulary(hotword);
             } catch (err) {
                 console.warn('sendVocabulary failed, retrying...', err);
                 try {
                     await callSpeechRecognition(false, noise, eyes);
-                    await sendVocabulary(hotwordSteps);
+                    await sendVocabulary(hotword);
                     await callSpeechRecognition(true, noise, eyes);
                 } catch (retryErr) {
                     console.error('Retry failed:', retryErr);
@@ -181,6 +185,30 @@ const ScriptHotWords = () => {
         } catch (err) {
             console.error('Error activating hotwords:', err);
         }
+    };
+
+    // ── Ejecución de todos los pasos ──────────────────────────────────────────
+
+    const handleExecuteAll = async () => {
+        if (!ros || isExecuting || steps.length === 0) return;
+        const ctrl = new AbortController();
+        abortRef.current = ctrl;
+        setIsExecuting(true);
+        try {
+            await executeScript(ros, steps, config.language, {
+                onStepStart: setExecutingIndex,
+                signal: ctrl.signal,
+            });
+        } finally {
+            setIsExecuting(false);
+            setExecutingIndex(null);
+            abortRef.current = null;
+        }
+    };
+
+    const handleStopAll = () => {
+        abortRef.current?.abort();
+        stopSpeech(ros);
     };
 
     // ── Ejecución de paso individual ──────────────────────────────────────────
@@ -193,8 +221,8 @@ const ScriptHotWords = () => {
         setCompletedStepIndex(null);
         try {
             const topics = {
-                speechTopic: createTopic(ros, '/speech',      'robot_toolkit_msgs/speech_msg'),
-                animTopic:   createTopic(ros, '/animations',  'robot_toolkit_msgs/animation_msg'),
+                speechTopic: createTopic(ros, '/speech',     'robot_toolkit_msgs/speech_msg'),
+                animTopic:   createTopic(ros, '/animations', 'robot_toolkit_msgs/animation_msg'),
             };
             await new Promise(r => setTimeout(r, 150));
             await executeStep(ros, steps[index], config.language, ctrl.signal, topics);
@@ -251,7 +279,7 @@ const ScriptHotWords = () => {
     // ── Carga / Descarga ──────────────────────────────────────────────────────
 
     const handleDownload = () => {
-        const data = { config, steps };
+        const data = { config, hotword, steps };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -273,11 +301,10 @@ const ScriptHotWords = () => {
                     if (!data.config || !Array.isArray(data.steps)) throw new Error();
                 } else {
                     data = parseLegacyTxt(e.target.result, file.name);
-                    // Los scripts legacy no tienen campos hotword — los añadimos vacíos
-                    data.steps = data.steps.map(s => ({ ...s, isHotword: false, hotword: '' }));
                 }
                 setConfig(data.config);
                 setSteps(data.steps);
+                if (data.hotword) setHotword(data.hotword);
                 event.target.value = '';
             } catch {
                 alert('Error al cargar el archivo. Verifica el formato (.json o .txt).');
@@ -288,15 +315,15 @@ const ScriptHotWords = () => {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    const allAnimations  = getAllAnimations();
-    const hotwordStepsCurrent = steps.filter(s => s.isHotword && s.hotword.trim() !== '');
+    const allAnimations = getAllAnimations();
+    const canActivate   = hotword.trim() !== '' && steps.length > 0;
 
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <div style={{ fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, padding: '16px' }}>
             <h2 style={{ color: COLORS.AZUL_PRINCIPAL, marginBottom: '12px' }}>
-                Script + HotWords
+                Script + HotWord
             </h2>
 
             {/* ── HEADER ── */}
@@ -313,6 +340,7 @@ const ScriptHotWords = () => {
                         style={{ ...inputStyle, width: '150px' }}
                     />
                 </div>
+
                 <div>
                     <label style={labelStyle}>Idioma</label>
                     <select
@@ -323,6 +351,25 @@ const ScriptHotWords = () => {
                         {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                     </select>
                 </div>
+
+                {/* HotWord global */}
+                <div>
+                    <label style={labelStyle}>HotWord</label>
+                    <input
+                        type="text"
+                        value={hotword}
+                        onChange={e => setHotword(e.target.value)}
+                        placeholder="ej: hola"
+                        disabled={hwActive}
+                        style={{
+                            ...inputStyle,
+                            width: '130px',
+                            backgroundColor: hwActive ? '#e9e9e9' : '#eef4ff',
+                            border: `1px solid ${COLORS.AZUL_SECUNDARIO}`,
+                        }}
+                    />
+                </div>
+
                 <div>
                     <label style={labelStyle}>Cargar script</label>
                     <input id="load-input" type="file" accept=".json,.txt"
@@ -334,6 +381,7 @@ const ScriptHotWords = () => {
                         Cargar .json / .txt
                     </button>
                 </div>
+
                 <button
                     onClick={handleDownload}
                     disabled={steps.length === 0}
@@ -343,7 +391,7 @@ const ScriptHotWords = () => {
                 </button>
             </div>
 
-            {/* ── Banner paso ejecutándose ── */}
+            {/* ── Banner paso individual ejecutándose ── */}
             {singleStepIndex !== null && (
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
@@ -380,36 +428,37 @@ const ScriptHotWords = () => {
                                 <th style={th}>Animación</th>
                                 <th style={th}>Pantalla</th>
                                 <th style={th}>Contenido pantalla</th>
-                                <th style={th}>¿HotWord?</th>
                                 <th style={th}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {steps.map((step, i) => {
+                                const isActive       = executingIndex === i;
                                 const isSingleActive = singleStepIndex === i;
                                 const isCompleted    = completedStepIndex === i;
                                 const screenType     = step.screen?.type ?? 'none';
 
                                 let rowBg = i % 2 === 0 ? '#fff' : '#f7f9ff';
+                                if (isActive)       rowBg = '#e8fff3';
                                 if (isSingleActive) rowBg = '#fffbe6';
                                 if (isCompleted)    rowBg = '#d4f7e0';
 
                                 return (
                                     <tr key={i} style={{
                                         backgroundColor: rowBg,
-                                        borderLeft: isSingleActive
-                                            ? `4px solid ${COLORS.AMARILLO}`
-                                            : isCompleted
-                                                ? `4px solid ${COLORS.VERDE}`
-                                                : step.isHotword
-                                                    ? `4px solid ${COLORS.AZUL_SECUNDARIO}`
+                                        borderLeft: isActive
+                                            ? `4px solid ${COLORS.VERDE}`
+                                            : isSingleActive
+                                                ? `4px solid ${COLORS.AMARILLO}`
+                                                : isCompleted
+                                                    ? `4px solid ${COLORS.VERDE}`
                                                     : '4px solid transparent',
                                         transition: 'background-color 0.3s',
                                     }}>
 
                                         {/* Número */}
                                         <td style={{ ...td, textAlign: 'center', fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, color: COLORS.AZUL_PRINCIPAL, minWidth: '36px' }}>
-                                            {isCompleted ? '✓' : isSingleActive ? '▶' : i + 1}
+                                            {isCompleted ? '✓' : (isActive || isSingleActive) ? '▶' : i + 1}
                                         </td>
 
                                         {/* Speech */}
@@ -482,43 +531,11 @@ const ScriptHotWords = () => {
                                             )}
                                         </td>
 
-                                        {/* ── Columna HotWord ── */}
-                                        <td style={{ ...td, minWidth: '160px' }}>
-                                            <label style={{
-                                                display: 'flex', alignItems: 'center', gap: '6px',
-                                                fontSize: '12px', fontWeight: TYPOGRAPHY.FONT_WEIGHT_SEMI_BOLD,
-                                                color: COLORS.AZUL_PRINCIPAL, cursor: 'pointer',
-                                                marginBottom: step.isHotword ? '6px' : '0',
-                                            }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={step.isHotword}
-                                                    onChange={e => updateStep(i, 'isHotword', e.target.checked)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                                ¿Es hotword?
-                                            </label>
-                                            {step.isHotword && (
-                                                <input
-                                                    type="text"
-                                                    value={step.hotword}
-                                                    onChange={e => updateStep(i, 'hotword', e.target.value)}
-                                                    placeholder="ej: hola"
-                                                    style={{
-                                                        ...inputStyle,
-                                                        width: '130px',
-                                                        border: `1px solid ${COLORS.AZUL_SECUNDARIO}`,
-                                                        backgroundColor: '#eef4ff',
-                                                    }}
-                                                />
-                                            )}
-                                        </td>
-
                                         {/* Acciones */}
                                         <td style={{ ...td, whiteSpace: 'nowrap' }}>
                                             <button
                                                 onClick={() => handleExecuteStep(i)}
-                                                disabled={singleStepIndex !== null}
+                                                disabled={isExecuting || singleStepIndex !== null}
                                                 title="Ejecutar este paso"
                                                 style={{ ...btnBase, backgroundColor: COLORS.VERDE, color: '#fff', marginRight: '3px' }}
                                             >▶</button>
@@ -551,9 +568,26 @@ const ScriptHotWords = () => {
                     style={{ ...btnBase, backgroundColor: COLORS.VERDE, color: '#fff' }}>
                     + Agregar paso
                 </button>
+
+                {!isExecuting ? (
+                    <button
+                        onClick={handleExecuteAll}
+                        disabled={steps.length === 0}
+                        style={{ ...btnBase, backgroundColor: COLORS.AZUL_SECUNDARIO, color: '#fff' }}
+                    >
+                        ▶▶ Ejecutar todo
+                    </button>
+                ) : (
+                    <button onClick={handleStopAll}
+                        style={{ ...btnBase, backgroundColor: COLORS.ROJO, color: '#fff' }}>
+                        Detener todo
+                    </button>
+                )}
+
                 {steps.length > 0 && (
                     <span style={{ fontSize: '13px', color: COLORS.AZUL_PRINCIPAL, opacity: 0.6, marginLeft: 'auto' }}>
-                        {steps.length} paso{steps.length !== 1 ? 's' : ''} · {hotwordStepsCurrent.length} hotword{hotwordStepsCurrent.length !== 1 ? 's' : ''} configurada{hotwordStepsCurrent.length !== 1 ? 's' : ''}
+                        {steps.length} paso{steps.length !== 1 ? 's' : ''}
+                        {isExecuting ? ` · ejecutando paso ${(executingIndex ?? 0) + 1}` : ''}
                     </span>
                 )}
             </div>
@@ -565,66 +599,62 @@ const ScriptHotWords = () => {
                 backgroundColor: COLORS.CELESTE_PRINCIPAL,
             }}>
                 <h3 style={{ color: COLORS.AZUL_PRINCIPAL, margin: '0 0 14px' }}>
-                    Control de HotWords
+                    Control de HotWord
                 </h3>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', marginBottom: '14px' }}>
-                    {/* Noise */}
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', color: COLORS.AZUL_PRINCIPAL }}>
                         <input type="checkbox" checked={noise} onChange={() => setNoise(!noise)} disabled={hwActive} />
                         Activar Noise
                     </label>
-
-                    {/* Eyes */}
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer', color: COLORS.AZUL_PRINCIPAL }}>
                         <input type="checkbox" checked={eyes} onChange={() => setEyes(!eyes)} disabled={hwActive} />
                         Activar Eyes
                     </label>
                 </div>
 
-                {/* Hotwords activas */}
-                {hotwordStepsCurrent.length > 0 && (
-                    <div style={{ marginBottom: '14px' }}>
-                        <p style={{ fontSize: '12px', color: COLORS.AZUL_PRINCIPAL, opacity: 0.7, margin: '0 0 6px' }}>
-                            Palabras que se van a escuchar:
-                        </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {hotwordStepsCurrent.map((s, i) => (
-                                <span key={i} style={{
-                                    backgroundColor: COLORS.AZUL_SECUNDARIO, color: '#fff',
-                                    padding: '2px 10px', borderRadius: '10px', fontSize: '12px',
-                                }}>
-                                    {s.hotword}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+                {/* Resumen de lo configurado */}
+                {hotword.trim() !== '' && (
+                    <p style={{ fontSize: '13px', color: COLORS.AZUL_PRINCIPAL, opacity: 0.8, margin: '0 0 14px' }}>
+                        Al escuchar{' '}
+                        <span style={{
+                            backgroundColor: COLORS.AZUL_SECUNDARIO, color: '#fff',
+                            padding: '2px 10px', borderRadius: '10px', fontSize: '12px',
+                        }}>
+                            {hotword}
+                        </span>
+                        {' '}→ ejecutará los {steps.length} paso{steps.length !== 1 ? 's' : ''} del script.
+                    </p>
                 )}
 
                 {/* Botón ON/OFF */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                     <button
                         onClick={toggleHotWords}
-                        disabled={!hwActive && hotwordStepsCurrent.length === 0}
+                        disabled={!hwActive && !canActivate}
                         style={{
                             ...btnBase,
                             padding: '9px 20px',
                             backgroundColor: hwActive ? COLORS.ROJO : COLORS.VERDE,
                             color: '#fff',
-                            opacity: (!hwActive && hotwordStepsCurrent.length === 0) ? 0.5 : 1,
+                            opacity: (!hwActive && !canActivate) ? 0.5 : 1,
+                            cursor: (!hwActive && !canActivate) ? 'not-allowed' : 'pointer',
                         }}
                     >
-                        {hwActive ? 'Desactivar HotWords' : 'Activar HotWords'}
+                        {hwActive ? 'Desactivar HotWord' : 'Activar HotWord'}
                     </button>
+
                     <span style={{
                         fontSize: '13px', fontWeight: TYPOGRAPHY.FONT_WEIGHT_SEMI_BOLD,
-                        color: hwActive ? COLORS.VERDE : COLORS.AZUL_PRINCIPAL, opacity: hwActive ? 1 : 0.5,
+                        color: hwActive ? COLORS.VERDE : COLORS.AZUL_PRINCIPAL,
+                        opacity: hwActive ? 1 : 0.5,
                     }}>
                         {hwActive ? '● ACTIVO' : '○ INACTIVO'}
                     </span>
-                    {!hwActive && hotwordStepsCurrent.length === 0 && (
+
+                    {!hwActive && !canActivate && (
                         <span style={{ fontSize: '12px', color: COLORS.ROJO, opacity: 0.8 }}>
-                            Marca al menos un paso como hotword para activar
+                            {hotword.trim() === '' ? 'Escribe una hotword arriba' : 'Agrega al menos un paso'}
                         </span>
                     )}
                 </div>
