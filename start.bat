@@ -19,6 +19,40 @@ echo ============================================
 echo   Iniciando Robot Pepper - Control Remoto
 echo ============================================
 echo.
+
+REM Verificar si Git Bash esta instalado
+if not exist "C:\Program Files\Git\bin\bash.exe" (
+    echo ERROR: Git Bash no encontrado en C:\Program Files\Git\bin\bash.exe
+    echo Por favor instala Git desde https://git-scm.com/
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Verificar si Node.js esta instalado
+where node >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Node.js no esta instalado
+    echo Por favor instala Node.js desde https://nodejs.org/
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Verificar si node_modules existe
+if not exist "node_modules" (
+    echo ADVERTENCIA: node_modules no encontrado
+    echo Instalando dependencias...
+    echo.
+    call npm install
+    if %ERRORLEVEL% NEQ 0 (
+        echo ERROR: Fallo la instalacion de dependencias
+        echo.
+        pause
+        exit /b 1
+    )
+)
+
 echo Robot IP: %PEPPER_IP%
 echo Usuario: %PEPPER_USER%
 echo.
