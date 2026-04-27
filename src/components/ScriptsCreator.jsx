@@ -4,6 +4,7 @@ import { executeStep, executeScript, parseLegacyTxt, stopSpeech } from '../servi
 import { createTopic } from '../services/RosManager';
 import { useAnimations } from '../services/useAnimations';
 import { COLORS, TYPOGRAPHY } from '../theme';
+import ScriptPanel from './ScriptPanel';
 
 const LANGUAGES = ['Spanish', 'English'];
 
@@ -26,6 +27,13 @@ const ScriptsCreator = () => {
 
     const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish', stepDelay: 3000 });
     const [steps, setSteps] = useState([]);
+    const [sessionScripts, setSessionScripts] = useState([]);
+    const [activeSessionIdx, setActiveSessionIdx] = useState(null);
+
+    useEffect(() => {
+        setSessionScripts([{ config, steps }]);
+        setActiveSessionIdx(0);
+    }, []);
 
     const [isExecuting, setIsExecuting] = useState(false);
     const [executingIndex, setExecutingIndex] = useState(null);
@@ -183,16 +191,55 @@ const ScriptsCreator = () => {
         const a = document.createElement('a'); a.href = url; a.download = `${config.name}.json`; a.click(); URL.revokeObjectURL(url);
     };
 
+    // Sincronizar el script activo con la biblioteca de la sesión en tiempo real
+    useEffect(() => {
+        if (activeSessionIdx !== null) {
+            setSessionScripts(prev => {
+                const newList = [...prev];
+                if (newList[activeSessionIdx]) {
+                    newList[activeSessionIdx] = { config, steps };
+                }
+                return newList;
+            });
+        }
+    }, [config, steps, activeSessionIdx]);
+
     const handleLoadScript = (event) => {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 let data = file.name.endsWith('.json') ? JSON.parse(e.target.result) : parseLegacyTxt(e.target.result, file.name);
-                setConfig(data.config); setSteps(data.steps.map(({ id: _id, ...rest }) => rest)); event.target.value = '';
+                const loadedScript = { config: data.config, steps: data.steps.map(({ id: _id, ...rest }) => rest) };
+                
+                setSessionScripts(prev => {
+                    const newList = [...prev, loadedScript];
+                    setActiveSessionIdx(newList.length - 1);
+                    return newList;
+                });
+
+                setConfig(loadedScript.config); setSteps(loadedScript.steps); event.target.value = '';
             } catch { alert('Error al cargar el archivo.'); }
         };
         reader.readAsText(file);
+    };
+
+    const handleNewScript = () => {
+        const newEmpty = { config: { name: 'nuevo_script', language: 'Spanish', stepDelay: 3000 }, steps: [] };
+        setSessionScripts(prev => {
+            const newList = [...prev, newEmpty];
+            setActiveSessionIdx(newList.length - 1);
+            return newList;
+        });
+        setConfig(newEmpty.config);
+        setSteps([]);
+    };
+
+    const handleSelectFromSession = (idx) => {
+        const selected = sessionScripts[idx];
+        setActiveSessionIdx(idx);
+        setConfig(selected.config);
+        setSteps(selected.steps);
     };
 
     // Estilos reutilizables
@@ -213,7 +260,8 @@ const ScriptsCreator = () => {
     );
 
     return (
-        <div style={{ width: '650px', height: '450px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', overflow: 'visible', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+        <div style={{ width: '650px', height: '450px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', overflow: 'visible', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
             
             {/* Título */}
             <div style={{ position: 'absolute', left: 0, top: '20px', width: '200px', height: '30px', background: COLORS.CELESTE_PRINCIPAL, borderTopRightRadius: '25px', borderBottomRightRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
@@ -240,6 +288,12 @@ const ScriptsCreator = () => {
                 </div>
                 
                 <input id="load-script-input" type="file" accept=".json,.txt" onChange={handleLoadScript} style={{ display: 'none' }} />
+                <button 
+                    onClick={handleNewScript}
+                    onMouseEnter={() => setHoveredBtn('new')} onMouseLeave={() => setHoveredBtn(null)}
+                    style={{ height: '32px', padding: '0 15px', borderRadius: '90px', border: 'none', background: hoverBtn === 'new' ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: '700', fontSize: '11px', cursor: 'pointer', transition: 'background 0.2s' }}
+                >NUEVO</button>
+
                 <button 
                     onClick={() => document.getElementById('load-script-input').click()}
                     onMouseEnter={() => setHoveredBtn('load')} onMouseLeave={() => setHoveredBtn(null)}
@@ -455,6 +509,14 @@ const ScriptsCreator = () => {
                     <span onClick={(e) => { e.stopPropagation(); handleStopSingleStep(); }} style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: '90px', color: '#fff' }}>PARAR</span>
                 </div>
             )}
+        </div>
+
+        {/* Biblioteca de Scripts */}
+        <ScriptPanel 
+            scripts={sessionScripts} 
+            activeIdx={activeSessionIdx} 
+            onSelect={(idx) => handleSelectFromSession(idx)} 
+        />
         </div>
     );
 };
