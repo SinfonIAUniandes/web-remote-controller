@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { executeScript, executeStep, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
+import { executeStep, executeScript, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
 import { createTopic } from '../services/RosManager';
-import { useAnimations } from '../services/useAnimations'; 
+import { useAnimations } from '../services/useAnimations';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
 const LANGUAGES = ['Spanish', 'English'];
@@ -27,29 +27,24 @@ const ScriptsCreator = () => {
     const [config, setConfig] = useState({ name: 'mi_script', language: 'Spanish', stepDelay: 3000 });
     const [steps, setSteps] = useState([]);
 
-    // Estado de ejecución
     const [isExecuting, setIsExecuting] = useState(false);
     const [executingIndex, setExecutingIndex] = useState(null);
     const abortRef = useRef(null);
     const dragItem = useRef(null);
-    const dragOverItem = useRef(null);
     const [dragOverIndex, setDragOverIndex] = useState(null);
 
-    const [singleStepIndex, setSingleStepIndex] = useState(null); 
-    const [completedStepIndex, setCompletedStepIndex] = useState(null); 
+    const [singleStepIndex, setSingleStepIndex] = useState(null);
+    const [completedStepIndex, setCompletedStepIndex] = useState(null);
     const singleAbortRef = useRef(null);
 
-    // Modal de paso
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState(null);
     const [modalStep, setModalStep] = useState(createEmptyStep());
-    
-    // Animaciones
+
     const [animTree, setAnimTree] = useState({});
     const [selCat, setSelCat] = useState("");
     const [selSub, setSelSub] = useState("");
 
-    // Hovers
     const [hoverBtn, setHoveredBtn] = useState(null);
     const [hoverModal, setHoverModal] = useState(null);
 
@@ -128,6 +123,34 @@ const ScriptsCreator = () => {
 
     const deleteStep = (e, index) => { e.stopPropagation(); setSteps(prev => prev.filter((_, i) => i !== index)); };
 
+    // ── Ejecución de un solo paso ─────────────────────────────────────────
+    const handleExecuteStep = async (index) => {
+        if (!ros || singleStepIndex !== null) return;
+        const ctrl = new AbortController();
+        singleAbortRef.current = ctrl;
+        setSingleStepIndex(index);
+        setCompletedStepIndex(null);
+        try {
+            const topics = {
+                speechTopic: createTopic(ros, '/speech',     'robot_toolkit_msgs/speech_msg'),
+                animTopic:   createTopic(ros, '/animations', 'robot_toolkit_msgs/animation_msg'),
+            };
+            await new Promise(r => setTimeout(r, 150));
+            await executeStep(ros, steps[index], config.language, ctrl.signal, topics);
+            if (!ctrl.signal.aborted) setCompletedStepIndex(index);
+        } finally {
+            setSingleStepIndex(null);
+            singleAbortRef.current = null;
+        }
+    };
+
+    const handleStopSingleStep = () => {
+        singleAbortRef.current?.abort();
+        stopSpeech(ros);
+        setSingleStepIndex(null);
+    };
+
+    // ── Ejecutar script completo ──────────────────────────────────────────
     const handleExecuteAll = async () => {
         if (!ros || isExecuting || steps.length === 0) return;
         const ctrl = new AbortController();
@@ -136,27 +159,21 @@ const ScriptsCreator = () => {
         try {
             await executeScript(ros, steps, config.language, {
                 onStepStart: setExecutingIndex,
-                onStepEnd: () => {}, signal: ctrl.signal, stepDelay: config.stepDelay
+                signal: ctrl.signal,
+                stepDelay: config.stepDelay
             });
-        } finally { setIsExecuting(false); setExecutingIndex(null); abortRef.current = null; }
+        } catch (err) {
+            if (!abortRef.current?.signal.aborted) console.error('Error ejecutando script:', err);
+        } finally {
+            setIsExecuting(false);
+            setExecutingIndex(null);
+            abortRef.current = null;
+        }
     };
 
-    const handleStopAll = () => { abortRef.current?.abort(); stopSpeech(ros); };
-    const handleStopSingleStep = () => { singleAbortRef.current?.abort(); stopSpeech(ros); setSingleStepIndex(null); };
-
-    const handleExecuteStep = async (index) => {
-        if (!ros || singleStepIndex !== null) return;
-        const ctrl = new AbortController(); singleAbortRef.current = ctrl;
-        setSingleStepIndex(index); setCompletedStepIndex(null);
-        try {
-            const topics = {
-                speechTopic: createTopic(ros, '/speech', 'robot_toolkit_msgs/speech_msg'),
-                animTopic: createTopic(ros, '/animations', 'robot_toolkit_msgs/animation_msg')
-            };
-            await new Promise(r => setTimeout(r, 150));
-            await executeStep(ros, steps[index], config.language, ctrl.signal, topics);
-            if (!ctrl.signal.aborted) setCompletedStepIndex(index);
-        } finally { setSingleStepIndex(null); singleAbortRef.current = null; }
+    const handleStopAll = () => {
+        abortRef.current?.abort();
+        stopSpeech(ros);
     };
 
     const handleDownload = () => {
@@ -178,11 +195,10 @@ const ScriptsCreator = () => {
         reader.readAsText(file);
     };
 
-    // Estilos alineados
+    // Estilos reutilizables
     const inputStyle = { background: COLORS.CELESTE_PRINCIPAL, borderRadius: '6px', border: 'none', padding: '0 12px', height: '32px', fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontSize: '13px', color: COLORS.AZUL_PRINCIPAL, outline: 'none', width: '100%', boxSizing: 'border-box' };
     const labelStyle = { color: COLORS.CELESTE_PRINCIPAL, fontSize: '13px', fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: '700', marginBottom: '6px', display: 'block' };
 
-    // Fila independiente para los 3 puntos (actúa como puente visual en las animaciones)
     const DotsRow = () => (
         <div style={{ display: 'flex', gap: '15px', height: '14px', margin: '2px 0' }}>
             <div style={{ width: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -199,14 +215,14 @@ const ScriptsCreator = () => {
     return (
         <div style={{ width: '650px', height: '450px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', overflow: 'visible', boxSizing: 'border-box' }}>
             
-            {/* Etiqueta Título Principal */}
+            {/* Título */}
             <div style={{ position: 'absolute', left: 0, top: '20px', width: '200px', height: '30px', background: COLORS.CELESTE_PRINCIPAL, borderTopRightRadius: '25px', borderBottomRightRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
                 <span style={{ fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: '700', fontSize: '16px', color: COLORS.AZUL_PRINCIPAL }}>
                     Creador de Scripts
                 </span>
             </div>
 
-            {/* Configuración Rápida */}
+            {/* Configuración rápida */}
             <div style={{ position: 'absolute', top: '70px', left: '30px', right: '30px', display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
                     <label style={{ ...labelStyle, fontSize: '11px', textTransform: 'uppercase' }}>NOMBRE</label>
@@ -237,7 +253,7 @@ const ScriptsCreator = () => {
                 >GUARDAR</button>
             </div>
 
-            {/* Tabla Principal */}
+            {/* Tabla de pasos */}
             <div style={{ position: 'absolute', top: '135px', left: '20px', right: '20px', height: '235px', overflowY: 'auto', background: 'rgba(207, 221, 252, 0.03)', borderRadius: '10px' }}>
                 {steps.length === 0 ? (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: COLORS.CELESTE_PRINCIPAL, opacity: 0.6, fontSize: '14px', fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, border: '2px dashed rgba(207,221,252,0.15)', borderRadius: '10px', margin: '5px', boxSizing: 'border-box' }}>
@@ -257,10 +273,21 @@ const ScriptsCreator = () => {
                             {steps.map((step, i) => {
                                 const isCurrent = executingIndex === i || singleStepIndex === i;
                                 const isDragOver = dragOverIndex === i;
+                                const borderBottomStyle = isDragOver && dragItem.current < i
+                                    ? `2px dashed ${COLORS.CELESTE_PRINCIPAL}`
+                                    : isDragOver && dragItem.current > i
+                                        ? 'none'
+                                        : '1px solid rgba(207, 221, 252, 0.05)';
                                 return (
                                     <tr 
                                         key={i} draggable={!isExecuting} onDragStart={(e) => handleDragStart(e, i)} onDragOver={(e) => handleDragOver(e, i)} onDrop={(e) => handleDrop(e, i)} onDragEnd={handleDragEnd}
-                                        style={{ background: isCurrent ? 'rgba(143, 138, 249, 0.15)' : (isDragOver ? 'rgba(255, 255, 255, 0.05)' : 'transparent'), cursor: isExecuting ? 'default' : 'grab', borderTop: isDragOver && dragItem.current > i ? `2px dashed ${COLORS.CELESTE_PRINCIPAL}` : 'none', borderBottom: isDragOver && dragItem.current < i ? `2px dashed ${COLORS.CELESTE_PRINCIPAL}` : 'none', borderBottom: '1px solid rgba(207, 221, 252, 0.05)', transition: 'background 0.2s' }}
+                                        style={{
+                                            background: isCurrent ? 'rgba(143, 138, 249, 0.15)' : (isDragOver ? 'rgba(255, 255, 255, 0.05)' : 'transparent'),
+                                            cursor: isExecuting ? 'default' : 'grab',
+                                            borderTop: isDragOver && dragItem.current > i ? `2px dashed ${COLORS.CELESTE_PRINCIPAL}` : 'none',
+                                            borderBottom: borderBottomStyle,
+                                            transition: 'background 0.2s'
+                                        }}
                                     >
                                         <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: isCurrent ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL }}>
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -290,7 +317,7 @@ const ScriptsCreator = () => {
                 )}
             </div>
 
-            {/* Footer Acciones */}
+            {/* Footer con botones principales */}
             <div style={{ position: 'absolute', bottom: '15px', left: '30px', right: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button 
                     onClick={() => openModal()}
@@ -315,25 +342,21 @@ const ScriptsCreator = () => {
                 </div>
             </div>
 
-            {/* --- MODAL REESTILIZADO (GRID 3x2) --- */}
+            {/* Modal para añadir/editar paso */}
             {isModalOpen && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
                     <div style={{ width: '650px', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', position: 'relative', padding: '70px 40px 30px 40px', boxSizing: 'border-box', boxShadow: '0 15px 35px rgba(0,0,0,0.4)' }}>
                         
-                        {/* Título del Modal */}
                         <div style={{ position: 'absolute', left: 0, top: '20px', width: '200px', height: '30px', background: COLORS.CELESTE_PRINCIPAL, borderTopRightRadius: '25px', borderBottomRightRadius: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             <span style={{ color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: '700', fontSize: '16px' }}>
                                 {editingIndex !== null ? 'Editar Paso' : 'Nuevo Paso'}
                             </span>
                         </div>
 
-                        {/* Botón Cerrar (X) */}
                         <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '15px', right: '25px', background: 'none', border: 'none', color: COLORS.CELESTE_PRINCIPAL, fontSize: '28px', cursor: 'pointer', opacity: 0.7, transition: 'opacity 0.2s' }} onMouseEnter={e => e.target.style.opacity=1} onMouseLeave={e => e.target.style.opacity=0.7}>×</button>
 
-                        {/* Grid Contenedor (3 filas x 2 columnas) */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto auto', gap: '25px 30px' }}>
                             
-                            {/* [Fila 1 y 2] Columna Izquierda: Voz de Pepper */}
                             <div style={{ gridColumn: '1', gridRow: '1 / span 2', display: 'flex', flexDirection: 'column' }}>
                                 <label style={labelStyle}>Voz de Pepper</label>
                                 <textarea 
@@ -344,7 +367,6 @@ const ScriptsCreator = () => {
                                 />
                             </div>
 
-                            {/* [Fila 1 y 2] Columna Derecha: Animaciones */}
                             <div style={{ gridColumn: '2', gridRow: '1 / span 2', display: 'flex', flexDirection: 'column' }}>
                                 <label style={labelStyle}>Animación</label>
                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
@@ -391,7 +413,6 @@ const ScriptsCreator = () => {
                                 </div>
                             </div>
 
-                            {/* [Fila 3] Columna Izquierda: Tipo de pantalla */}
                             <div style={{ gridColumn: '1', gridRow: '3', display: 'flex', flexDirection: 'column' }}>
                                 <label style={labelStyle}>Tipo de pantalla</label>
                                 <select value={modalStep.screen?.type || 'none'} onChange={e => setModalStep({...modalStep, screen: e.target.value === 'none' ? null : { type: e.target.value, content: "" }})} style={inputStyle}>
@@ -399,7 +420,6 @@ const ScriptsCreator = () => {
                                 </select>
                             </div>
 
-                            {/* [Fila 3] Columna Derecha: Contenido URL */}
                             <div style={{ gridColumn: '2', gridRow: '3', display: 'flex', flexDirection: 'column' }}>
                                 {modalStep.screen && modalStep.screen.type !== 'subtitle' && modalStep.screen.type !== 'none' ? (
                                     <>
@@ -411,7 +431,6 @@ const ScriptsCreator = () => {
 
                         </div>
 
-                        {/* Botones del Modal */}
                         <div style={{ marginTop: '35px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
                             <button 
                                 onClick={() => setIsModalOpen(false)}
@@ -429,7 +448,7 @@ const ScriptsCreator = () => {
                 </div>
             )}
 
-            {/* Alerta flotante de ejecución paso a paso */}
+            {/* Alerta de ejecución de paso único */}
             {singleStepIndex !== null && (
                 <div style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(143, 138, 249, 0.95)', padding: '6px 16px', borderRadius: '90px', color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontSize: '12px', fontWeight: '700', zIndex: 10, display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
                     EJECUTANDO PASO {singleStepIndex + 1}...
