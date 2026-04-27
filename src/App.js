@@ -320,7 +320,7 @@ const App = () => {
                                 }}
                             >
                                 <QuickAction />
-                                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <HotWords />
                                     <ScriptsCreator />
                                 </div>

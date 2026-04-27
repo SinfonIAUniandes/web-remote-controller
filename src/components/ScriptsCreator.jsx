@@ -261,7 +261,7 @@ const ScriptsCreator = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-        <div style={{ width: '650px', height: '450px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', overflow: 'visible', boxSizing: 'border-box', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
+        <div style={{ width: '630px', height: '450px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, borderRadius: '25px', overflow: 'visible', boxSizing: 'border-box' }}>
             
             {/* Título */}
             <div style={{ position: 'absolute', left: 0, top: '20px', width: '200px', height: '30px', background: COLORS.CELESTE_PRINCIPAL, borderTopRightRadius: '25px', borderBottomRightRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>

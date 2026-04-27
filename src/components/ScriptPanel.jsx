@@ -7,15 +7,14 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }) => {
 
     return (
         <div style={{
-            width: '650px',
-            height: '200px',                  // altura total reducida
+            width: '630px',
+            height: '230px',                  // altura total reducida
             background: COLORS.AZUL_PRINCIPAL,
             borderRadius: '25px',
             marginTop: '20px',
             position: 'relative',
             overflow: 'hidden',
-            boxSizing: 'border-box',
-            border: `1px solid rgba(207, 221, 252, 0.1)`
+            boxSizing: 'border-box'
         }}>
             {/* Etiqueta título */}
             <div style={{
@@ -38,7 +37,7 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }) => {
                     fontSize: '13px',
                     color: COLORS.AZUL_PRINCIPAL
                 }}>
-                    Scripts en Sesión
+                    Panel de Scripts
                 </span>
             </div>
 
@@ -46,7 +45,7 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }) => {
             <div style={{
                 marginTop: '42px',              // espacio para el título
                 padding: '0 25px 10px',
-                height: '132px',               // 2 filas * 60px + 12px gap
+                height: '140px',              
                 overflowY: 'auto',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
