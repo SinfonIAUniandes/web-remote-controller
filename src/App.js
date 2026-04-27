@@ -19,7 +19,6 @@ import Cabeza from "./components/Cabeza";
 import ScriptPanel from "./components/ScriptPanel";
 import PostureControl from "./components/PostureControl";
 import ScriptsCreator from "./components/ScriptsCreator";
-import QuickActions from "./components/QuickActions";
 import Texto from "./components/Texto";
 import ControlSeguridad from "./components/ControlSeguridad";
 import LateralMenu from "./components/MenuLateral";
@@ -40,6 +39,7 @@ import Tracker from "./components/Tracker";
 import TabletVisibility from "./components/TabletVisibility";
 import completePepper from "./assets/complete_pepper.png";
 import HotWords from "./components/HotWords";
+import QuickAction from "./components/QuickAction";
 
 // Función de hash "pesada" con Key Stretching (500 rondas) y Salt
 const hashPassword = (password) => {
@@ -312,11 +312,14 @@ const App = () => {
                                     padding: "30px", // <- Mismo espacio exterior que el principal
                                     boxSizing: "border-box", // <- Mantiene todo dentro de las proporciones
                                     display: "flex",
+                                    flexDirection: "column",
+                                    gap: "30px",
                                     opacity: activeTab === "scripts" ? 1 : 0,
                                     pointerEvents: activeTab === "scripts" ? "auto" : "none",
                                     transition: "opacity 0.3s ease",
                                 }}
                             >
+                                <QuickAction />
                                 <HotWords />
                             </section>
                         </div>
@@ -362,7 +365,7 @@ const App = () => {
                     <h2>Scripts Creator</h2>
                     <ScriptsCreator />
                     <h2>Acciones rápidas</h2>
-                    <QuickActions />
+                    <QuickAction />
                 </section>
             </main>
         </div>
