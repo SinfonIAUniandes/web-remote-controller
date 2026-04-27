@@ -25,6 +25,7 @@ import ControlSeguridad from './components/ControlSeguridad';
 import LateralMenu from './components/MenuLateral';
 import Animations from './components/Animations';
 import HotWords from './components/HotWords';
+import ScriptHotWords from './components/ScriptHotWords';
 import './App.css';
 import './fonts.css';
 import Led from './components/Led';
@@ -97,6 +98,8 @@ const App = () => {
                     <ScriptsCreator />
                     <h2>Acciones rápidas</h2>
                     <QuickActions />
+                    <h2>Script Hot Words</h2>
+                    <ScriptHotWords />
                 </section>
             </main>
         </div>
