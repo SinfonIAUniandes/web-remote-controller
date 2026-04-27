@@ -167,15 +167,33 @@ const Cameras = () => {
                 <div 
                     onClick={() => setFullScreenCamera(null)} 
                     style={{
-                        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                        position: 'fixed', 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0,
                         backgroundColor: 'rgba(0, 21, 56, 0.9)', 
-                        zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        zIndex: 10000, 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
                         backdropFilter: 'blur(5px)' 
                     }}
                 >
                     <div 
                         onClick={(e) => e.stopPropagation()} 
-                        style={{ position: 'relative', width: '80%', height: '80%', background: '#000', borderRadius: 20, overflow: 'hidden', border: `2px solid ${COLORS.CELESTE_PRINCIPAL}` }}
+                        style={{ 
+                            position: 'relative', 
+                            width: '90vw', 
+                            height: '80vh', 
+                            background: '#000', 
+                            borderRadius: 20, 
+                            overflow: 'hidden', 
+                            border: `2px solid ${COLORS.CELESTE_PRINCIPAL}`,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                        }}
                     >
                         {/* Botón de cerrar */}
                         <button 

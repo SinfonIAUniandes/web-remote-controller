@@ -83,8 +83,14 @@ const InteractiveColorWheel = ({ left, top, color, onChange }) => {
         if (!wheelRef.current) return;
         const rect = wheelRef.current.getBoundingClientRect();
         
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // Calculamos la posición normalizada (0 a 1) respecto al tamaño actual en pantalla
+        // Esto elimina el error producido por transform: scale()
+        const nx = (e.clientX - rect.left) / rect.width;
+        const ny = (e.clientY - rect.top) / rect.height;
+
+        // Mapeamos a nuestro sistema de coordenadas interno de 200x200
+        const x = nx * 200;
+        const y = ny * 200;
         
         const cx = 100;
         const cy = 100;

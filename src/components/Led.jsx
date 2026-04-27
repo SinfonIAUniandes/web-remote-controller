@@ -24,7 +24,7 @@ const Led = () => {
 
     // Estados para recordar la configuración al cerrar los modales
     const [faceState, setFaceState] = useState({ left: '#FFFFFF', right: '#FFFFFF', isLeftOn: true, isRightOn: true });
-    const [chestState, setChestState] = useState({ left: '#FFFFFF', right: '#FFFFFF', isLeftOn: true, isRightOn: true });
+    const [chestState, setChestState] = useState({ color: '#FFFFFF', isOn: true });
     // Nuevo estado para las orejas
     const [earState, setEarState] = useState({ color: '#0000FF', isLeftOn: true, isRightOn: true });
     // Estado para recordar la configuración general
@@ -54,7 +54,7 @@ const Led = () => {
 
     const handleChestSave = (newState) => {
         setChestState(newState);
-        publishLedColor('ChestLeds', newState.isLeftOn ? newState.left : '#000000');
+        publishLedColor('ChestLeds', newState.isOn ? newState.color : '#000000');
         setIsChestModalOpen(false);
     };
 
@@ -80,7 +80,7 @@ const Led = () => {
 
         // Sincronizamos las memorias de los otros modales
         setFaceState({ left: newState.color, right: newState.color, isLeftOn: newState.isOn, isRightOn: newState.isOn });
-        setChestState({ left: newState.color, right: newState.color, isLeftOn: newState.isOn, isRightOn: newState.isOn });
+        setChestState({ color: newState.color, isOn: newState.isOn });
         // También sincronizamos la memoria del modal de orejas
         setEarState({ color: newState.color, isLeftOn: newState.isOn, isRightOn: newState.isOn });
 

@@ -45,8 +45,28 @@ const FaceModal = ({ isOpen, onClose, onSave, initialState }) => {
                 <input type="text" value={rightFaceColor} onChange={(e) => setRightFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 72, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
                 <input type="text" value={leftFaceColor} onChange={(e) => setLeftFaceColor(e.target.value)} style={{ width: 155, height: 30, left: 517, top: 242, position: 'absolute', background: COLORS.CELESTE_PRINCIPAL, borderRadius: 10, color: COLORS.AZUL_PRINCIPAL, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL, fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD, border: 'none', textAlign: 'center', outline: 'none' }} />
 
-                <div onClick={() => setIsLeftFaceOn(!isLeftFaceOn)} style={{ width: 51.40, height: 49.41, left: 284, top: 121.59, position: 'absolute', transform: 'rotate(-4deg)', transformOrigin: 'top left', background: isRightFaceOn ? hexToRgba(rightFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isRightFaceOn ? rightFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
-                <div onClick={() => setIsRightFaceOn(!isRightFaceOn)} style={{ width: 51, height: 50, left: 366, top: 118, position: 'absolute', background: isLeftFaceOn ? hexToRgba(leftFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', outline: `2.50px ${isLeftFaceOn ? leftFaceColor : '#000'} solid`, outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' }} />
+                {/* Ojo Derecho del Robot (Izquierda de la pantalla) */}
+                <div 
+                    onClick={() => setIsRightFaceOn(!isRightFaceOn)} 
+                    style={{ 
+                        width: 51.40, height: 49.41, left: 284, top: 121.59, position: 'absolute', 
+                        transform: 'rotate(-4deg)', transformOrigin: 'top left', 
+                        background: isRightFaceOn ? hexToRgba(rightFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', 
+                        outline: `2.50px ${isRightFaceOn ? rightFaceColor : '#000'} solid`, 
+                        outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' 
+                    }} 
+                />
+                
+                {/* Ojo Izquierdo del Robot (Derecha de la pantalla) */}
+                <div 
+                    onClick={() => setIsLeftFaceOn(!isLeftFaceOn)} 
+                    style={{ 
+                        width: 51, height: 50, left: 366, top: 118, position: 'absolute', 
+                        background: isLeftFaceOn ? hexToRgba(leftFaceColor, 0.5) : 'rgba(0, 0, 0, 0.8)', 
+                        outline: `2.50px ${isLeftFaceOn ? leftFaceColor : '#000'} solid`, 
+                        outlineOffset: '-1.25px', cursor: 'pointer', transition: 'all 0.2s' 
+                    }} 
+                />
 
                 {/* BOTÓN GUARDAR CON HOVER */}
                 <div 

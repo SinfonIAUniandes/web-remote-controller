@@ -5,18 +5,14 @@ const RosContext = createContext();
 
 export const RosProvider = ({ children }) => {
     const [ros, setRos] = useState(null);
-    const [rosUrl, setRosUrl] = useState('ws://localhost:9090');
-    // 👇 NUEVO: Creamos un estado para guardar solo la IP limpia
-    const [ipAddress, setIpAddress] = useState('localhost');
+    const [ipAddress, setIpAddress] = useState(window.location.hostname);
+    const [rosUrl, setRosUrl] = useState(`ws://${window.location.hostname}:9090`);
     const [baseSpeed, setBaseSpeed] = useState(0.5);
 
+    // Actualiza rosUrl cuando ipAddress cambie (ya sea al inicio o por el menú)
     useEffect(() => {
-        const userIp = prompt("Please enter the server IP address (default is localhost):", "localhost");
-        if (userIp) {
-            setRosUrl(`ws://${userIp}:9090`);
-            setIpAddress(userIp);
-        }
-    }, []);    
+        setRosUrl(`ws://${ipAddress}:9090`);
+    }, [ipAddress]);
 
     const connect = (url_param) => {
         const rosInstance = new ROSLIB.Ros({ url: url_param });
@@ -41,7 +37,7 @@ export const RosProvider = ({ children }) => {
     }, [rosUrl]);
 
     return (
-        <RosContext.Provider value={{ ros, ipAddress, baseSpeed, setBaseSpeed }}>
+        <RosContext.Provider value={{ ros, ipAddress, setIpAddress, baseSpeed, setBaseSpeed }}>
             {children}
         </RosContext.Provider>
     );
