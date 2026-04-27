@@ -77,7 +77,7 @@ export default function LateralMenu({ activeTab, setActiveTab }) {
             const rect = slider.getBoundingClientRect();
             const clientX = event.touches ? event.touches[0].clientX : event.clientX;
             const x = clientX - rect.left;
-            const width = slider.clientWidth;
+            const width = rect.width;
             const newValue = Math.round((x / width) * 100);
             updateFunction(newValue);
         }
@@ -268,10 +268,11 @@ export default function LateralMenu({ activeTab, setActiveTab }) {
                 >
                     <div style={{
                         width: '100%',
-                        height: '8px',
+                        height: '10px',
                         background: '#00214B', 
                         borderRadius: '90px',
-                        border: '5px solid #CFDDFC'
+                        border: '2px solid #CFDDFC',
+                        boxSizing: 'border-box'
                     }}>
                     </div>
                     <div style={{
@@ -318,10 +319,11 @@ export default function LateralMenu({ activeTab, setActiveTab }) {
                 >
                     <div style={{
                         width: '100%',
-                        height: '8px',
+                        height: '10px',
                         background: '#00214B', 
                         borderRadius: '90px',
-                        border: '5px solid #CFDDFC'
+                        border: '2px solid #CFDDFC',
+                        boxSizing: 'border-box'
                     }}>
                     </div>
                     <div style={{

@@ -219,19 +219,22 @@ const App = () => {
                         display: "flex",
                         justifyContent: "center",
                         position: "relative",
+                        overflow: "hidden"
                     }}
                 >
                     <div
                         className="top-section"
                         style={{
-                            transform: `scale(${scale})`,
-                            transformOrigin: "top center",
                             display: "flex",
                             flexDirection: "row",
                             gap: "30px",
                             alignItems: "flex-start",
                             width: "fit-content",
                             height: "950px",
+                            transform: `scale(${scale})`,
+                            transformOrigin: "top center",
+                            backfaceVisibility: "hidden",
+                            WebkitFontSmoothing: "antialiased"
                         }}
                     >
                         {/* ── MENÚ LATERAL ── */}
