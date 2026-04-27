@@ -39,6 +39,7 @@ import AutonomousLife from "./components/AutonomousLife";
 import Tracker from "./components/Tracker";
 import TabletVisibility from "./components/TabletVisibility";
 import completePepper from "./assets/complete_pepper.png";
+import HotWords from "./components/HotWords";
 
 // Función de hash "pesada" con Key Stretching (500 rondas) y Salt
 const hashPassword = (password) => {
@@ -300,7 +301,24 @@ const App = () => {
 
                                 <img style={{width: 212, height: 420, left: 780, bottom: 30, position: 'absolute', pointerEvents: 'none', zIndex: 1}} src={completePepper} alt="Complete Pepper"/>
                             </section>
-
+                            <section
+                                className="Scripts"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    padding: "30px", // <- Mismo espacio exterior que el principal
+                                    boxSizing: "border-box", // <- Mantiene todo dentro de las proporciones
+                                    display: "flex",
+                                    opacity: activeTab === "scripts" ? 1 : 0,
+                                    pointerEvents: activeTab === "scripts" ? "auto" : "none",
+                                    transition: "opacity 0.3s ease",
+                                }}
+                            >
+                                <HotWords />
+                            </section>
                         </div>
                     </div>
                 </div>
