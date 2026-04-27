@@ -52,8 +52,15 @@ const InteractiveBluePicker = ({ width = 250, height = 150, left, top, color, on
     const handlePointerEvent = (e) => {
         if (!pickerRef.current) return;
         const rect = pickerRef.current.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
+
+        // Calculamos la posición normalizada (0 a 1) respecto al tamaño actual en pantalla.
+        // Esto elimina el error de desfase producido por el transform: scale() en el App.js.
+        const nx = (e.clientX - rect.left) / rect.width;
+        const ny = (e.clientY - rect.top) / rect.height;
+
+        // Mapeamos de vuelta al sistema de coordenadas interno del componente.
+        let x = nx * width;
+        let y = ny * height;
 
         // Limitar el puntero dentro de la caja
         x = Math.max(0, Math.min(x, width));
