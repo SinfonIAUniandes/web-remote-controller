@@ -24,6 +24,7 @@ import PostureControl from './components/PostureControl'
 import ScriptsCreator from './components/ScriptsCreator';
 import QuickActions from './components/QuickActions';
 import HotWords from './components/HotWords';
+import ScriptHotWords from './components/ScriptHotWord';
 import './App.css';
 
 const App = () => {
@@ -75,6 +76,9 @@ const App = () => {
             <QuickActions />
             <h1>Hot Words</h1>
             <HotWords/>
+            <h1> ScriptHotWords</h1>
+            <ScriptHotWords/>
+                
         </div>
     );
 };
