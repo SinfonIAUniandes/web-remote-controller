@@ -85,12 +85,19 @@ const HeadMovement = () => {
 
     // Lógica cuando se PRESIONA una tecla (Mover cabeza e iluminar)
     const handleKeyDown = useCallback((event) => {
-        if (["input", "textarea"].includes(event.target.localName)) return;
+        const isInput = ["input", "textarea", "select"].includes(event.target.localName) || 
+                        event.target.isContentEditable;
+        if (isInput || event.ctrlKey || event.altKey || event.metaKey) return;
+
         moveHead(event.key);
     }, [moveHead]);
 
     // Lógica cuando se SUELTA una tecla (Apagar luz)
     const handleKeyUp = useCallback((event) => {
+        const isInput = ["input", "textarea", "select"].includes(event.target.localName) || 
+                        event.target.isContentEditable;
+        if (isInput) return;
+
         stopHead(event.key);
     }, [stopHead]);
 

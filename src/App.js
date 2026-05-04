@@ -64,7 +64,7 @@ const TARGET_HASH = "ad5ac8e6";
 // Función para verificar si la red es local (localhost o rangos privados)
 const isLocalNetwork = () => {
     const hostname = window.location.hostname;
-    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(
+    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^157\.253\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(
         hostname,
     );
 };
@@ -471,8 +471,8 @@ const App = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* ── PARTE INFERIOR INTACTA ── */}
+                
+                {/* ── PARTE INFERIOR INTACTA ── 
                 <section
                     className="seccion-extra"
                     style={{ width: "100%", maxWidth: "1084px", marginTop: "60px" }}
@@ -509,6 +509,7 @@ const App = () => {
                     <h2>Acciones rápidas</h2>
                     <QuickAction />
                 </section>
+                */}
             </main>
         </div>
     );

@@ -117,14 +117,20 @@ const Movement = () => {
     }, [ros]);
 
     const handleKeyDown = useCallback((event) => {
-        const bannedHTMLElements = ["input", "textarea"];
-        if (bannedHTMLElements.includes(event.target.localName)) return;
+        const isInput = ["input", "textarea", "select"].includes(event.target.localName) || 
+                        event.target.isContentEditable;
+        if (isInput || event.ctrlKey || event.altKey || event.metaKey) return;
+
         if (Object.values(KEYS).includes(event.keyCode)) {
             startMove(event.keyCode);
         }
     }, [startMove]);
 
     const handleKeyUp = useCallback((event) => {
+        const isInput = ["input", "textarea", "select"].includes(event.target.localName) || 
+                        event.target.isContentEditable;
+        if (isInput) return;
+
         if (Object.values(KEYS).includes(event.keyCode)) {
             stopMove(event.keyCode);
         }

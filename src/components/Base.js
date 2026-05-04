@@ -49,9 +49,11 @@ const Base = () => {
     }, [ros]);
 
     function handleKeyPress(event) {
-        const bannedHTMLElements = ["input", "textarea"];
-        if (bannedHTMLElements.includes(event.target.localName))
+        const isInput = ["input", "textarea", "select"].includes(event.target.localName) || 
+                        event.target.isContentEditable;
+        if (isInput || event.ctrlKey || event.altKey || event.metaKey) {
             return;
+        }
 
         var cmdVel = new ROSLIB.Topic({
             ros: ros,
