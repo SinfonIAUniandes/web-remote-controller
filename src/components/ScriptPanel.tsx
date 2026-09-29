@@ -28,7 +28,8 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }: ScriptPanelProps) => {
     return (
         <div
             style={themeVars}
-            className="relative mt-5 box-border h-[230px] w-[630px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]"
+            // className="relative mt-5 box-border h-[230px] w-[630px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]"
+            className="relative mt-5 box-border h-[230px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]"
         >
             {/* Etiqueta título */}
             <div className="absolute left-0 top-3 z-[2] flex h-[26px] w-[min(180px,90%)] items-center justify-center rounded-r-[25px] bg-[var(--celeste)]">

@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createService, callService } from '../services/RosManager';
 import agacharse from '../assets/agacharse.svg';
 import pararse from '../assets/pararse.svg';
 
+// Variables CSS alimentadas desde COLORS/TYPOGRAPHY para usarlas en clases de Tailwind
+const themeVars = {
+    '--azul': COLORS.AZUL_PRINCIPAL,
+    '--celeste': COLORS.CELESTE_PRINCIPAL,
+    '--azul-sec': COLORS.AZUL_SECUNDARIO,
+    '--font': TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
+} as CSSProperties;
+
 const PostureControl = () => {
     const { ros } = useRos();
-    const [isHoveredAgacharse, setIsHoveredAgacharse] = useState(false);
-    const [isHoveredPararse, setIsHoveredPararse] = useState(false);
     const postureService = ros
         ? createService(
             ros,
@@ -54,136 +61,42 @@ const PostureControl = () => {
     };
 
     return (
-        <div style={{
-            width: '560px',
-            height: '65px',
-            background: COLORS.AZUL_PRINCIPAL,   // ← corregido
-            borderRadius: '20px',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            overflow: 'visible',
-        }}>
+        // <div style={themeVars} className="relative w-[560px] max-w-full overflow-visible rounded-[20px] bg-[var(--azul)]">
+        <div style={themeVars} className="relative max-w-full overflow-visible rounded-[20px] bg-[var(--azul)]">
             {/* Etiqueta título */}
-            <div style={{
-                position: 'absolute',
-                left: 0,
-                top: '17px',
-                height: '30px',
-                paddingLeft: '19px',
-                paddingRight: '19px',
-                background: COLORS.CELESTE_PRINCIPAL,
-                borderTopRightRadius: '25px',
-                borderBottomRightRadius: '25px',
-                display: 'flex',
-                alignItems: 'center',
-                zIndex: 1,
-            }}>
-                <span style={{
-                    fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
-                    fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
-                    fontSize: '16px',
-                    color: COLORS.AZUL_PRINCIPAL,  // ← corregido
-                    whiteSpace: 'nowrap',
-                }}>
+            <div className="absolute left-0 top-[17px] z-[1] flex h-[30px] items-center rounded-r-[25px] bg-[var(--celeste)] px-[19px]">
+                <span className="whitespace-nowrap text-base font-bold text-[var(--azul)] font-[family-name:var(--font)]">
                     Postura de control
                 </span>
             </div>
 
-            {/* ── AGACHARSE ── */}
-            <div style={{
-                position: 'absolute',
-                left: '244px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '120px',
-                height: '32px',
-                overflow: 'visible',
-            }}>
-                {/* Robot encima del botón */}
-                <img
-                    src={agacharse}
-                    alt="Agacharse"
-                    style={{
-                        position: 'absolute',
-                        width: '57px',
-                        height: '60px',
-                        left: '-28px',
-                        top: '-10px',
-                        pointerEvents: 'none',
-                        objectFit: 'contain',
-                        zIndex: 2,
-                    }}
-                />
-                <button
-                    onClick={handleAgacharse}
-                    onMouseEnter={() => setIsHoveredAgacharse(true)}
-                    onMouseLeave={() => setIsHoveredAgacharse(false)}
-                    style={{
-                        position: 'relative',
-                        zIndex: 1,
-                        width: '120px',
-                        height: '32px',
-                        background: isHoveredAgacharse ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
-                        borderRadius: '90px',
-                        cursor: 'pointer',
-                        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
-                        fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
-                        fontSize: '12px',
-                        color: isHoveredAgacharse ? COLORS.AZUL_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
-                        transition: 'background 0.2s, color 0.2s',
-                    }}
-                >
-                    AGACHARSE
-                </button>
-            </div>
+            {/* Botones: en fila desde 560px (posiciones originales), apilados/envueltos en pantallas pequeñas */}
+            <div className="flex min-h-[65px] flex-wrap items-center justify-center gap-x-[42px] gap-y-[22px] px-7 pb-4 pt-[62px] min-[560px]:justify-start min-[560px]:py-[16.5px] min-[560px]:pl-[244px] min-[560px]:pr-0">
+                {/* ── AGACHARSE ── */}
+                <div className="relative h-8 w-[120px] overflow-visible">
+                    {/* Robot encima del botón */}
+                    <img
+                        src={agacharse}
+                        alt="Agacharse"
+                        className="pointer-events-none absolute -left-7 -top-2.5 z-[2] h-[60px] w-[57px] max-w-none object-contain"
+                    />
+                    <button onClick={handleAgacharse} className="h-8 w-[120px] relative z-[1] cursor-pointer rounded-[90px] bg-[var(--celeste)] text-xs font-bold text-[var(--azul)] transition-colors duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-[var(--azul-sec)]">
+                        AGACHARSE
+                    </button>
+                </div>
 
-            {/* ── PARARSE ── */}
-            <div style={{
-                position: 'absolute',
-                left: '406px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '120px',
-                height: '32px',
-                overflow: 'visible',
-            }}>
-                {/* Robot encima del botón */}
-                <img
-                    src={pararse}
-                    alt="Pararse"
-                    style={{
-                        position: 'absolute',
-                        width: '42px',
-                        height: '79px',
-                        left: '-20px',
-                        top: '-15px',
-                        pointerEvents: 'none',
-                        objectFit: 'contain',
-                        zIndex: 2,
-                    }}
-                />
-                <button
-                    onClick={handlePararse}
-                    onMouseEnter={() => setIsHoveredPararse(true)}
-                    onMouseLeave={() => setIsHoveredPararse(false)}
-                    style={{
-                        position: 'relative',
-                        zIndex: 1,
-                        width: '120px',
-                        height: '32px',
-                        background: isHoveredPararse ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL,
-                        borderRadius: '90px',
-                        cursor: 'pointer',
-                        fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
-                        fontWeight: TYPOGRAPHY.FONT_WEIGHT_BOLD,
-                        fontSize: '12px',
-                        color: isHoveredPararse ? COLORS.AZUL_PRINCIPAL : COLORS.AZUL_PRINCIPAL,
-                        transition: 'background 0.2s, color 0.2s',
-                    }}
-                >
-                    PARARSE
-                </button>
+                {/* ── PARARSE ── */}
+                <div className="relative h-8 w-[120px] overflow-visible">
+                    {/* Robot encima del botón */}
+                    <img
+                        src={pararse}
+                        alt="Pararse"
+                        className="pointer-events-none absolute -left-5 -top-[15px] z-[2] h-[79px] w-[42px] max-w-none object-contain"
+                    />
+                    <button onClick={handlePararse} className="h-8 w-[120px] relative z-[1] cursor-pointer rounded-[90px] bg-[var(--celeste)] text-xs font-bold text-[var(--azul)] transition-colors duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-[var(--azul-sec)]">
+                        PARARSE
+                    </button>
+                </div>
             </div>
         </div>
     );

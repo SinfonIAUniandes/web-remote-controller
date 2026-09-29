@@ -310,7 +310,8 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
 
     return (
         <div className="flex flex-col gap-0">
-        <div style={themeVars} className="relative box-border flex min-h-[450px] w-[630px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]">
+        {/* <div style={themeVars} className="relative box-border flex min-h-[450px] w-[630px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]"> */}
+        <div style={themeVars} className="relative box-border flex min-h-[450px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]">
 
             {/* Título */}
             <div className="absolute left-0 top-5 z-[2] flex h-[30px] w-[min(200px,90%)] items-center justify-center rounded-r-[25px] bg-[var(--celeste)]">

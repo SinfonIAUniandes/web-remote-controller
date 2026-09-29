@@ -127,7 +127,8 @@ const Cameras = () => {
     return (
         <>
             {/* Tamaño base 560x770; escala proporcionalmente en pantallas pequeñas */}
-            <div style={themeVars} className="relative w-full max-w-[560px] aspect-[560/770]">
+            {/* <div style={themeVars} className="relative w-full max-w-[560px] aspect-[560/770]"> */}
+            <div style={themeVars} className="relative w-full aspect-[560/770]">
                 {/* Fondos decorativos */}
                 <div className="absolute left-[1.071%] top-0 w-[98.929%] h-full bg-[var(--azul)] rounded-[20px]" />
                 <div className="absolute left-[5.536%] top-[4.026%] w-[89.107%] h-[91.948%] bg-[var(--azul)] rounded-[20px]" />

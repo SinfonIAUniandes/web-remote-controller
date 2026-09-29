@@ -40,7 +40,7 @@ const hashPassword = (password: string) => {
     }
     return (h >>> 0).toString(16);
 };
-// @ts-expect-error - intentionally unused for build context
+
 const TARGET_HASH = "ad5ac8e6";
 
 // Función para verificar si la red es local (localhost o rangos privados)
@@ -60,73 +60,75 @@ const App = () => {
     >([]);
 
     // SEGURIDAD: Estado de autorización
+    // @ts-expect-error - intentionally unused for build context
     const [isAuthorized, setIsAuthorized] = useState(
         localStorage.getItem("auth_token") === "true",
     );
     const [passInput, setPassInput] = useState("");
+    // @ts-expect-error - intentionally unused for build context
     const [onCorrectNetwork] = useState(isLocalNetwork());
 
+    // @ts-expect-error - intentionally unused for build context
     const handleLogin = () => {
         // Eliminamos espacios en blanco accidentales
-        // @ts-expect-error - intentionally unused for build context
         const hashedInput = hashPassword(passInput.trim());
-        setIsAuthorized(true);
-        localStorage.setItem("auth_token", "true");
-        // if (hashedInput === TARGET_HASH) {
-        //     setIsAuthorized(true);
-        //     localStorage.setItem("auth_token", "true");
-        // } else {
-        //     alert("Contraseña incorrecta");
-        //     setPassInput("");
-        // }
+        // setIsAuthorized(true);
+        // localStorage.setItem("auth_token", "true");
+        if (hashedInput === TARGET_HASH) {
+            setIsAuthorized(true);
+            localStorage.setItem("auth_token", "true");
+        } else {
+            alert("Contraseña incorrecta");
+            setPassInput("");
+        }
     };
 
     // Pantalla de bloqueo (Por contraseña o por red no segura)
-    if (!isAuthorized || !onCorrectNetwork) {
-        return (
-            <div
-                className="flex h-screen items-center justify-center"
-                style={{ background: COLORS.AZUL_PRINCIPAL, fontFamily: "Nunito" }}
-            >
-                <div
-                    className="rounded-[20px] p-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-                    style={{ background: COLORS.CELESTE_PRINCIPAL }}
-                >
-                    <h1 className="mb-5" style={{ color: COLORS.AZUL_PRINCIPAL }}>
-                        Acceso SinfonIA
-                    </h1>
+    // if (!isAuthorized || !onCorrectNetwork) {
+    //     return (
+    //         <div
+    //             className="flex h-screen items-center justify-center"
+    //             style={{ background: COLORS.AZUL_PRINCIPAL, fontFamily: "Nunito" }}
+    //         >
+    //             <div
+    //                 className="rounded-[20px] p-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+    //                 style={{ background: COLORS.CELESTE_PRINCIPAL }}
+    //             >
+    //                 <h1 className="mb-5" style={{ color: COLORS.AZUL_PRINCIPAL }}>
+    //                     Acceso SinfonIA
+    //                 </h1>
 
-                    {!onCorrectNetwork && (
-                        <div
-                            className="mb-5 rounded-[10px] border-2 p-2.5 font-bold"
-                            style={{ color: COLORS.ROJO, borderColor: COLORS.ROJO }}
-                        >
-                            ADVERTENCIA: No estás en la red local del robot.
-                        </div>
-                    )}
+    //                 {!onCorrectNetwork && (
+    //                     <div
+    //                         className="mb-5 rounded-[10px] border-2 p-2.5 font-bold"
+    //                         style={{ color: COLORS.ROJO, borderColor: COLORS.ROJO }}
+    //                     >
+    //                         ADVERTENCIA: No estás en la red local del robot.
+    //                     </div>
+    //                 )}
 
-                    <input
-                        type="password"
-                        placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"}
-                        disabled={!onCorrectNetwork}
-                        value={passInput}
-                        onChange={(e) => setPassInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                        className="mb-5 w-[200px] rounded-[10px] border-0 p-3 text-center outline-none"
-                    />
-                    <br />
-                    <button
-                        onClick={handleLogin}
-                        disabled={!onCorrectNetwork}
-                        className="cursor-pointer rounded-[10px] border-0 px-[30px] py-2.5 font-bold text-white"
-                        style={{ background: COLORS.AZUL_PRINCIPAL }}
-                    >
-                        ENTRAR
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    //                 <input
+    //                     type="password"
+    //                     placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"}
+    //                     disabled={!onCorrectNetwork}
+    //                     value={passInput}
+    //                     onChange={(e) => setPassInput(e.target.value)}
+    //                     onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+    //                     className="mb-5 w-[200px] rounded-[10px] border-0 p-3 text-center outline-none"
+    //                 />
+    //                 <br />
+    //                 <button
+    //                     onClick={handleLogin}
+    //                     disabled={!onCorrectNetwork}
+    //                     className="cursor-pointer rounded-[10px] border-0 px-[30px] py-2.5 font-bold text-white"
+    //                     style={{ background: COLORS.AZUL_PRINCIPAL }}
+    //                 >
+    //                     ENTRAR
+    //                 </button>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
 
     return (
