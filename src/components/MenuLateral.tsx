@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRos } from "../contexts/RosContext";
 import { createService } from "../services/RosManager";
 import { COLORS, TYPOGRAPHY } from "../theme";
@@ -57,7 +57,7 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
             const request = { volume: clampedVolume };
             volumeService.callService(
                 request,
-                (result : unknown) => { /* console.log('Volumen actualizado:', result); */ }, 
+                () => { /* console.log('Volumen actualizado:', result); */ }, 
                 (error : unknown) => { console.error('Error al actualizar volumen:', error); }
             );
         }

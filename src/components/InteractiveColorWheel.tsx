@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { COLORS } from '../theme';
 
 const hslToHex = (h: number, s: number, l: number): string => {

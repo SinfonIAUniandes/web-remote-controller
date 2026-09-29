@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
 
 const HeadMovementControl = () => {
     const { ros } = useRos();

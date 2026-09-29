@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createService } from '../services/RosManager';
@@ -46,7 +46,8 @@ const ControlSeguridad = () => {
     };
 
     return (
-        <div style={themeVars} className="relative h-[125px] w-[400px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]">
+        // <div style={themeVars} className="relative h-[125px] w-[400px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]">
+        <div style={themeVars} className="relative h-[125px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]">
             <div className="absolute left-0 top-6 z-[2] flex h-[30px] w-[min(180px,90%)] items-center justify-center gap-2.5 bg-[var(--celeste)] px-[19px] rounded-r-[25px]">
                 <div className="break-words text-center text-base font-bold text-[var(--azul)] font-[family-name:var(--font)]">Control seguridad</div>
             </div>

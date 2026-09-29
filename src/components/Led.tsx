@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
 import { COLORS, TYPOGRAPHY } from '../theme';
-import * as ROSLIB from 'roslib';
 import iconoOjos from '../assets/Ojos.svg';
 import iconoOrejas from '../assets/Orejas.svg';
 import iconoPecho from '../assets/Pecho.svg';

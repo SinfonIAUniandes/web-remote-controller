@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
 import * as ROSLIB from 'roslib';
 import { COLORS, TYPOGRAPHY } from '../theme';

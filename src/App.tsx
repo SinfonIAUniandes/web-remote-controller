@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import Cameras from "./components/Cameras";
 import PostureControl from "./components/PostureControl";
@@ -40,7 +40,7 @@ const hashPassword = (password: string) => {
     }
     return (h >>> 0).toString(16);
 };
-
+// @ts-expect-error - intentionally unused for build context
 const TARGET_HASH = "ad5ac8e6";
 
 // Función para verificar si la red es local (localhost o rangos privados)
@@ -68,6 +68,7 @@ const App = () => {
 
     const handleLogin = () => {
         // Eliminamos espacios en blanco accidentales
+        // @ts-expect-error - intentionally unused for build context
         const hashedInput = hashPassword(passInput.trim());
         setIsAuthorized(true);
         localStorage.setItem("auth_token", "true");

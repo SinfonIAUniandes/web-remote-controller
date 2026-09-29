@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createTopic, createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
 
 const LANGUAGES = ['ES', 'EN'] as const;
 type Language = typeof LANGUAGES[number];

@@ -1,7 +1,5 @@
-import React from 'react';
 import { useRos } from '../contexts/RosContext';
-import { createTopic, createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
+import {createService } from '../services/RosManager';
 
 //Componente para habilitar o deshabilitar la seguridad del robot
 const SecurityControl = () => {

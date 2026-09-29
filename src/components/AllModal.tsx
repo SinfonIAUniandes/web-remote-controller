@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import InteractiveColorWheel, { hexToRgba } from './InteractiveColorWheel';
 import robotPNG from '../assets/robot.png';

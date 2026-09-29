@@ -1,4 +1,3 @@
-import React from 'react';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
 interface Script {

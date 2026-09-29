@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
-import * as ROSLIB from 'roslib';
 
 //Componente que permite elegir los colores de los LEDS del robot
 const LEDController = () => {

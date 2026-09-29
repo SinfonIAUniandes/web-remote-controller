@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // --- UTILIDADES MATEMÁTICAS PARA EL AZUL ---
 // Convierte HSV a HEX. El Hue (Tono) siempre será 240 (Azul) para este modal.

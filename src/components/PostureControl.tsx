@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import { createService, callService } from '../services/RosManager';

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { executeScript } from '../services/scriptExecutor';
 import { COLORS } from '../theme';

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRos } from '../contexts/RosContext'
 import { createService } from '../services/RosManager';
 import * as ROSLIB from 'roslib';

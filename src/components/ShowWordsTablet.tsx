@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useRos } from '../contexts/RosContext';
 import * as ROSLIB from 'roslib';
 
@@ -15,7 +14,7 @@ const ShowWordsTablet = () => {
 
             const request = {}; //no args
 
-            service.callService(request, (result) => {
+            service.callService(request, () => {
 
             });
         }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useRos } from '../contexts/RosContext';
 import * as ROSLIB from 'roslib';
 

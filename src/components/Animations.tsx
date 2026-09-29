@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRos } from "../contexts/RosContext";
 import { createTopic } from "../services/RosManager";
 import { COLORS, TYPOGRAPHY } from "../theme";
-import * as ROSLIB from "roslib";
 
 // Ruta al archivo txt
 import animationsTxt from "../animations/animations.txt";
