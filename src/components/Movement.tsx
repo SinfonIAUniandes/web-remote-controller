@@ -265,7 +265,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.Q)}
                     onPointerUp={() => stopMove(KEYS.Q)}
                     onPointerLeave={() => stopMove(KEYS.Q)}
-                    className="flex h-[45px] w-[45px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.Q) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">Q</div>
@@ -275,7 +275,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.W)}
                     onPointerUp={() => stopMove(KEYS.W)}
                     onPointerLeave={() => stopMove(KEYS.W)}
-                    className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.W) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">W</div>
@@ -285,7 +285,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.E)}
                     onPointerUp={() => stopMove(KEYS.E)}
                     onPointerLeave={() => stopMove(KEYS.E)}
-                    className="flex h-[45px] w-[45px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.E) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">E</div>
@@ -298,7 +298,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.A)}
                     onPointerUp={() => stopMove(KEYS.A)}
                     onPointerLeave={() => stopMove(KEYS.A)}
-                    className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.A) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">A</div>
@@ -308,7 +308,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.S)}
                     onPointerUp={() => stopMove(KEYS.S)}
                     onPointerLeave={() => stopMove(KEYS.S)}
-                    className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.S) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">S</div>
@@ -318,7 +318,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.D)}
                     onPointerUp={() => stopMove(KEYS.D)}
                     onPointerLeave={() => stopMove(KEYS.D)}
-                    className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                    className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.D) }}
                 >
                     <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">D</div>

@@ -158,7 +158,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('i')}
                             onPointerUp={() => stopHead('i')}
                             onPointerLeave={() => stopHead('i')}
-                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.I) }}
                         >
                             <div
@@ -177,7 +177,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('j')}
                             onPointerUp={() => stopHead('j')}
                             onPointerLeave={() => stopHead('j')}
-                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.J) }}
                         >
                             <div
@@ -192,7 +192,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('k')}
                             onPointerUp={() => stopHead('k')}
                             onPointerLeave={() => stopHead('k')}
-                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.K) }}
                         >
                             <div
@@ -207,7 +207,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('l')}
                             onPointerUp={() => stopHead('l')}
                             onPointerLeave={() => stopHead('l')}
-                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
+                            className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.L) }}
                         >
                             <div

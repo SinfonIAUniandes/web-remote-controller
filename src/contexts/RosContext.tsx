@@ -20,7 +20,7 @@ export const RosProvider = ({ children }: { children: ReactNode }) => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        setRosUrl(`ws://${ipAddress}:9090`);
+        setRosUrl(`wss://${ipAddress}:9090`);
     }, [ipAddress]);
 
     const connect = (url_param: string) => {

@@ -38,19 +38,113 @@ const FullScreenIcon = ({ onClick }: { onClick: React.MouseEventHandler<SVGSVGEl
     </svg>
 );
 
-// Encabezado de cada cámara (etiqueta + botón de pantalla completa)
-const CameraHeader = ({ label, onFullScreen }: { label: string; onFullScreen: () => void }) => (
+// Icono de encendido/apagado de cámara
+const PowerIcon = ({ onClick, enabled }: { onClick: React.MouseEventHandler<SVGSVGElement>; enabled: boolean }) => (
+    <svg
+        onClick={onClick}
+        className="cursor-pointer"
+        width="20" height="20" viewBox="0 0 24 24"
+        fill="none" stroke={enabled ? COLORS.CELESTE_PRINCIPAL : '#ff5c5c'}
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    >
+        <title>{enabled ? 'Apagar cámara' : 'Encender cámara'}</title>
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+        <line x1="12" y1="2" x2="12" y2="12" />
+    </svg>
+);
+
+// Encabezado de cada cámara (etiqueta + botón de encendido + botón de pantalla completa)
+const CameraHeader = ({ label, enabled, onToggle, onFullScreen }: {
+    label: string;
+    enabled: boolean;
+    onToggle: () => void;
+    onFullScreen: () => void;
+}) => (
     <div className="flex items-center justify-between self-stretch h-[4.41%]">
         <div className="flex items-center justify-center overflow-hidden w-[40%] -ml-[12.889%] h-full bg-[var(--celeste)] rounded-r-[25px]">
             <div className="text-center text-[16px] font-bold whitespace-nowrap text-[var(--azul)] font-[family-name:var(--font-main)]">{label}</div>
         </div>
-        <div className="flex items-center p-[3px]">
+        <div className="flex items-center gap-2 p-[3px]">
+            <PowerIcon enabled={enabled} onClick={onToggle} />
             <FullScreenIcon onClick={onFullScreen} />
         </div>
     </div>
 );
 
-const Cameras = () => {
+// Suscribe una cámara y activa su stream en el robot mientras esté habilitada.
+// Al deshabilitarla (o desmontar) se cancela la suscripción y se apaga la cámara en el robot.
+const useCameraStream = (
+    ros: ReturnType<typeof useRos>['ros'],
+    enabled: boolean,
+    cameraName: 'front_camera' | 'bottom_camera',
+    topicName: string,
+    imgRefs: React.RefObject<HTMLImageElement | null>[],
+) => {
+    useEffect(() => {
+        if (!ros || !enabled) return;
+
+        const listener = createTopic(ros, topicName, 'sensor_msgs/CompressedImage');
+        listener.subscribe((message: unknown) => {
+            if (!isCompressedImageMessage(message)) return;
+            const imgSrc = "data:image/jpeg;base64," + message.data;
+            imgRefs.forEach((ref) => {
+                if (ref.current) ref.current.src = imgSrc;
+            });
+        });
+
+        const visionService = createService(ros, '/robot_toolkit/vision_tools_srv', 'robot_toolkit_msgs/vision_tools_msg');
+        const buildRequest = (command: 'custom' | 'disable') => ({
+            data: {
+                camera_name: cameraName,
+                command,
+                resolution: CAMERA_RESOLUTION,
+                frame_rate: CAMERA_FRAME_RATE,
+                color_space: CAMERA_COLOR_SPACE
+            }
+        });
+
+        visionService.callService(buildRequest('custom'), (result: unknown) => {
+            console.log(`${cameraName} vision service enabled:`, result);
+        }, (error: unknown) => {
+            console.error(`Error enabling ${cameraName} vision service:`, error);
+        });
+
+        return () => {
+            listener.unsubscribe();
+            imgRefs.forEach((ref) => ref.current?.removeAttribute('src'));
+            visionService.callService(buildRequest('disable'), (result: unknown) => {
+                console.log(`${cameraName} vision service disabled:`, result);
+            }, (error: unknown) => {
+                console.error(`Error disabling ${cameraName} vision service:`, error);
+            });
+        };
+        // imgRefs son refs estables; no hace falta como dependencia
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [ros, enabled, cameraName, topicName]);
+};
+
+// Placeholder mostrado cuando la cámara está apagada
+const CameraOff = () => (
+    <div className="flex items-center justify-center self-stretch h-[41.765%] rounded-[10px] bg-black/40 text-[var(--celeste)] font-bold font-[family-name:var(--font-main)]">
+        Cámara apagada
+    </div>
+);
+
+// Indica si la pestaña del navegador está visible (Page Visibility API)
+const usePageVisible = () => {
+    const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible');
+
+    useEffect(() => {
+        const onChange = () => setPageVisible(document.visibilityState === 'visible');
+        document.addEventListener('visibilitychange', onChange);
+        return () => document.removeEventListener('visibilitychange', onChange);
+    }, []);
+
+    return pageVisible;
+};
+
+// `visible`: false cuando el usuario está en otra pestaña de la app (las cámaras se apagan)
+const Cameras = ({ visible = true }: { visible?: boolean }) => {
     const { ros } = useRos();
 
     // Estado para el modal de pantalla completa ('front', 'bottom' o null)
@@ -64,65 +158,15 @@ const Cameras = () => {
     const modalFrontCameraRef = useRef<HTMLImageElement | null>(null);
     const modalBottomCameraRef = useRef<HTMLImageElement | null>(null);
 
-    useEffect(() => {
-        if (ros) {
-            const frontCameraListener = createTopic(ros, '/robot_toolkit_node/camera/front/image_raw/compressed', 'sensor_msgs/CompressedImage');
-            const bottomCameraListener = createTopic(ros, '/robot_toolkit_node/camera/bottom/image_raw/compressed', 'sensor_msgs/CompressedImage');
+    const [frontEnabled, setFrontEnabled] = useState(true);
+    const [bottomEnabled, setBottomEnabled] = useState(true);
 
-            // Suscripción de la cámara frontal (actualiza ambas refs)
-            frontCameraListener.subscribe((message: unknown) => {
-                if (!isCompressedImageMessage(message)) return;
-                const imgSrc = "data:image/jpeg;base64," + message.data;
-                if (frontCameraRef.current) frontCameraRef.current.src = imgSrc;
-                if (modalFrontCameraRef.current) modalFrontCameraRef.current.src = imgSrc;
-            });
+    // Solo se transmite si nadie apagó la cámara a mano y el usuario realmente la está viendo
+    const pageVisible = usePageVisible();
+    const streaming = visible && pageVisible;
 
-            // Suscripción de la cámara inferior (actualiza ambas refs)
-            bottomCameraListener.subscribe((message: unknown) => {
-                if (!isCompressedImageMessage(message)) return;
-                const imgSrc = "data:image/jpeg;base64," + message.data;
-                if (bottomCameraRef.current) bottomCameraRef.current.src = imgSrc;
-                if (modalBottomCameraRef.current) modalBottomCameraRef.current.src = imgSrc;
-            });
-
-            const enableVisionService = createService(ros, '/robot_toolkit/vision_tools_srv', 'robot_toolkit_msgs/vision_tools_msg');
-
-            const frontRequest = {
-                data: {
-                    camera_name: "front_camera",
-                    command: "custom",
-                    resolution: CAMERA_RESOLUTION,
-                    frame_rate: CAMERA_FRAME_RATE,
-                    color_space: CAMERA_COLOR_SPACE
-                }
-            };
-            enableVisionService.callService(frontRequest, (result : unknown) => {
-                console.log('Front camera vision service called:', result);
-            }, (error: unknown) => {
-                console.error('Error enabling front camera vision service:', error);
-            });
-
-            const bottomRequest = {
-                data: {
-                    camera_name: "bottom_camera",
-                    command: "custom",
-                    resolution: CAMERA_RESOLUTION,
-                    frame_rate: CAMERA_FRAME_RATE,
-                    color_space: CAMERA_COLOR_SPACE
-                }
-            };
-            enableVisionService.callService(bottomRequest, (result: unknown) => {
-                console.log('Bottom camera vision service called:', result);
-            }, (error: unknown) => {
-                console.error('Error enabling bottom camera vision service:', error);
-            });
-
-            return () => {
-                frontCameraListener.unsubscribe();
-                bottomCameraListener.unsubscribe();
-            };
-        }
-    }, [ros]);
+    useCameraStream(ros, frontEnabled && streaming, 'front_camera', '/robot_toolkit_node/camera/front/image_raw/compressed', [frontCameraRef, modalFrontCameraRef]);
+    useCameraStream(ros, bottomEnabled && streaming, 'bottom_camera', '/robot_toolkit_node/camera/bottom/image_raw/compressed', [bottomCameraRef, modalBottomCameraRef]);
 
     return (
         <>
@@ -137,24 +181,28 @@ const Cameras = () => {
                 <div className="absolute left-[10.357%] top-[5.974%] w-[80.357%] h-[88.312%] flex flex-col items-center justify-between">
 
                     {/* --- CÁMARA FRONTAL --- */}
-                    <CameraHeader label="Cámara frontal" onFullScreen={() => setFullScreenCamera('front')} />
+                    <CameraHeader label="Cámara frontal" enabled={frontEnabled} onToggle={() => setFrontEnabled((v) => !v)} onFullScreen={() => setFullScreenCamera('front')} />
 
-                    <img
+                    {frontEnabled ? (
+                        <img
                         id="front_camera"
                         ref={frontCameraRef}
                         alt="Cámara Frontal"
                         className="self-stretch h-[41.765%] object-contain [image-rendering:auto]"
                     />
+                    ) : <CameraOff />}
 
                     {/* --- CÁMARA INFERIOR --- */}
-                    <CameraHeader label="Cámara inferior" onFullScreen={() => setFullScreenCamera('bottom')} />
+                    <CameraHeader label="Cámara inferior" enabled={bottomEnabled} onToggle={() => setBottomEnabled((v) => !v)} onFullScreen={() => setFullScreenCamera('bottom')} />
 
-                    <img
+                    {bottomEnabled ? (
+                        <img
                         id="bottom_camera"
                         ref={bottomCameraRef}
                         alt="Cámara Inferior"
                         className="self-stretch h-[41.765%] object-contain [image-rendering:auto]"
                     />
+                    ) : <CameraOff />}
                 </div>
             </div>
 

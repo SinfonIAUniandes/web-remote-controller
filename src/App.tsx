@@ -177,7 +177,7 @@ const App = () => {
                                 <div
                                     className="flex w-full basis-[580px] flex-col gap-6 lg:h-full lg:justify-around"
                                 >
-                                    <Cameras />
+                                    <Cameras visible={activeTab === "principal"} />
                                     <PostureControl />
                                 </div>
                             </section>
