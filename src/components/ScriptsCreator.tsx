@@ -3,6 +3,7 @@ import { useRos } from '../contexts/RosContext';
 import { executeStep, executeScript, parseLegacyTxt, stopSpeech } from '../services/scriptExecutor';
 import { createTopic } from '../services/RosManager';
 import { useAnimations } from '../services/useAnimations';
+import { usePanicListener } from '../services/panic';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import ScriptPanel from './ScriptPanel';
 
@@ -95,6 +96,11 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
     const [singleStepIndex, setSingleStepIndex] = useState<number | null>(null);
     const [completedStepIndex, setCompletedStepIndex] = useState<number | null>(null);
     const singleAbortRef = useRef<AbortController | null>(null);
+
+    usePanicListener(() => {
+        abortRef.current?.abort();
+        singleAbortRef.current?.abort();
+    });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);

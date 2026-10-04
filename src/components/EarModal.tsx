@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import InteractiveBluePicker from './InteractiveBluePicker';
 import robotPNG from '../assets/robot.png';
+import ScaledModal from './ScaledModal';
 
 interface EarState {
     color: string;
@@ -35,7 +36,7 @@ const EarModal = ({ isOpen, onClose, onSave, initialState }: EarModalProps) => {
     const activeRightColor = isRightOn ? color : '#000000';
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <ScaledModal width={600} height={300}>
             <div style={{ width: 600, height: 300, position: 'relative', background: COLORS.AZUL_PRINCIPAL, overflow: 'hidden', borderRadius: 20 }}>
                 
                 {/* Selector de Azul Independiente */}
@@ -74,7 +75,7 @@ const EarModal = ({ isOpen, onClose, onSave, initialState }: EarModalProps) => {
                 {/* Botón Cerrar */}
                 <button onClick={onClose} style={{ position: 'absolute', top: 5, right: 15, background: 'none', border: 'none', color: COLORS.CELESTE_PRINCIPAL, fontSize: 24, cursor: 'pointer', zIndex: 10 }}>×</button>
             </div>
-        </div>
+        </ScaledModal>
     );
 };
 

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { executeScript } from '../services/scriptExecutor';
+import { usePanicListener } from '../services/panic';
 import { COLORS } from '../theme';
 
 // Scripts rápidos predefinidos en el nuevo formato step-based
@@ -55,6 +56,8 @@ const QuickAction = () => {
     const [currentScript, setCurrentScript] = useState('');
 
     const abortRef = useRef<AbortController | null>(null);
+
+    usePanicListener(() => abortRef.current?.abort());
 
     // Limpieza automática si el componente se desmonta durante la ejecución
     useEffect(() => {

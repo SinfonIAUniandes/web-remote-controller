@@ -3,6 +3,8 @@ import { useRos } from "../contexts/RosContext";
 import { createService } from "../services/RosManager";
 import { COLORS, TYPOGRAPHY } from "../theme";
 import BatteryIcon from "./BatteryIcon";
+import IpModal from "./IpModal";
+import { isValidIpv4 } from "../utils/ip";
 import logoSinfonia from "../assets/SinfonIA-Logo.png";
 import IconoHome from "../assets/Home.svg";
 import IconoServicios from "../assets/robot_icon.svg";
@@ -17,7 +19,8 @@ type parameters = {
 
 // 1. AÑADIMOS activeTab y setActiveTab A LAS PROPS DEL COMPONENTE
 export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
-    const { ros, ipAddress, setIpAddress, baseSpeed, setBaseSpeed } = useRos();
+    const { ros, ipAddress, setIpAddress, baseSpeed, setBaseSpeed, isConnected } = useRos();
+    const [isIpModalOpen, setIsIpModalOpen] = useState(false);
     const [volume, setVolume] = useState(50);
     const [speed, setSpeed] = useState(Math.round(baseSpeed * 100));
     const [isHoveredPrincipal, setIsHoveredPrincipal] = useState(false);
@@ -137,18 +140,18 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isVolumeDragging, isSpeedDragging]); 
 
-    const handleIpClick = () => {
-        const newIp = prompt("Introduce la nueva dirección IP del servidor ROS:", ipAddress);
-        if (newIp && newIp.trim() !== "") {
-            if (setIpAddress) {
-                setIpAddress(newIp.trim());
-            }
-        }
+    const handleIpSave = (newIp: string) => {
+        setIpAddress(newIp);
+        setIsIpModalOpen(false);
     };
+
+    // Rojo: IP válida pero sin conexión; amarillo: IP aún incompleta; celeste: conectado
+    const isIpValid = isValidIpv4(ipAddress);
+    const ipColor = !isIpValid ? COLORS.AMARILLO : isConnected ? COLORS.CELESTE_PRINCIPAL : COLORS.ROJO;
 
     return (
         <div
-            className="flex min-h-[220px] w-full flex-col items-center justify-between rounded-[25px] p-3 sm:min-h-[250px] lg:h-[950px] lg:min-h-0 lg:w-[220px] lg:p-5"
+            className="flex min-h-[220px] w-full flex-col items-center justify-between rounded-[25px] p-3 sm:min-h-[250px] lg:h-full lg:flex-1 lg:min-h-0 lg:w-[220px] lg:p-5"
             style={{ backgroundColor: COLORS.AZUL_PRINCIPAL }}
         >
             <div
@@ -308,17 +311,36 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
                     {speed}%
                 </div>
             </div>
-            <div 
-                onClick={handleIpClick}
-                className="cursor-pointer font-['Nunito'] text-base"
-                style={{
-                    color: COLORS.CELESTE_PRINCIPAL,
-                    fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK,
-                }}
+            <div
+                onClick={() => setIsIpModalOpen(true)}
+                className="flex cursor-pointer flex-col items-center font-['Nunito']"
+                style={{ fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK }}
             >
-                {ipAddress}
+                <span
+                    className={`text-base ${isIpValid ? '' : 'animate-pulse'}`}
+                    style={{ color: ipColor }}
+                >
+                    {ipAddress}
+                </span>
+                {!isIpValid && (
+                    <span className="text-[11px]" style={{ color: COLORS.AMARILLO }}>
+                        Toca para ingresar la IP del robot
+                    </span>
+                )}
+                {isIpValid && !isConnected && (
+                    <span className="text-[11px]" style={{ color: COLORS.ROJO }}>
+                        Sin conexión
+                    </span>
+                )}
             </div>
             </div>
+
+            <IpModal
+                isOpen={isIpModalOpen}
+                currentIp={ipAddress}
+                onClose={() => setIsIpModalOpen(false)}
+                onSave={handleIpSave}
+            />
         </div>
     );
 }

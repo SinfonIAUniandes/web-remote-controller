@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createService } from '../services/RosManager';
+import { usePanicListener } from '../services/panic';
 import { COLORS } from '../theme';
 import * as ROSLIB from 'roslib';
 
@@ -14,11 +15,48 @@ const KEYS = {
     Q: 81
 };
 
+// El toolkit detiene el robot si pasan 0.5 s sin /cmd_vel; 10 Hz es el ritmo que recomienda su documentación
+const HOLD_INTERVAL_MS = 100;
+
+// Combina todas las teclas presionadas en un solo Twist (p. ej. W + Q avanza girando)
+const buildTwist = (keys: Set<number>, speed: number) => {
+    const axis = (positive: number, negative: number) =>
+        (keys.has(positive) ? speed : 0) - (keys.has(negative) ? speed : 0);
+    return {
+        linear: { x: axis(KEYS.W, KEYS.S), y: axis(KEYS.A, KEYS.D), z: 0 },
+        angular: { x: 0, y: 0, z: axis(KEYS.Q, KEYS.E) },
+    };
+};
+
 const Movement = () => {
     const { ros, baseSpeed } = useRos();
     
     // Estado para controlar qué teclas están siendo presionadas visualmente
     const [activeKeys, setActiveKeys] = useState<Record<number, boolean>>({});
+    const panickedRef = useRef(false);
+    const pressedRef = useRef<Set<number>>(new Set());
+    const holdTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+    // El timer lee la velocidad más reciente sin tener que reiniciarse cuando cambia el slider
+    const baseSpeedRef = useRef(baseSpeed);
+    baseSpeedRef.current = baseSpeed;
+
+    // Un solo tópico por conexión, en vez de crear (y re-anunciar) uno por cada mensaje
+    const cmdVel = useMemo(() => ros
+        ? new ROSLIB.Topic({ ros, name: '/cmd_vel', messageType: 'geometry_msgs/Twist' })
+        : null, [ros]);
+
+    const stopHold = useCallback(() => {
+        clearInterval(holdTimerRef.current);
+        holdTimerRef.current = undefined;
+    }, []);
+
+    // El botón de pánico ya publica el Twist en 0: aquí solo cancelamos el reenvío y soltamos las teclas
+    usePanicListener(() => {
+        panickedRef.current = true;
+        pressedRef.current.clear();
+        stopHold();
+        setActiveKeys({});
+    });
 
     // Inicialización del servicio de navegación
     useEffect(() => {
@@ -63,59 +101,41 @@ const Movement = () => {
         }
     }, [ros]);
 
+    const publishTwist = useCallback(() => {
+        cmdVel?.publish(buildTwist(pressedRef.current, baseSpeedRef.current));
+    }, [cmdVel]);
+
+    // Suelta todas las teclas y manda un Twist en 0
+    const releaseAll = useCallback(() => {
+        if (pressedRef.current.size === 0) return;
+        pressedRef.current.clear();
+        stopHold();
+        setActiveKeys({});
+        publishTwist();
+    }, [publishTwist, stopHold]);
+
     const startMove = useCallback((keyCode: number) => {
-        if (!ros) return;
+        // Ignora las repeticiones del navegador: el reenvío lo hace el timer mientras la tecla siga presionada
+        if (!cmdVel || pressedRef.current.has(keyCode)) return;
+        pressedRef.current.add(keyCode);
         setActiveKeys(prev => ({ ...prev, [keyCode]: true }));
 
-        const cmdVel = new ROSLIB.Topic({
-            ros,
-            name: '/cmd_vel',
-            messageType: 'geometry_msgs/Twist'
-        });
-
-        const message = {
-            linear: { x: 0, y: 0, z: 0 },
-            angular: { x: 0, y: 0, z: 0 }
-        };
-
-        if (keyCode === KEYS.A) {
-            message.linear.y = baseSpeed;
-        } else if (keyCode === KEYS.D) {
-            message.linear.y = -baseSpeed;
-        } else if (keyCode === KEYS.W) {
-            message.linear.x = baseSpeed;
-        } else if (keyCode === KEYS.S) {
-            message.linear.x = -baseSpeed;
+        publishTwist();
+        // El toolkit detiene el robot si pasan 0.5 s sin /cmd_vel: reenviamos a 10 Hz mientras se mantenga presionado
+        if (holdTimerRef.current === undefined) {
+            holdTimerRef.current = setInterval(publishTwist, HOLD_INTERVAL_MS);
         }
-
-        if (keyCode === KEYS.E) {
-            message.angular.z = -baseSpeed;
-        } else if (keyCode === KEYS.Q) {
-            message.angular.z = baseSpeed;
-        }
-
-        // const twist = new ROSLIB.Message(message);
-        cmdVel.publish(message);
-    }, [ros, baseSpeed]);
+    }, [cmdVel, publishTwist]);
 
     const stopMove = useCallback((keyCode: number) => {
-        if (!ros) return;
-        // Desactivamos visualmente la tecla
+        // pointerleave se dispara aunque la tecla no estuviera presionada
+        if (!pressedRef.current.delete(keyCode)) return;
         setActiveKeys(prev => ({ ...prev, [keyCode]: false }));
 
-        // Publicamos Twist en 0 para detener el robot por seguridad
-        const cmdVel = new ROSLIB.Topic({
-            ros: ros,
-            name: '/cmd_vel',
-            messageType: 'geometry_msgs/Twist'
-        });
-
-        const stopMessage = {
-            linear: { x: 0, y: 0, z: 0 },
-            angular: { x: 0, y: 0, z: 0 }
-        };
-        cmdVel.publish(stopMessage);
-    }, [ros]);
+        // Si quedan otras teclas presionadas se publica su combinación; si no, un Twist en 0
+        publishTwist();
+        if (pressedRef.current.size === 0) stopHold();
+    }, [publishTwist, stopHold]);
 
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
         const target = event.target as HTMLElement | null;
@@ -124,6 +144,12 @@ const Movement = () => {
         if (isInput || event.ctrlKey || event.altKey || event.metaKey) return;
 
         if (Object.values(KEYS).includes(event.keyCode)) {
+            // Tras un pánico, las repeticiones de una tecla que seguía presionada no deben reactivar el movimiento
+            if (event.repeat) {
+                if (panickedRef.current) return;
+            } else {
+                panickedRef.current = false;
+            }
             startMove(event.keyCode);
         }
     }, [startMove]);
@@ -149,6 +175,23 @@ const Movement = () => {
             window.removeEventListener("keyup", handleKeyUp, false);
         };
     }, [handleKeyDown, handleKeyUp]);
+
+    // Si la ventana pierde el foco o se oculta no llegará el keyup/pointerup: soltamos todo para que el robot no siga avanzando
+    useEffect(() => {
+        const onHidden = () => { if (document.hidden) releaseAll(); };
+        window.addEventListener("blur", releaseAll);
+        document.addEventListener("visibilitychange", onHidden);
+        return () => {
+            window.removeEventListener("blur", releaseAll);
+            document.removeEventListener("visibilitychange", onHidden);
+        };
+    }, [releaseAll]);
+
+    // Si cambia la conexión o se desmonta el componente, el timer no debe seguir publicando sobre un tópico viejo
+    useEffect(() => () => {
+        stopHold();
+        pressedRef.current.clear();
+    }, [cmdVel, stopHold]);
 
     // Función auxiliar para obtener el color dinámico dependiendo del estado de la tecla
     const getKeyBackground = (keyCode: number) => {
@@ -265,6 +308,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.Q)}
                     onPointerUp={() => stopMove(KEYS.Q)}
                     onPointerLeave={() => stopMove(KEYS.Q)}
+                    onPointerCancel={() => stopMove(KEYS.Q)}
                     className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.Q) }}
                 >
@@ -275,6 +319,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.W)}
                     onPointerUp={() => stopMove(KEYS.W)}
                     onPointerLeave={() => stopMove(KEYS.W)}
+                    onPointerCancel={() => stopMove(KEYS.W)}
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.W) }}
                 >
@@ -285,6 +330,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.E)}
                     onPointerUp={() => stopMove(KEYS.E)}
                     onPointerLeave={() => stopMove(KEYS.E)}
+                    onPointerCancel={() => stopMove(KEYS.E)}
                     className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.E) }}
                 >
@@ -298,6 +344,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.A)}
                     onPointerUp={() => stopMove(KEYS.A)}
                     onPointerLeave={() => stopMove(KEYS.A)}
+                    onPointerCancel={() => stopMove(KEYS.A)}
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.A) }}
                 >
@@ -308,6 +355,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.S)}
                     onPointerUp={() => stopMove(KEYS.S)}
                     onPointerLeave={() => stopMove(KEYS.S)}
+                    onPointerCancel={() => stopMove(KEYS.S)}
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.S) }}
                 >
@@ -318,6 +366,7 @@ const Movement = () => {
                     onPointerDown={() => startMove(KEYS.D)}
                     onPointerUp={() => stopMove(KEYS.D)}
                     onPointerLeave={() => stopMove(KEYS.D)}
+                    onPointerCancel={() => stopMove(KEYS.D)}
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.D) }}
                 >

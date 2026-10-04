@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
+import { usePanicListener } from '../services/panic';
 import { COLORS } from '../theme';
 
 type keys = {
@@ -18,6 +19,19 @@ const KEYS: keys = {
     L: 76
 };
 
+// Límites reales de las articulaciones (share/urdf/pepper.urdf, ver context/ROBOT_TOOLKIT_API.md §6)
+const PITCH_LIMITS = { min: -0.7069, max: 0.6370 };
+const YAW_LIMITS = { min: -2.0857, max: 2.0857 };
+
+const SPEED = 0.1;
+const STEP = 0.05;
+// Mismo ritmo que Movement: reenvío mientras la tecla siga presionada
+const HOLD_INTERVAL_MS = 100;
+
+const clamp = (value: number, { min, max }: { min: number; max: number }) => Math.max(min, Math.min(max, value));
+
+const HEAD_KEYS = ['i', 'j', 'k', 'l'];
+
 const HeadMovement = () => {
     const { ros } = useRos();
 
@@ -27,10 +41,29 @@ const HeadMovement = () => {
     // Usamos refs para mantener los valores actualizados sin causar re-renders excesivos en el eventListener
     const pitchRef = useRef(0);
     const yawRef = useRef(0);
+    const panickedRef = useRef(false);
+    const pressedRef = useRef<Set<string>>(new Set());
+    const holdTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-    const speed = 0.1;
-    const STEP = 0.05;
-    const MAX = 1.57;  // 90 grados en radianes
+    const headTopic = useMemo(
+        () => ros ? createTopic(ros, '/set_angles', 'robot_toolkit_msgs/set_angles_msg') : null,
+        [ros]
+    );
+
+    const stopHold = useCallback(() => {
+        clearInterval(holdTimerRef.current);
+        holdTimerRef.current = undefined;
+    }, []);
+
+    // El botón de pánico centra la cabeza: reiniciamos el estado interno para que el siguiente movimiento parta de 0
+    usePanicListener(() => {
+        panickedRef.current = true;
+        pitchRef.current = 0;
+        yawRef.current = 0;
+        pressedRef.current.clear();
+        stopHold();
+        setActiveKeys({});
+    });
 
     // Inicialización del servicio de motion tools
     useEffect(() => {
@@ -50,45 +83,67 @@ const HeadMovement = () => {
         }
     }, [ros]);
 
+    // Aplica un paso por cada tecla presionada y publica el nuevo objetivo
+    const applyStep = useCallback(() => {
+        if (!headTopic) return;
 
-    const clamp = (value: number) => Math.max(-MAX, Math.min(MAX, value));
+        let dPitch = 0;
+        let dYaw = 0;
+        pressedRef.current.forEach(char => {
+            if (char === 'i') dPitch -= STEP;
+            else if (char === 'k') dPitch += STEP;
+            else if (char === 'j') dYaw += STEP;
+            else if (char === 'l') dYaw -= STEP;
+        });
+
+        const newPitch = clamp(pitchRef.current + dPitch, PITCH_LIMITS);
+        const newYaw = clamp(yawRef.current + dYaw, YAW_LIMITS);
+
+        // Ya estamos en el límite: no hay nada nuevo que enviar
+        if (newPitch === pitchRef.current && newYaw === yawRef.current) return;
+
+        pitchRef.current = newPitch;
+        yawRef.current = newYaw;
+
+        headTopic.publish({
+            names: ["HeadPitch", "HeadYaw"],
+            angles: [newPitch, newYaw],
+            fraction_max_speed: [SPEED, SPEED]
+        });
+    }, [headTopic]);
 
     const moveHead = useCallback((key: string) => {
         const char = key.toLowerCase();
-        if (!['i', 'j', 'k', 'l'].includes(char)) return;
+        // Ignora teclas ajenas y las repeticiones del navegador: el reenvío lo hace el timer
+        if (!HEAD_KEYS.includes(char) || pressedRef.current.has(char)) return;
 
         // Activamos visualmente la tecla (usando el mapeo de KEYS para el estado)
         const code = KEYS[char.toUpperCase() as keyof keys];
         setActiveKeys(prev => ({ ...prev, [code]: true }));
 
-        let newPitch = pitchRef.current;
-        let newYaw = yawRef.current;
-
-        switch (char) {
-            case 'i': newPitch = clamp(pitchRef.current - STEP); break;
-            case 'k': newPitch = clamp(pitchRef.current + STEP); break;
-            case 'j': newYaw = clamp(yawRef.current + STEP); break;
-            case 'l': newYaw = clamp(yawRef.current - STEP); break;
-            default: return;
+        pressedRef.current.add(char);
+        applyStep();
+        if (holdTimerRef.current === undefined) {
+            holdTimerRef.current = setInterval(applyStep, HOLD_INTERVAL_MS);
         }
-
-        pitchRef.current = newPitch;
-        yawRef.current = newYaw;
-
-        if (ros) {
-            const headTopic = createTopic(ros, '/set_angles', 'robot_toolkit_msgs/set_angles_msg');
-            headTopic.publish({
-                names: ["HeadPitch", "HeadYaw"],
-                angles: [newPitch, newYaw],
-                fraction_max_speed: [speed, speed]
-            });
-        }
-    }, [ros]);
+    }, [applyStep]);
 
     const stopHead = useCallback((key: string) => {
-        const code = KEYS[key.toUpperCase() as keyof keys];
+        const char = key.toLowerCase();
+        // pointerleave se dispara aunque la tecla no estuviera presionada
+        if (!pressedRef.current.delete(char)) return;
+
+        const code = KEYS[char.toUpperCase() as keyof keys];
         setActiveKeys(prev => ({ ...prev, [code]: false }));
-    }, []);
+        if (pressedRef.current.size === 0) stopHold();
+    }, [stopHold]);
+
+    const releaseAll = useCallback(() => {
+        if (pressedRef.current.size === 0) return;
+        pressedRef.current.clear();
+        stopHold();
+        setActiveKeys({});
+    }, [stopHold]);
 
     // Lógica cuando se PRESIONA una tecla (Mover cabeza e iluminar)
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -96,6 +151,13 @@ const HeadMovement = () => {
         const isInput = ["input", "textarea", "select"].includes(target.localName) ||
             target.isContentEditable;
         if (isInput || event.ctrlKey || event.altKey || event.metaKey) return;
+
+        // Tras un pánico, las repeticiones de una tecla que seguía presionada no deben mover la cabeza
+        if (event.repeat) {
+            if (panickedRef.current) return;
+        } else {
+            panickedRef.current = false;
+        }
 
         moveHead(event.key);
     }, [moveHead]);
@@ -112,14 +174,27 @@ const HeadMovement = () => {
 
     // Registro de los event listeners
     useEffect(() => {
+        const onHidden = () => { if (document.hidden) releaseAll(); };
+
         window.addEventListener('keydown', handleKeyDown, false);
         window.addEventListener('keyup', handleKeyUp, false);
+        // Si la ventana pierde el foco no llegará el keyup: soltamos todo para que la cabeza no siga moviéndose
+        window.addEventListener('blur', releaseAll);
+        document.addEventListener('visibilitychange', onHidden);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown, false);
             window.removeEventListener('keyup', handleKeyUp, false);
+            window.removeEventListener('blur', releaseAll);
+            document.removeEventListener('visibilitychange', onHidden);
         };
-    }, [handleKeyDown, handleKeyUp]);
+    }, [handleKeyDown, handleKeyUp, releaseAll]);
+
+    // Si cambia la conexión o se desmonta el componente, el timer no debe seguir publicando sobre un tópico viejo
+    useEffect(() => () => {
+        stopHold();
+        pressedRef.current.clear();
+    }, [headTopic, stopHold]);
 
     // Función auxiliar para obtener el color dinámico dependiendo del estado de la tecla
     const getKeyBackground = (keyCode: number) => {
@@ -158,6 +233,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('i')}
                             onPointerUp={() => stopHead('i')}
                             onPointerLeave={() => stopHead('i')}
+                            onPointerCancel={() => stopHead('i')}
                             className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.I) }}
                         >
@@ -177,6 +253,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('j')}
                             onPointerUp={() => stopHead('j')}
                             onPointerLeave={() => stopHead('j')}
+                            onPointerCancel={() => stopHead('j')}
                             className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.J) }}
                         >
@@ -192,6 +269,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('k')}
                             onPointerUp={() => stopHead('k')}
                             onPointerLeave={() => stopHead('k')}
+                            onPointerCancel={() => stopHead('k')}
                             className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.K) }}
                         >
@@ -207,6 +285,7 @@ const HeadMovement = () => {
                             onPointerDown={() => moveHead('l')}
                             onPointerUp={() => stopHead('l')}
                             onPointerLeave={() => stopHead('l')}
+                            onPointerCancel={() => stopHead('l')}
                             className="inline-flex h-[clamp(30px,25vw,55px)] w-[clamp(30px,25vw,55px)] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                             style={{ background: getKeyBackground(KEYS.L) }}
                         >

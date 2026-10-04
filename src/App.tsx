@@ -22,6 +22,7 @@ import TabletVisibility from "./components/TabletVisibility";
 import completePepper from "./assets/complete_pepper.png";
 import HotWords from "./components/HotWords";
 import QuickAction from "./components/QuickAction";
+import PanicButton from "./components/PanicButton";
 
 // Función de hash "pesada" con Key Stretching (500 rondas) y Salt
 const hashPassword = (password: string) => {
@@ -146,12 +147,15 @@ const App = () => {
                         className="flex w-full flex-col items-stretch gap-5 lg:flex-row lg:items-start"
                     >
                         {/* ── MENÚ LATERAL ── */}
-                        <aside
-                            className="w-full shrink-0 overflow-hidden lg:sticky lg:top-0 lg:w-[220px]"
-                        >
-                            {/* ¡OJO AQUÍ! Pasamos la función setActiveTab para que el menú cambie de vista */}
-                            <LateralMenu activeTab={activeTab} setActiveTab={setActiveTab} />
-                        </aside>
+                        {/* El sticky va en el contenedor para que menú y botón de pánico siempre queden a la vista */}
+                        <div className="flex w-full shrink-0 flex-col gap-3 lg:sticky lg:top-0 lg:w-[220px]">
+                            <aside className="w-full shrink-0 overflow-hidden">
+                                {/* ¡OJO AQUÍ! Pasamos la función setActiveTab para que el menú cambie de vista */}
+                                <LateralMenu activeTab={activeTab} setActiveTab={setActiveTab} />
+                            </aside>
+
+                            <PanicButton />
+                        </div>
 
                         {/* ── CONTENEDOR APILADO PARA AMBOS TABLEROS ── */}
                         <div

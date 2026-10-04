@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createService, createTopic } from '../services/RosManager';
 import { executeScript, stopSpeech } from '../services/scriptExecutor';
+import { usePanicListener } from '../services/panic';
 import { COLORS, TYPOGRAPHY } from '../theme';
 
 const LANGUAGES = ['ES', 'EN'] as const;
@@ -55,6 +56,8 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
     // Ejecución de scripts
     const [executingScriptId, setExecutingScriptId] = useState<number | null>(null);
     const abortRef = useRef<AbortController | null>(null);
+
+    usePanicListener(() => abortRef.current?.abort());
 
     const topicRef = useRef<{ unsubscribe: () => void } | null>(null);
     const nextId = useRef(4);
@@ -286,41 +289,44 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
 
     // ── Render ────────────────────────────────────────────────────────────────
     const toggles = [
-        { label: 'Noise', state: noise, setter: handleNoiseToggle, topClass: 'top-[88px]' },
-        { label: 'Eyes',  state: eyes,  setter: handleEyesToggle,  topClass: 'top-[132px]' }
+        { label: 'Noise', state: noise, setter: handleNoiseToggle },
+        { label: 'Eyes',  state: eyes,  setter: handleEyesToggle }
     ];
 
     return (
         // <div style={themeVars} className="relative h-[700px] w-full max-w-[350px] overflow-hidden rounded-[20px] bg-[var(--azul)]">
-        <div style={themeVars} className="relative h-[700px] w-full overflow-hidden rounded-[20px] bg-[var(--azul)]">
+        <div style={themeVars} className="flex  w-full max-w-[350px] flex-col gap-4 overflow-hidden rounded-[20px] bg-[var(--azul)] pb-5">
 
-            {/* Etiqueta título */}
-            <div className="absolute left-0 top-[21px] z-[2] flex h-[30px] w-[min(180px,90%)] items-center rounded-r-[25px] bg-[var(--celeste)] px-[19px]">
-                <span className="w-full text-center text-base font-bold text-[var(--azul)] font-[family-name:var(--font)]">
-                    Hot Words
-                </span>
-            </div>
+            {/* Cabecera: etiqueta título + selector de idioma */}
+            <div className="mt-[21px] flex items-center justify-between gap-2">
+                <div className="flex h-[30px] w-[min(180px,60%)] items-center rounded-r-[25px] bg-[var(--celeste)] px-[19px]">
+                    <span className="w-full text-center text-base font-bold text-[var(--azul)] font-[family-name:var(--font)]">
+                        Hot Words
+                    </span>
+                </div>
 
-            {/* Selector de idioma */}
-            <div className="absolute right-5 top-6 z-10 flex cursor-pointer items-center gap-1" onClick={() => setShowLangDropdown(v => !v)}>
-                <span className="text-xs font-bold text-[var(--celeste)] font-[family-name:var(--font)]">{language}</span>
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke={COLORS.CELESTE_PRINCIPAL} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                {showLangDropdown && (
-                    <div className="absolute right-0 top-5 z-20 overflow-hidden rounded-lg bg-[var(--celeste)] shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
-                        {LANGUAGES.map(lang => (
-                            <div
-                                key={lang}
-                                onClick={(e) => { e.stopPropagation(); setLanguage(lang); setShowLangDropdown(false); }}
-                                className={`cursor-pointer px-4 py-1.5 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)] ${lang === language ? 'bg-[rgba(0,33,75,0.12)]' : 'bg-transparent'}`}
-                            >{lang}</div>
-                        ))}
+                <div className="flex cursor-pointer items-center gap-2 pr-5" onClick={() => setShowLangDropdown(v => !v)}>
+                    {showLangDropdown && (
+                        <div className="flex overflow-hidden rounded-lg bg-[var(--celeste)]">
+                            {LANGUAGES.map(lang => (
+                                <div
+                                    key={lang}
+                                    onClick={(e) => { e.stopPropagation(); setLanguage(lang); setShowLangDropdown(false); }}
+                                    className={`cursor-pointer px-3 py-1 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)] ${lang === language ? 'bg-[rgba(0,33,75,0.12)]' : 'bg-transparent'}`}
+                                >{lang}</div>
+                            ))}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-[var(--celeste)] font-[family-name:var(--font)]">{language}</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke={COLORS.CELESTE_PRINCIPAL} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Banner de script ejecutándose */}
             {executingScriptId !== null && (
-                <div className="absolute left-5 right-5 top-[55px] z-[5] flex items-center gap-2.5 rounded-lg border border-solid border-[var(--amarillo)] bg-[#fff8e1] px-3 py-1.5 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)]">
+                <div className="mx-5 flex items-center gap-2.5 rounded-lg border border-solid border-[var(--amarillo)] bg-[#fff8e1] px-3 py-1.5 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)]">
                     ▶ Ejecutando script...
                     <button
                         onClick={handleStopScript}
@@ -332,23 +338,25 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
             )}
 
             {/* Controles de Noise y Eyes */}
-            {toggles.map((item) => (
-                <div key={item.label} className={`absolute inset-x-0 mx-auto h-[30px] w-[207px] ${item.topClass}`}>
-                    <div className="absolute left-0 top-1 text-base font-bold text-[var(--celeste)] font-['Nunito']">{item.label}</div>
-                    <div
-                        onClick={item.setter}
-                        className={`absolute left-[72px] flex h-[30px] w-[135px] cursor-pointer items-center justify-center gap-2 rounded-[25px] bg-[var(--celeste)] px-2.5 transition-colors duration-200 ease-[ease] ${item.state ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                        <div className={`h-5 w-5 rounded-full transition-colors duration-200 ease-[ease] ${item.state ? 'bg-[var(--verde)]' : 'bg-[var(--azul)]'}`} />
-                        <div className="text-xs font-bold text-[var(--azul)] font-['Nunito']">{item.state ? 'ACTIVO' : 'HABILITAR'}</div>
+            <div className="flex flex-col gap-3">
+                {toggles.map((item) => (
+                    <div key={item.label} className="mx-auto flex h-[30px] w-[207px] items-center justify-between">
+                        <div className="text-base font-bold text-[var(--celeste)] font-['Nunito']">{item.label}</div>
+                        <div
+                            onClick={item.setter}
+                            className={`flex h-[30px] w-[135px] cursor-pointer items-center justify-center gap-2 rounded-[25px] bg-[var(--celeste)] px-2.5 transition-colors duration-200 ease-[ease] ${item.state ? 'flex-row-reverse' : 'flex-row'}`}
+                        >
+                            <div className={`h-5 w-5 rounded-full transition-colors duration-200 ease-[ease] ${item.state ? 'bg-[var(--verde)]' : 'bg-[var(--azul)]'}`} />
+                            <div className="text-xs font-bold text-[var(--azul)] font-['Nunito']">{item.state ? 'ACTIVO' : 'HABILITAR'}</div>
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
 
             {/* Botón ACTIVAR HOTWORDS */}
             <div
                 onClick={toggleSubscribe}
-                className={`absolute inset-x-0 top-[200px] mx-auto flex h-[30px] w-[210px] cursor-pointer items-center justify-between rounded-[25px] bg-[var(--celeste)] px-2.5 transition-colors duration-200 ease-[ease] ${subscribe ? 'flex-row-reverse' : 'flex-row'}`}
+                className={`mx-auto flex h-[30px] w-[210px] shrink-0 cursor-pointer items-center justify-between rounded-[25px] bg-[var(--celeste)] px-2.5 transition-colors duration-200 ease-[ease] ${subscribe ? 'flex-row-reverse' : 'flex-row'}`}
             >
                 <div className={`h-5 w-5 rounded-full transition-colors duration-200 ease-[ease] ${subscribe ? 'bg-[var(--verde)]' : 'bg-[var(--azul)]'}`} />
                 <div className="flex-1 text-center text-xs font-bold text-[var(--azul)] font-['Nunito']">
@@ -357,7 +365,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
             </div>
 
             {/* Sección Vocabulario */}
-            <div className="absolute top-[260px] w-full text-center text-base font-bold text-[var(--celeste)] font-['Nunito']">
+            <div className="w-full text-center text-base font-bold text-[var(--celeste)] font-['Nunito']">
                 Palabras configuradas
                 <div
                     onClick={() => openConfigModal()}
@@ -366,7 +374,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
             </div>
 
             {/* Tabla de Palabras */}
-            <div className="absolute left-5 top-[300px] h-[370px] w-[calc(100%-40px)] overflow-y-auto rounded-[10px] bg-[rgba(207,221,252,0.05)]">
+            <div className="mx-5 min-h-0 flex-1 overflow-y-auto rounded-[10px] bg-[rgba(207,221,252,0.05)]">
                 <table className="w-full border-collapse text-[var(--celeste)] font-['Nunito']">
                     <thead>
                         <tr className="border-b border-solid border-[var(--celeste)]">
@@ -398,16 +406,21 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
             {/* MODAL DE CONFIGURACIÓN */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(0,0,0,0.7)]">
-                    {/* Layout original (absoluto, 600x300) desde sm; apilado en pantallas pequeñas */}
-                    <div className="relative flex max-h-[95vh] w-[600px] max-w-[95vw] flex-col gap-5 overflow-y-auto rounded-[20px] bg-[var(--azul)] px-6 pb-6 pt-12 sm:block sm:h-[300px] sm:overflow-hidden sm:p-0">
+                    {/* Apilado en pantallas pequeñas; dos columnas desde sm */}
+                    <div className="flex max-h-[95vh] w-[600px] max-w-[95vw] flex-col gap-5 overflow-y-auto rounded-[20px] bg-[var(--azul)] pb-6">
 
-                        <div className="absolute left-1/2 top-0 flex h-[30px] w-[245px] -translate-x-1/2 items-center justify-center rounded-b-[20px] bg-[var(--celeste)] sm:left-[178px] sm:translate-x-0">
-                            <div className="text-base font-extrabold text-[var(--azul)] font-[family-name:var(--font)]">
-                                {editingIndex !== null ? 'EDITAR PALABRA' : 'NUEVA PALABRA'}
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-start">
+                            <div />
+                            <div className="flex h-[30px] w-[245px] max-w-full items-center justify-center rounded-b-[20px] bg-[var(--celeste)]">
+                                <div className="text-base font-extrabold text-[var(--azul)] font-[family-name:var(--font)]">
+                                    {editingIndex !== null ? 'EDITAR PALABRA' : 'NUEVA PALABRA'}
+                                </div>
                             </div>
+                            <button onClick={() => setIsModalOpen(false)} className="cursor-pointer justify-self-end border-none bg-transparent pr-[15px] text-[24px] leading-none text-[var(--celeste)]">×</button>
                         </div>
 
-                        <div className="w-full sm:absolute sm:left-[30px] sm:top-[55px] sm:w-[280px]">
+                        <div className="flex flex-col gap-5 px-6 sm:flex-row sm:gap-8">
+                        <div className="w-full sm:flex-1">
                             <label className="text-xs font-bold text-[var(--celeste)] font-['Nunito']">PALABRA CLAVE</label>
                             <input
                                 type="text"
@@ -434,7 +447,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
                             </div>
                         </div>
 
-                        <div className="flex w-full flex-col gap-5 sm:absolute sm:left-[340px] sm:top-[75px] sm:w-[230px]">
+                        <div className="flex w-full flex-col gap-5 sm:w-[230px] sm:shrink-0">
                             <div>
                                 <label className="text-sm font-bold text-[var(--celeste)] font-['Nunito']">THRESHOLD: {modalData.threshold}</label>
                                 <input
@@ -463,8 +476,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
                                 )}
                             </div>
                         </div>
-
-                        <button onClick={() => setIsModalOpen(false)} className="absolute right-[15px] top-[5px] z-10 cursor-pointer border-none bg-transparent text-[24px] text-[var(--celeste)]">×</button>
+                        </div>
 
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { COLORS, TYPOGRAPHY } from '../theme';
 import InteractiveColorWheel, { hexToRgba } from './InteractiveColorWheel';
+import ScaledModal from './ScaledModal';
 
 interface ChestModalProps {
     isOpen: boolean;
@@ -39,7 +40,7 @@ const ChestModal = ({ isOpen, onClose, onSave, initialState }: ChestModalProps) 
     const toggleOn = () => setIsOn(!isOn);
 
     return (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <ScaledModal width={500} height={300}>
             <div style={{ width: '500px', height: '300px', position: 'relative', background: COLORS.AZUL_PRINCIPAL, overflow: 'hidden', borderRadius: 20 }}>
                 
                 {/* Selector de Color único (izquierda) */}
@@ -72,7 +73,7 @@ const ChestModal = ({ isOpen, onClose, onSave, initialState }: ChestModalProps) 
 
                 <button onClick={onClose} style={{ position: 'absolute', top: 5, right: 15, background: 'none', border: 'none', color: COLORS.CELESTE_PRINCIPAL, fontSize: 24, cursor: 'pointer', zIndex: 10 }}>×</button>
             </div>
-        </div>
+        </ScaledModal>
     );
 };
 
