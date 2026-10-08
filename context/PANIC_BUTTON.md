@@ -17,7 +17,7 @@ Steps run in this order, all in the same click:
 |---|--------|-----|
 | 1 | Cancel running scripts, clear held keys, stop the hold-to-repeat timers | `triggerPanic()` dispatches the window event `robot:panic` (see below) |
 | 2 | Stop the base | Publish a zero `Twist` on `/cmd_vel` 5 times, 50 ms apart (one message can be lost on a websocket) |
-| 3 | Stop speech (best effort, see limitations) | `stopSpeech(ros)`: `audio_tools_srv` `disable_tts` then `enable_tts` |
+| 3 | Cut the audio | `stopSpeech(ros)` (`audio_tools_srv` `disable_tts` then `enable_tts`), plus `/pytoolkit/ALTextToSpeech/shut_up_srv` (`ALTextToSpeech.stopAll()`) and `/pytoolkit/ALAudioPlayer/stop_audio_stream_srv` (`ALAudioPlayer.stopAll()`). Both services take no arguments (type `robot_toolkit_msgs/battery_service_srv`) and are served by `py_toolkit` |
 | 4 | Center the head | Publish `HeadPitch = 0`, `HeadYaw = 0` on `/set_angles` (`fraction_max_speed` 0.2) |
 | 5 | Default posture | Call `/pytoolkit/ALRobotPosture/go_to_posture_srv` with `posture: 'stand'` (NAOqi `Stand`) |
 
@@ -75,13 +75,19 @@ If it turns out animations are not interrupted, the options are, all untested:
 - `/special_settings` with `command: 'rest', state: true` (`ALMotion.rest()`). It stops motion for sure, but the robot goes limp, so it is closer to a hard stop than to "return to default position".
 - Add a "stop all behaviors" call to the toolkit itself (`ALBehaviorManager.stopAllBehaviors`), since it is not exposed today.
 
-### Speech may not be cut off
+### Audio cut: what is and is not verified
 
-`disable_tts` / `enable_tts` start and stop the `/speech` subscriber. Speech itself is asynchronous, and the toolkit documentation does not say that this cuts off a sentence already in progress. `stopSpeech` is therefore best effort: it reliably prevents new speech, but the current sentence may finish. Test it on the robot.
+`disable_tts` / `enable_tts` only start and stop the `/speech` subscriber, so on their own they do not cut a sentence already in progress. That is why the panic button also calls `ALTextToSpeech/shut_up_srv` and `ALAudioPlayer/stop_audio_stream_srv`, which the toolkit documentation maps to `ALTextToSpeech.stopAll()` and `ALAudioPlayer.stopAll()`.
 
-### The posture service lives in `pyToolkit.py`
+**Still to test on the robot:**
 
-`go_to_posture_srv` is served by `scripts/pyToolkit.py`, a separate node that the toolkit documentation marks as not tested (quirk #10). It is also not installed by the package's CMake, so whether it is running depends on how the robot is started. If that node is not running, step 5 does nothing (the service call fails and an error is logged to the console). The `/cmd_vel` and head steps do not depend on it.
+- Does `ALAudioPlayer.stopAll()` also cut the sound of an **animation** (a behavior's Play Sound box), or only files and streams started through `ALAudioPlayer`? Start a long animation with sound and press panic.
+- Does `ALTextToSpeech.stopAll()` cut **animated speech** (`animated: true` uses `ALAnimatedSpeech`)?
+- `ALMotion/play_dance_srv` blocks until the choreography ends and then stops audio itself; panic cannot interrupt the call, only its effects on the robot.
+
+### The posture and audio-cut services are not part of the C++ toolkit
+
+`go_to_posture_srv`, `shut_up_srv` and `stop_audio_stream_srv` are served by the separate Python node (`py_toolkit`, or the reduced `pyToolkit.py` copy, which the toolkit documentation marks as not tested). Whether it is running depends on how the robot is started. If it is not, steps 3 (the two service calls) and 5 do nothing (the calls fail and an error is logged to the console). The `/cmd_vel`, `disable_tts`/`enable_tts` and head steps do not depend on it.
 
 ### Other limitations
 

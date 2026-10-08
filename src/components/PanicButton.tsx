@@ -31,8 +31,16 @@ const PanicButton = () => {
             if (++sent >= STOP_REPEATS) clearInterval(timersRef.current.stop);
         }, STOP_INTERVAL_MS);
 
-        // 3. Silencia el TTS
+        // 3. Corta el audio: TTS y cualquier sonido/stream que esté reproduciendo ALAudioPlayer
         stopSpeech(ros);
+        for (const name of ['ALTextToSpeech/shut_up_srv', 'ALAudioPlayer/stop_audio_stream_srv']) {
+            createService(ros, `/pytoolkit/${name}`, 'robot_toolkit_msgs/battery_service_srv')
+                .callService(
+                    {},
+                    (result) => console.log(`Panic: ${name}`, result),
+                    (error) => console.error(`Panic: error en ${name}`, error)
+                );
+        }
 
         // 4. Cabeza al centro
         createTopic(ros, '/set_angles', 'robot_toolkit_msgs/set_angles_msg').publish({

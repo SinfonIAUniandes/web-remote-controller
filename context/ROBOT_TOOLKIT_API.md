@@ -1,10 +1,10 @@
 # SinfonIA Robot Toolkit — Public Interface Reference
 
-Package: `robot_toolkit` (C++, catkin) plus `scripts/pyToolkit.py` (Python node `pytoolkit`)
+Packages: `robot_toolkit` (C++, catkin, this repository), `py_toolkit` (Python 2.7 node `pytoolkit`, sibling repository `../py_toolkit`; a reduced copy is in `scripts/pyToolkit.py`) and the message package `robot_toolkit_msgs` (`../robot_toolkit_msgs`)
 Robot: SoftBank Pepper (NAOqi / libqi)
 Middleware: **ROS 1** (`roscpp`, `rospy`, `catkin`; docs target Kinetic/Melodic/Noetic). There is no ROS 2 code in this repository.
 
-> **How this document was produced.** Every entry below was derived from the source in this repository (file and line references are given) and from the message/service definitions in the sibling package `robot_toolkit_msgs` (`../robot_toolkit_msgs/msg/*.msg`, `srv/*.srv`), which supplies every field name, type and range comment quoted here. Section 7 reproduces those definitions.
+> **How this document was produced.** Every entry below was derived from the source in this repository (file and line references are given), from the sibling package `py_toolkit` (`../py_toolkit/src/py_toolkit.py`, read in full for Section 8) and from the message/service definitions in `robot_toolkit_msgs` (`../robot_toolkit_msgs/msg/*.msg`, `srv/*.srv`), which supplies every field name, type and range comment quoted here. Section 7 reproduces those definitions.
 
 ---
 
@@ -767,41 +767,41 @@ string result                string result                             ---
                                                                        string result
 ```
 
-### 7.3 Services served by `scripts/pyToolkit.py`
+### 7.3 Services and topics served by `py_toolkit`
+
+These types are used by the Python node described in Section 8 (the reduced copy `scripts/pyToolkit.py` uses only `go_to_posture_srv`, `tablet_service_srv`, `std_srvs/SetBool` and `std_srvs/Empty`).
 
 ```text
-# go_to_posture_srv          # tablet_service_srv
-string posture               string url
----                          ---
+# go_to_posture_srv          # tablet_service_srv         # battery_service_srv
+string posture               string url                   ---
+---                          ---                          string porcentage
 string approved              string approved
 ```
 
-(`std_srvs/SetBool` and `std_srvs/Empty` are also used.)
+| Interface | Request | Response | Served as (`/pytoolkit/...`) |
+|---|---|---|---|
+| `battery_service_srv` | none | `string porcentage` | 15 services that take no input: `ALAudioDevice/get_output_volume_srv`, `ALTextToSpeech/shut_up_srv`, `ALAudioPlayer/stop_audio_stream_srv`, `ALTracker/start_follow_face`, `.../start_tracker_srv`, `.../stop_tracker_srv`, `ALBasicAwareness/pause_awareness_srv`, `.../resume_awareness_srv`, `ALMotion/enable_security_srv`, `ALNavigation/stop_exploring_srv`, `ALBatteryService/get_porcentage`, `ALTabletService/show_words_srv`, `.../show_picture_srv`, `.../hide_srv`, `.../overload_srv` |
+| `get_input_srv` | `string type`, `string text` | `string input` | `ALTabletService/get_input_srv` |
+| `get_segmentation3D_srv` | none | `float64[] coordinates` | `ALSegmentation3D/get_segmentation3D_srv` |
+| `go_to_posture_srv` | `string posture` | `string approved` | `ALRobotPosture/go_to_posture_srv`, `ALBasicAwareness/set_tracking_mode_srv` |
+| `move_head_srv` | `string state` | `string approved` | `ALMotion/move_head_srv` |
+| `navigate_to_srv` | `float64 x_coordinate`, `float64 y_coordinate` | `string approved` | `ALMotion/move_relative_srv`, `ALNavigation/navigate_to_srv` |
+| `point_at_srv` | `float64 x, y, z`, `string effector_name`, `int32 frame`, `float64 speed` | `string approved` | `ALTracker/point_at_srv` |
+| `say_to_file_srv` | `string text` | `uint8[] data` | `ALTextToSpeech/say_to_file_srv` |
+| `set_angle_srv` | `string[] name`, `float64[] angle`, `float64 speed` | `string result` | `ALMotion/set_angle_srv`, `ALMotion/toggle_get_angle_srv` |
+| `set_move_arms_enabled_srv` | `bool LArm`, `bool RArm` | `string answer` | `ALMotion/set_move_arms_enabled_srv` |
+| `set_open_close_hand_srv` | `string hand`, `string state` | `string approved` | `ALMotion/set_open_close_hand_srv`, `ALMotion/toggle_breathing_srv` |
+| `set_output_volume_srv` | `int32 volume` | `string approved` | `ALAudioDevice/set_output_volume_srv`, `ALMotion/play_dance_srv`, `ALNavigation/start_exploring_srv` |
+| `set_security_distance_srv` | `float64 distance` | `string approved` | three `ALMotion/set_*security_distance_srv` services |
+| `set_speechrecognition_srv` | `bool subscribe`, `bool noise`, `bool eyes` | `string approved` | `ALSpeechRecognition/set_speechrecognition_srv` |
+| `set_stiffnesses_srv` | `string names`, `float64 stiffnesses` | `string result` | `ALMotion/set_stiffnesses_srv`, `ALAudioPlayer/play_audio_stream_srv` |
+| `set_words_threshold_srv` | `string[] words`, `float32[] threshold` | `string result` | `ALSpeechRecognition/set_words_srv` |
+| `tablet_service_srv` | `string url` | `string approved` | `show_image_srv`, `show_web_view_srv`, `show_topic_srv`, `play_video_srv`, `ALSpeechRecognition/set_hot_word_language_srv`, `ALAudioPlayer/play_sound_effect_srv` |
+| `speech_recognition_status_msg` (msg) | `string status` | n/a | topics `ALSpeechRecognition/status`, `.../SpeechDetected`, `ALMotion/failed`, `ALSensors/obstacles` |
+| `text_to_speech_status_msg` (msg) | `int32 idOfConcernedTask`, `string status` | n/a | topic `ALTextToSpeech/status` |
+| `Tshirt_color_srv` | none | `string color` | **Not served**: the registration in `py_toolkit.py` is commented out |
 
-### 7.4 Defined in the package but not used by this repository
-
-None of these is referenced by code in `sinfonia_toolkit`. They are presumably served by other nodes (for example the sibling `py_toolkit` folder, which was not reviewed here).
-
-| Interface | Request | Response |
-|---|---|---|
-| `Tshirt_color_srv` | none | `string color` |
-| `battery_service_srv` | none | `string porcentage` |
-| `get_input_srv` | `string type`, `string text` | `string input` |
-| `get_segmentation3D_srv` | none | `float64[] coordinates` |
-| `move_head_srv` | `string state` | `string approved` |
-| `navigate_to_srv` | `float64 x_coordinate`, `float64 y_coordinate` | `string approved` |
-| `point_at_srv` | `float64 x, y, z`, `string effector_name`, `int32 frame`, `float64 speed` | `string approved` |
-| `say_to_file_srv` | `string text` | `uint8[] data` |
-| `set_angle_srv` | `string[] name`, `float64[] angle`, `float64 speed` | `string result` |
-| `set_move_arms_enabled_srv` | `bool LArm`, `bool RArm` | `string answer` |
-| `set_open_close_hand_srv` | `string hand`, `string state` | `string approved` |
-| `set_output_volume_srv` | `int32 volume` | `string approved` |
-| `set_security_distance_srv` | `float64 distance` | `string approved` |
-| `set_speechrecognition_srv` | `bool subscribe`, `bool noise`, `bool eyes` | `string approved` |
-| `set_stiffnesses_srv` | `string names`, `float64 stiffnesses` | `string result` |
-| `set_words_threshold_srv` | `string[] words`, `float32[] threshold` | `string result` |
-| `speech_recognition_status_msg` (msg) | `string status` | n/a |
-| `text_to_speech_status_msg` (msg) | `int32 idOfConcernedTask`, `string status` | n/a |
+(`std_srvs/SetBool` and `std_srvs/Empty` are also used.) `speech_recognition_srv` is served by the C++ toolkit (Section 4.6), not by `py_toolkit`, which imports it without using it.
 
 External message types also used by the toolkit: `naoqi_bridge_msgs/AudioBuffer` (`/mic`), `naoqi_bridge_msgs/RobotInfo` and `SetString` (included by the helpers, not exposed), and standard `geometry_msgs`, `nav_msgs`, `sensor_msgs`, `std_msgs`, `tf2_msgs`, `std_srvs`.
 
@@ -809,42 +809,301 @@ External message types also used by the toolkit: `naoqi_bridge_msgs/AudioBuffer`
 
 ## 8. Python node `pytoolkit`
 
-[scripts/pyToolkit.py](scripts/pyToolkit.py) is a separate `rospy` node (`rospy.init_node('pytoolkit')`) that uses NAOqi through `qi` and exposes services for high-level robot state. Start it with:
+The Python side of the stack lives in the separate **`py_toolkit`** package (`../py_toolkit`, ROS 1, **Python 2.7**, catkin). Its README describes it as a complement to `sinfonia_toolkit`. It runs one `rospy` node named `pytoolkit` that talks to NAOqi through `qi` and exposes **51 services, 6 published topics and 2 subscribed topics**, all under `pytoolkit/...` (Section 8.2 to 8.4). `sinfonia_toolkit/scripts/pyToolkit.py` is a much smaller earlier copy (Section 8.6).
+
+### 8.1 Starting it
 
 ```bash
-cd scripts && python pyToolkit.py --ip 127.0.0.1 --port 9559   # run from scripts/ so `import ConsoleFormatter` resolves
+# on the robot (or any machine that can reach NAOqi), with ROS sourced
+rosrun py_toolkit py_toolkit.py --ip 127.0.0.1 --port 9559
 ```
-
-The script is not installed by `CMakeLists.txt`, so `rosrun` will not find it.
 
 | Argument | Type | Default | Meaning |
 |---|---|---|---|
-| `--ip` | string | `127.0.0.1` | NAOqi address (use `127.0.0.1` on the robot) |
+| `--ip` | string | `127.0.0.1` | NAOqi address (`127.0.0.1` when running on the robot) |
 | `--port` | int | `9559` | NAOqi port |
+
+Install (from the README): clone `py_toolkit` and `robot_toolkit_msgs` into a catkin workspace and run `catkin_make`. `CMakeLists.txt` installs nothing and does not mark the scripts executable, so use `rosrun` only after `chmod +x src/py_toolkit.py`, or run `python src/py_toolkit.py`. There are no ROS parameters or launch files.
+
+**Things the node does at start-up** ([py_toolkit.py:1560-1602](../py_toolkit/src/py_toolkit.py)), so expect the robot to react as soon as it starts:
+
+1. Stops the NAOqi `AppLauncher` service (errors ignored).
+2. Enables autonomous blinking.
+3. If `ALAutonomousLife` is not `disabled`: sets it to `disabled`, waits 2 s, goes to the `Stand` posture.
+4. Disables `ALBasicAwareness` if it is enabled.
+5. Sets the tracker's maximum detection distance to 0.1 m and stops it.
+6. Hides the tablet, enables `ALSpeakingMovement`, then shows `http://198.18.0.1/apps/robot-page/img/SinfonIA-Tablet.png` on the tablet.
+7. Subscribes `ALCloseObjectDetection` and `ALSegmentation3D` with the id `pytoolkit`.
+
+**Naming.** Topic names are absolute (`/pytoolkit/...`). Service names are written without a leading slash; with `init_node("pytoolkit")` in the root namespace they resolve to `/pytoolkit/...`.
+
+### 8.2 Topics published
+
+All have `queue_size=10`. Message types are from `robot_toolkit_msgs`.
+
+| Topic | Type | When |
+|---|---|---|
+| `/pytoolkit/ALTextToSpeech/status` | `text_to_speech_status_msg` (`int32 idOfConcernedTask`, `string status`) | NAOqi `ALTextToSpeech/Status` event (task id and status string such as started/done, as NAOqi reports them) |
+| `/pytoolkit/ALMotion/failed` | `speech_recognition_status_msg` (`string status`) | NAOqi `ALMotion/MoveFailed`; `status` is the first element of the event value |
+| `/pytoolkit/ALSpeechRecognition/status` | `speech_recognition_status_msg` | NAOqi `WordRecognized`: published only if the word is in the list set by `set_words_srv` **and** its confidence is greater than that word's threshold. Other words only print `word not in list` |
+| `/pytoolkit/ALSpeechRecognition/SpeechDetected` | `speech_recognition_status_msg` | `status = "started"` or `"stopped"` when NAOqi `SpeechDetected` becomes 1 or 0 |
+| `/pytoolkit/ALMotion/get_angles` | `set_angles_msg` | About every 0.1 s after `toggle_get_angle_srv` is called: `names` = requested joints, `angles` = current angles in rad (commanded actuator values, not sensor readings: the code calls `getAngles(names, False)`), `fraction_max_speed` empty |
+| `/pytoolkit/ALSensors/obstacles` | `speech_recognition_status_msg` | Advertised but **never published** (the code that fed it is commented out) |
+
+Speech recognition only produces events after you enable it with `set_speechrecognition_srv` and set a vocabulary with `set_words_srv`.
+
+### 8.3 Topics subscribed
+
+| Topic | Type | Behaviour |
+|---|---|---|
+| `/pytoolkit/ALMotion/move` | `geometry_msgs/Twist` | An **all-zero** Twist calls `ALMotion.stopMove()`; anything else calls `ALMotion.move(linear.x, linear.y, angular.z)`. No watchdog: the robot keeps moving until you send zeros |
+| `/speech` | `robot_toolkit_msgs/speech_msg` | **Does not speak.** Only while `show_words_srv` is active (Section 8.4, tablet), it strips NAOqi markup (`\pau=...\`, `\rspd=...\`) and shows the text on the tablet word by word (450 ms per word if `language` is `Spanish`, 300 ms if `English`). The robot's voice comes from the `robot_toolkit` `/speech` subscriber, which reads the same topic |
+
+```bash
+rostopic pub -r 10 /pytoolkit/ALMotion/move geometry_msgs/Twist "{linear: {x: 0.2, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+rostopic pub -1  /pytoolkit/ALMotion/move geometry_msgs/Twist "{}"      # stop
+```
+
+### 8.4 Services
+
+Request and response fields come from the `robot_toolkit_msgs` definitions (Section 7). Most handlers print to the console and return `"OK"` in the response's single string field (exceptions are noted in the tables). Response field names depend on the service type:
+
+| Service type | Request | Response field |
+|---|---|---|
+| `battery_service_srv` | none | `porcentage` (string) |
+| `tablet_service_srv`, `go_to_posture_srv`, `move_head_srv`, `navigate_to_srv`, `set_output_volume_srv`, `set_security_distance_srv`, `set_open_close_hand_srv`, `set_speechrecognition_srv`, `point_at_srv` | see tables | `approved` (string) |
+| `set_angle_srv`, `set_stiffnesses_srv`, `set_words_threshold_srv` | see tables | `result` (string) |
+| `std_srvs/SetBool` | `data` (bool) | `success` (bool), `message` (string) |
+| `set_move_arms_enabled_srv` | `LArm`, `RArm` (bool) | `answer` (string) |
+| `get_input_srv` | `type`, `text` (string) | `input` (string) |
+| `say_to_file_srv` | `text` | `data` (uint8[]) |
+| `get_segmentation3D_srv` | none | `coordinates` (float64[]) |
+
+Several services **reuse a type whose field names do not match their meaning**; those are called out below.
+
+#### Audio, speech and sound
+
+| Service (`pytoolkit/...`) | Type | Request | Behaviour |
+|---|---|---|---|
+| `ALAudioDevice/set_output_volume_srv` | `set_output_volume_srv` | `volume` (int32) | `ALAudioDevice.setOutputVolume(volume)`; value is passed to NAOqi unchanged |
+| `ALAudioDevice/get_output_volume_srv` | `battery_service_srv` | none | Returns the output volume as a string in `porcentage` |
+| `ALTextToSpeech/shut_up_srv` | `battery_service_srv` | none | `ALTextToSpeech.stopAll()` |
+| `ALTextToSpeech/say_to_file_srv` | `say_to_file_srv` | `text` | Synthesises to `/tmp/say_to_file.raw` **on the machine running the node**, returns the file bytes in `data` |
+| `ALSpeechRecognition/set_speechrecognition_srv` | `set_speechrecognition_srv` | `subscribe`, `noise`, `eyes` (bool) | `subscribe=true`: subscribe as `isHearing` and un-pause; `false`: unsubscribe and pause. `noise` sets the audio expression (beep), `eyes` the visual expression (eye LEDs) |
+| `ALSpeechRecognition/set_words_srv` | `set_words_threshold_srv` | `words` (string[]), `threshold` (float32[], one per word) | If `words` is not empty: pause, clear contexts, set the vocabulary, store words and thresholds, un-pause. Empty `words` does nothing |
+| `ALSpeechRecognition/set_hot_word_language_srv` | `tablet_service_srv` | `url` = **language name** | `ALSpeechRecognition.setLanguage(url)` (pause/un-pause around it) |
+| `ALAudioPlayer/play_sound_effect_srv` | `tablet_service_srv` | `url` = **file path on the robot** | `ALAudioPlayer.playSoundSetFile(url)` |
+| `ALAudioPlayer/play_audio_stream_srv` | `set_stiffnesses_srv` | `names` = **stream URL**, `stiffnesses` = **volume** | `ALAudioPlayer.playWebStream(url, volume, 0)` |
+| `ALAudioPlayer/stop_audio_stream_srv` | `battery_service_srv` | none | `ALAudioPlayer.stopAll()` |
+| `ALMotion/play_dance_srv` | `set_output_volume_srv` | `volume` = **dance id**: `1` Arcadia, `2` hands (no music), `3` Asereje | Goes to `Stand`, runs the choreography **inside the call (blocks until it ends)**, then stops audio. Music files are read from `/home/nao/ros_ws/toolkit_ws/src/py_toolkit/resources/` on the robot. Other ids only stand up |
+
+#### Life, awareness and tracking
 
 | Service | Type | Request | Behaviour |
 |---|---|---|---|
-| `pytoolkit/ALAutonomousLife/set_state_srv` | `std_srvs/SetBool` | `data` | `true`: enable all autonomous abilities and set state `interactive`. `false`: disable abilities, state `disabled`, then go to `Stand` |
-| `pytoolkit/ALBasicAwareness/set_awareness_srv` | `std_srvs/SetBool` | `data` | `true`: `setEnabled(True)`; `false`: `pauseAwareness()` |
-| `pytoolkit/ALRobotPosture/go_to_posture_srv` | `robot_toolkit_msgs/go_to_posture_srv` | `posture` (string): `stand` or `rest` | `stand` -> NAOqi `Stand`, `rest` -> `Crouch`, speed 0.5. Other values do nothing. Response: `approved` (string) = `"OK"` |
-| `pytoolkit/ALTabletService/show_image_srv` | `robot_toolkit_msgs/tablet_service_srv` | `url` (string) | `ALTabletService.showImage(url)`. Response: `approved` (string) = `"OK"` |
-| `pytoolkit/ALTabletService/show_web_view_srv` | `robot_toolkit_msgs/tablet_service_srv` | `url` | `showWebview(url)`. Response: `approved` (string) = `"OK"` |
-| `pytoolkit/ALTabletService/play_video_srv` | `robot_toolkit_msgs/tablet_service_srv` | `url` | `playVideo(url)`. Response: `approved` (string) = `"OK"` |
-| `pytoolkit/ALTabletService/hide_srv` | `std_srvs/Empty` | — | `ALTabletService.hide()` |
+| `ALAutonomousLife/set_state_srv` | `SetBool` | `data` | `true`: enable all abilities, state `interactive`. `false`: disable abilities, state `disabled`, stop all, go to `Stand` |
+| `ALAutonomousBlinking/toggle_blinking_srv` | `SetBool` | `data` | `ALAutonomousBlinking.setEnabled(data)` |
+| `ALBasicAwareness/set_awareness_srv` | `SetBool` | `data` | Head to default pose, then `setEnabled(data)` |
+| `ALBasicAwareness/pause_awareness_srv` | `battery_service_srv` | none | Head to default; runs start/resume/pause/stop awareness in sequence; tracker max distance 0.1 m; stops the tracker |
+| `ALBasicAwareness/resume_awareness_srv` | `battery_service_srv` | none | Head to default; stop/start/pause/resume awareness |
+| `ALBasicAwareness/set_tracking_mode_srv` | `go_to_posture_srv` | `posture` = **tracking mode**: `Head`, `BodyRotation`, `WholeBody`, `MoveContextually` | `setTrackingMode(mode)`; returns `"OK"` or `"ERROR"` for an invalid mode |
+| `ALTracker/start_follow_face` | `battery_service_srv` | none | Head default, max distance 3.5 m, tracker mode `Move`, registers target `Face` (face width 0.2 m) and tracks it (the robot walks after the face) |
+| `ALTracker/start_tracker_srv` | `battery_service_srv` | none | Head default, max distance 3.5 m, `initialize()` |
+| `ALTracker/stop_tracker_srv` | `battery_service_srv` | none | Head default, max distance 0.1 m, `stopTracker()` |
+| `ALTracker/point_at_srv` | `point_at_srv` | `x`, `y`, `z` (float64), `effector_name` (string), `frame` (int32), `speed` (float64) | `ALTracker.pointAt(effector, [x, y, z], frame, speed)`; `frame` and `speed` follow NAOqi's definitions |
+| `ALServiceManager/toggle_applauncher_srv` | `SetBool` | `data` | `true`: set life `interactive` if `disabled`, start the `AppLauncher` service, load and show the `app-launcher` page on the tablet. `false`: stop `AppLauncher` |
 
-`SetBool` services return `success: true, message: "OK"`. These service names are relative; with `init_node('pytoolkit')` in the root namespace they resolve to `/pytoolkit/...`. See section 11 regarding initialisation order.
+#### Motion
+
+| Service | Type | Request | Behaviour |
+|---|---|---|---|
+| `ALMotion/move_head_srv` | `move_head_srv` | `state`: `up`, `down`, `default` | `up`: pitch -0.4 rad, yaw 0, speed 0.15. `down`: pitch 0.46, yaw 0, speed 0.2. `default`: 0, 0, speed 0.2. Other values do nothing |
+| `ALMotion/set_angle_srv` | `set_angle_srv` | `name` (string[]), `angle` (float64[], rad), `speed` (float64, fraction of max speed) | `ALMotion.setAngles(names, angles, speed)`; **one speed for all joints**, no name validation |
+| `ALMotion/toggle_get_angle_srv` | `set_angle_srv` | `name` (string[]) | Starts a thread that publishes `/pytoolkit/ALMotion/get_angles` every ~0.1 s. See Section 8.7: it cannot be switched off |
+| `ALMotion/set_open_close_hand_srv` | `set_open_close_hand_srv` | `hand`: `left`, `right`, `both`; `state`: `open`, `close` | Sets `LHand` / `RHand` to 1.0 (open) or 0.0 (close) at speed 0.2 |
+| `ALMotion/toggle_breathing_srv` | `set_open_close_hand_srv` | `hand` = **chain name** (e.g. `Body`), `state`: `"True"` or `"False"` (strings) | `ALMotion.setBreathEnabled(chain, state)` |
+| `ALMotion/set_move_arms_enabled_srv` | `set_move_arms_enabled_srv` | `LArm`, `RArm` (bool) | `setMoveArmsEnabled`, then polls and re-sends until NAOqi reports the requested state (no time limit) |
+| `ALMotion/set_stiffnesses_srv` | `set_stiffnesses_srv` | `names` (string, joint or chain, e.g. `Body`), `stiffnesses` (float64, 0..1) | `ALMotion.setStiffnesses(names, stiffnesses)` |
+| `ALMotion/toggle_smart_stiffness_srv` | `SetBool` | `data` | `ALMotion.setSmartStiffnessEnabled(data)` |
+| `ALMotion/move_relative_srv` | `navigate_to_srv` | `x_coordinate`, `y_coordinate` (float64, m) | `ALMotion.moveTo(x, y, 0)`, relative to the robot, no rotation |
+| `ALRobotPosture/go_to_posture_srv` | `go_to_posture_srv` | `posture`: `stand` or `rest` | `stand`: posture `Stand` at speed 0.5. `rest`: `Crouch` at 0.5, then `ALMotion.rest()`. Other values do nothing |
+
+Collision-protection services:
+
+| Service | Type | Request | Behaviour |
+|---|---|---|---|
+| `ALMotion/set_security_distance_srv` | `set_security_distance_srv` | `distance` (float64, m) | Sets the orthogonal **and** tangential security distance, **and turns off** arm collision protection and external collision protection for `All`. Side effect, not just a distance change |
+| `ALMotion/set_orthogonal_security_distance_srv` | `set_security_distance_srv` | `distance` | `setOrthogonalSecurityDistance` only |
+| `ALMotion/set_tangential_security_distance_srv` | `set_security_distance_srv` | `distance` | `setTangentialSecurityDistance` only |
+| `ALMotion/set_arms_security_srv` | `SetBool` | `data` | Arm collision protection and external arm collision protection = `data` |
+| `ALMotion/enable_security_srv` | `battery_service_srv` | none | Orthogonal 0.4 m, tangential 0.1 m, arm collision protection on, external protection `All` on |
+
+#### Navigation and perception
+
+| Service | Type | Request | Behaviour |
+|---|---|---|---|
+| `ALNavigation/navigate_to_srv` | `navigate_to_srv` | `x_coordinate`, `y_coordinate` (float64, m) | `ALNavigation.navigateTo(x, y)`, called synchronously inside the handler |
+| `ALNavigation/start_exploring_srv` | `set_output_volume_srv` | `volume` = **exploration radius in m** | `ALNavigation.explore(radius)`; a NAOqi `RuntimeError` is treated as "finished". Blocks until exploration ends |
+| `ALNavigation/stop_exploring_srv` | `battery_service_srv` | none | `ALNavigation.stopExploration()` |
+| `ALSegmentation3D/get_segmentation3D_srv` | `get_segmentation3D_srv` | none | `coordinates` = the list returned by `ALSegmentation3D.getTopOfBlob(-1, 0, False)` (layout as NAOqi returns it) |
+| `ALBatteryService/get_porcentage` | `battery_service_srv` | none | `porcentage` = `ALBattery.getBatteryCharge()` as a string |
+
+#### Tablet
+
+The tablet pages come from a **`robot-page` application that must already be installed on the robot** (served at `http://198.18.0.1/apps/robot-page/`); it is not in any of the three repositories.
+
+| Service | Type | Request | Behaviour |
+|---|---|---|---|
+| `ALTabletService/show_image_srv` | `tablet_service_srv` | `url` | Hides the tablet, waits 1 s, `showImage(url)`; reconnects to `ALTabletService` on error. Clears the "show words" mode |
+| `ALTabletService/show_web_view_srv` | `tablet_service_srv` | `url` | `showWebview(url)` |
+| `ALTabletService/show_topic_srv` | `tablet_service_srv` | `url` = **ROS image topic name** | Opens `http://<ip>:8080/stream_viewer?topic=<url>` (a `web_video_server` stream viewer) and injects JavaScript to restyle the page (dark background, 614 px high). `<ip>` is read from `resources/topic_srv.txt` (currently `192.168.0.229`) |
+| `ALTabletService/play_video_srv` | `tablet_service_srv` | `url` | `playVideo(url)` |
+| `ALTabletService/get_input_srv` | `get_input_srv` | `type`, `text` | Shows an input page and **blocks until the user answers**, then hides the tablet and returns the answer in `input`. `type = text`: label `text`, free text box. `type = bool`: label `text`, Yes/No buttons, returns `yes` or `no`. `type = list`: `text` is a **comma-separated list of options**, returns the chosen one. No timeout, one request at a time |
+| `ALTabletService/show_words_srv` | `battery_service_srv` | none | Shows the `show_words.html` page and enables mirroring of `/speech` text (Section 8.3) |
+| `ALTabletService/show_picture_srv` | `battery_service_srv` | none | Takes a photo (`ALPhotoCapture`, saved to the robot-page `img/picture.jpg`), waits 2 s and displays it without cache |
+| `ALTabletService/hide_srv` | `battery_service_srv` | none | `ALTabletService.hide()` |
+| `ALTabletService/overload_srv` | `battery_service_srv` | none | Loads the `webdisplay` application 10 times (1.5 s apart) and then hides the tablet. A reset/workaround helper |
+
+### 8.5 Other files in the package
+
+| Path | What it is |
+|---|---|
+| `src/dance_arcadia.py`, `dance_asereje.py`, `dance_hands.py` | Choreographies used by `play_dance_srv` (`angleInterpolation` / `angleInterpolationBezier`, music on a thread) |
+| `src/ConsoleFormatter.py` | Coloured console output |
+| `src/move.py` | Stand-alone test: connects to NAOqi at `127.0.0.1:9559`, drives backwards at 1 m/s for 10 s, stops. Not part of the node |
+| `src/NavigationUtilities.py` | A "follow you" tracker sketch. **Not runnable**: it has syntax errors (`_init_` / `_name_` instead of `__init__` / `__name__`, broken line continuations). Not part of the node |
+| `src/py_toolkit.py.save` | Empty editor backup |
+| `resources/codigot.txt`, `codigob.txt`, `codigol.txt` | JavaScript injected into the tablet by `get_input_srv` (`+++++` is replaced by `text`) |
+| `resources/topic_srv.txt` | IP of the machine running `web_video_server` (read by `show_topic_srv`) |
+| `resources/arcadia_30.wav`, `asereje.wav` | Dance music |
+
+### 8.6 The reduced copy in `sinfonia_toolkit/scripts/pyToolkit.py`
+
+`scripts/pyToolkit.py` is an earlier, much smaller copy of the same node (same name `pytoolkit`, same `--ip`/`--port` arguments) with only these services, all identical in name and type to the ones above except where noted: `ALAutonomousLife/set_state_srv` (`SetBool`; omits `stopAll()`), `ALBasicAwareness/set_awareness_srv` (`SetBool`; does not move the head and uses `pauseAwareness()` for `false`), `ALRobotPosture/go_to_posture_srv` (does not call `ALMotion.rest()`), `ALTabletService/show_image_srv`, `show_web_view_srv`, `play_video_srv` (no hide/reconnect logic) and `ALTabletService/hide_srv` (typed `std_srvs/Empty` here, `battery_service_srv` in `py_toolkit`). **Use `py_toolkit`.** Both register the node name `pytoolkit`, so starting both makes ROS 1 shut down whichever started first.
+
+### 8.7 Quirks of `py_toolkit`
+
+| # | Issue | Workaround |
+|---|---|---|
+| 1 | `toggle_get_angle_srv` is not a toggle. The publishing thread runs `while self.publish_angles != "None"`, but `publish_angles` is the request's `name` list, which never equals the string `"None"`. Every call starts another thread and none can be stopped | Restart the node to stop publishing; call it once |
+| 2 | `README.md` shows `set_words_srv` with `threshold: 0.5`; the field is `float32[]` (one value per word) and the example is not valid YAML | `{words: ['yes','no'], threshold: [0.4, 0.4]}` |
+| 3 | `set_security_distance_srv` also disables arm and external collision protection | Use `set_orthogonal_...` / `set_tangential_...` if you only want a distance |
+| 4 | Types reused with misleading names: `play_audio_stream_srv` (`names` = URL, `stiffnesses` = volume), `play_dance_srv` and `start_exploring_srv` (`volume` = dance id / radius), `set_tracking_mode_srv` (`posture` = mode), `set_hot_word_language_srv`, `play_sound_effect_srv`, `show_topic_srv` (`url` = language / file / topic) | Follow the tables above |
+| 5 | `get_input_srv` and `set_move_arms_enabled_srv` can block forever (busy loops with no timeout) | Set a client timeout; do not call twice concurrently |
+| 6 | `play_dance_srv`, `start_exploring_srv` and `get_input_srv` hold the service thread until they finish | Call from a client that tolerates long calls |
+| 7 | `show_topic_srv` depends on a hard-coded IP in `resources/topic_srv.txt` and on `web_video_server` on port 8080 | Edit the file for your network |
+| 8 | Dance music paths are hard-coded to `/home/nao/ros_ws/toolkit_ws/src/py_toolkit/resources/` | Install the package at that path on the robot |
+| 9 | Tablet error handlers rebuild the NAOqi proxy from the global `session`; `overload_srv` and `toggle_applauncher_srv` use the global `pytoolkit` | Only matters if you import the class from another module |
+| 10 | `node` creates publishers and services **before** `rospy.init_node("pytoolkit")` (same ordering as `scripts/pyToolkit.py`). Since this is the team's working node, it evidently starts, but I did not run it | None needed |
+| 11 | `Tshirt_color_srv` and `speech_recognition_srv` are imported but never served (the Tshirt service is commented out) | n/a |
+
+### 8.8 Examples
 
 ```bash
 rosservice call /pytoolkit/ALRobotPosture/go_to_posture_srv "posture: 'stand'"
+rosservice call /pytoolkit/ALMotion/move_head_srv "state: 'up'"
+rosservice call /pytoolkit/ALMotion/set_angle_srv "{name: ['HeadYaw','HeadPitch'], angle: [0.5, -0.2], speed: 0.2}"
+rosservice call /pytoolkit/ALMotion/set_open_close_hand_srv "{hand: 'both', state: 'open'}"
+rosservice call /pytoolkit/ALMotion/set_stiffnesses_srv "{names: 'Body', stiffnesses: 1.0}"
+rosservice call /pytoolkit/ALMotion/play_dance_srv "volume: 1"
+rosservice call /pytoolkit/ALSpeechRecognition/set_speechrecognition_srv "{subscribe: true, noise: false, eyes: true}"
+rosservice call /pytoolkit/ALSpeechRecognition/set_words_srv "{words: ['yes','no'], threshold: [0.4, 0.4]}"
+rostopic echo /pytoolkit/ALSpeechRecognition/status
 rosservice call /pytoolkit/ALTabletService/show_web_view_srv "url: 'http://example.com'"
+rosservice call /pytoolkit/ALTabletService/get_input_srv "{type: 'bool', text: 'Do you want coffee?'}"
+rosservice call /pytoolkit/ALBatteryService/get_porcentage
 rosservice call /pytoolkit/ALAutonomousLife/set_state_srv "data: false"
+```
+
+```javascript
+import { Ros, Topic, Service } from 'roslib';
+
+const ros = new Ros({ url: 'ws://192.168.0.10:9090' });
+
+// Helper-free pattern: one Service per interface, plain-object request, error callback.
+const goToPosture = new Service({
+  ros,
+  name: '/pytoolkit/ALRobotPosture/go_to_posture_srv',
+  serviceType: 'robot_toolkit_msgs/go_to_posture_srv',
+});
+goToPosture.callService({ posture: 'stand' }, (r) => console.log(r.approved), (e) => console.error(e));
+
+const moveHead = new Service({
+  ros,
+  name: '/pytoolkit/ALMotion/move_head_srv',
+  serviceType: 'robot_toolkit_msgs/move_head_srv',
+});
+moveHead.callService({ state: 'down' }, (r) => console.log(r.approved), (e) => console.error(e));
+
+const setAngle = new Service({
+  ros,
+  name: '/pytoolkit/ALMotion/set_angle_srv',
+  serviceType: 'robot_toolkit_msgs/set_angle_srv',
+});
+setAngle.callService(
+  { name: ['HeadYaw', 'HeadPitch'], angle: [0.5, -0.2], speed: 0.2 },
+  (r) => console.log(r.result),
+  (e) => console.error(e),
+);
+
+// Voice commands: enable recognition, set a vocabulary, listen on the status topic.
+const enableSR = new Service({
+  ros,
+  name: '/pytoolkit/ALSpeechRecognition/set_speechrecognition_srv',
+  serviceType: 'robot_toolkit_msgs/set_speechrecognition_srv',
+});
+const setWords = new Service({
+  ros,
+  name: '/pytoolkit/ALSpeechRecognition/set_words_srv',
+  serviceType: 'robot_toolkit_msgs/set_words_threshold_srv',
+});
+enableSR.callService({ subscribe: true, noise: false, eyes: true }, () => {
+  setWords.callService({ words: ['yes', 'no'], threshold: [0.4, 0.4] }, () => {
+    new Topic({
+      ros,
+      name: '/pytoolkit/ALSpeechRecognition/status',
+      messageType: 'robot_toolkit_msgs/speech_recognition_status_msg',
+    }).subscribe((m) => console.log('heard:', m.status));
+  }, (e) => console.error(e));
+}, (e) => console.error(e));
+
+// Ask the user a yes/no question on the tablet (blocks on the robot until answered).
+const getInput = new Service({
+  ros,
+  name: '/pytoolkit/ALTabletService/get_input_srv',
+  serviceType: 'robot_toolkit_msgs/get_input_srv',
+});
+getInput.callService({ type: 'bool', text: 'Do you want coffee?' }, (r) => console.log('answer:', r.input), (e) => console.error(e));
+
+// Services with no request fields take {}. The response field is "porcentage" for battery_service_srv.
+const battery = new Service({
+  ros,
+  name: '/pytoolkit/ALBatteryService/get_porcentage',
+  serviceType: 'robot_toolkit_msgs/battery_service_srv',
+});
+battery.callService({}, (r) => console.log('battery %:', r.porcentage), (e) => console.error(e));
+
+// SetBool services use std_srvs
+const life = new Service({
+  ros,
+  name: '/pytoolkit/ALAutonomousLife/set_state_srv',
+  serviceType: 'std_srvs/SetBool',
+});
+life.callService({ data: false }, (r) => console.log(r.success, r.message), (e) => console.error(e));
+
+// Drive through py_toolkit (stops only when you send zeros)
+const move = new Topic({ ros, name: '/pytoolkit/ALMotion/move', messageType: 'geometry_msgs/Twist' });
+move.publish({ linear: { x: 0.2, y: 0, z: 0 }, angular: { x: 0, y: 0, z: 0 } });
+move.publish({ linear: { x: 0, y: 0, z: 0 }, angular: { x: 0, y: 0, z: 0 } });   // stop
 ```
 
 ---
 
 ## 9. External NAOqi dependencies
 
-**NAOqi services used:** `ALMotion`, `ALMemory`, `ALBehaviorManager`, `ALTextToSpeech`, `ALAnimatedSpeech`, `ALLeds`, `ALSonar`, `ALAudioDevice`, `ALRobotModel`, `ALSpeechRecognition`, `ALSoundDetection`, `ALVideoDevice`, `ALNavigation`, `ALBasicAwareness` (+ `ALAutonomousLife`, `ALRobotPosture`, `ALTabletService` in `pyToolkit.py`).
+**NAOqi services used by `robot_toolkit`:** `ALMotion`, `ALMemory`, `ALBehaviorManager`, `ALTextToSpeech`, `ALAnimatedSpeech`, `ALLeds`, `ALSonar`, `ALAudioDevice`, `ALRobotModel`, `ALSpeechRecognition`, `ALSoundDetection`, `ALVideoDevice`, `ALNavigation`, `ALBasicAwareness`.
+
+**Additionally used by `py_toolkit`:** `ALAudioPlayer`, `ALAutonomousBlinking`, `ALAutonomousLife`, `ALBattery`, `ALCloseObjectDetection`, `ALPeoplePerception`, `ALPhotoCapture`, `ALRobotPosture`, `ALSegmentation3D`, `ALServiceManager`, `ALSpeakingMovement`, `ALTabletService`, `ALTracker`, plus the `ALMemory` events `ALTextToSpeech/Status`, `WordRecognized`, `SpeechDetected`, `ALMotion/MoveFailed` and `PeoplePerception/JustArrived`. It also needs the `robot-page` tablet application installed on the robot (`http://198.18.0.1/apps/robot-page/`: `input1/2/3.html`, `show_words.html`, `img/SinfonIA-Tablet.png`), which is not in any of the repositories.
 
 **Custom NAOqi modules/keys that must exist on the robot** (not part of this repo; features degrade or log "not available" without them):
 
@@ -891,7 +1150,7 @@ Found while reading the code. Each is something a client developer will hit.
 | 7 | [mic_event.cpp:216](src/audio_tools/mic/mic_event.cpp) | `AudioBuffer.frequency` is hard-coded to 48000 | Trust the rate you requested |
 | 8 | [camera_converter.cpp:276](src/vision_tools/camera_converter.cpp), [face_detector.cpp:296](src/vision_tools/face_detector.cpp) | `CameraInfo` is a function-level `static`, shared by all converter instances of that class; in `camera_converter.cpp` the depth camera's `camera_info` is given frame `CameraTop_optical_frame` | Do not rely on `camera_info` when several cameras are active |
 | 9 | speech recognition | Blocking, English-only, no timeout/cancel | Client-side timeout; one call at a time |
-| 10 | [pyToolkit.py:142-143](scripts/pyToolkit.py) | `PyToolkit(session)` registers `rospy.Service`s **before** `rospy.init_node('pytoolkit')`, which rospy normally rejects. The last commit message states the script is "NOT TESTED" | Move `rospy.init_node` before `PyToolkit(session)` if startup fails |
+| 10 | [pyToolkit.py:142-143](scripts/pyToolkit.py) | `PyToolkit(session)` registers services **before** `rospy.init_node('pytoolkit')`. `py_toolkit.py` (the full node the team uses) has the same order, so this probably works, but I have not run either. The last commit message calls the reduced script "NOT TESTED" | Move `rospy.init_node` first if startup fails. Quirks specific to `py_toolkit` are in Section 8.7 |
 | 11 | [main.cpp:87](src/main.cpp) | `variablesMap["publish_odom"].as<bool>()` throws (bad cast) if `--roscore_ip` is given without `--publish_odom` | Always pass `--publish_odom true|false` with `--roscore_ip` |
 | 12 | [robot_toolkit.cpp:125-130](src/robot_toolkit.cpp) | Publishing loop starts only in the `--roscore_ip` startup path (section 2) | Use `--roscore_ip` |
 | 13 | `robot_toolkit_msgs` | `robot_pose_suscriber_enable` and `confidendce` are misspelled in the message definitions; `audio_tools_msg`, `speech_msg` and `vision_tools_msg` share a copy-pasted "Vision Tools Message" title comment | Use the exact spelling |
@@ -1082,30 +1341,7 @@ speechRecognition.callService(
 );
 ```
 
-Python-node services (section 8):
-
-```javascript
-const goToPosture = new Service({
-  ros,
-  name: '/pytoolkit/ALRobotPosture/go_to_posture_srv',
-  serviceType: 'robot_toolkit_msgs/go_to_posture_srv',
-});
-goToPosture.callService({ posture: 'stand' }, (r) => console.log(r), (e) => console.error(e));
-
-const setAwareness = new Service({
-  ros,
-  name: '/pytoolkit/ALBasicAwareness/set_awareness_srv',
-  serviceType: 'std_srvs/SetBool',
-});
-setAwareness.callService({ data: false }, (r) => console.log(r.success, r.message), (e) => console.error(e));
-
-const hideTablet = new Service({
-  ros,
-  name: '/pytoolkit/ALTabletService/hide_srv',
-  serviceType: 'std_srvs/Empty',
-});
-hideTablet.callService({}, () => console.log('hidden'), (e) => console.error(e));
-```
+Services of the Python node (`py_toolkit`, Section 8) use the same pattern; ready-made examples are in Section 8.8.
 
 ### 12.3 Publishing to topics
 

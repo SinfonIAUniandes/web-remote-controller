@@ -48,7 +48,7 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
 
     // --- Update volume state & ROS Service ---
     const updateVolume = (newVolume: number) => {
-        const clampedVolume = Math.max(0, Math.min(100, newVolume));
+        const clampedVolume = Math.max(0, Math.min(150, newVolume));
         setVolume(clampedVolume);
         
         if (ros) {

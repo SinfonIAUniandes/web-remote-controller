@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+AUDIO_VOLUME_BOOST_PLAN.md
+WSS_SECURE_WEBSOCKET_PLAN.md
+PANIC_BUTTON.md
