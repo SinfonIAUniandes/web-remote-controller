@@ -9,7 +9,14 @@ const STOP_REPEATS = 5;
 const STOP_INTERVAL_MS = 50;
 const FEEDBACK_MS = 2000;
 
-const PanicButton = () => {
+type PanicButtonProps = {
+    // Versión pequeña para la barra compacta del menú en móvil
+    compact?: boolean;
+    // Solo una instancia montada debe escuchar Esc; si no, el pánico se dispararía varias veces
+    enableHotkey?: boolean;
+};
+
+const PanicButton = ({ compact = false, enableHotkey = true }: PanicButtonProps) => {
     const { ros, isConnected } = useRos();
     const [triggered, setTriggered] = useState(false);
     const timersRef = useRef<{ stop?: ReturnType<typeof setInterval>; feedback?: ReturnType<typeof setTimeout> }>({});
@@ -64,12 +71,13 @@ const PanicButton = () => {
 
     // Atajo Esc: funciona incluso con un campo de texto enfocado
     useEffect(() => {
+        if (!enableHotkey) return;
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && !e.repeat) handlePanic();
         };
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [handlePanic]);
+    }, [handlePanic, enableHotkey]);
 
     useEffect(() => () => {
         clearInterval(timersRef.current.stop);
@@ -85,11 +93,17 @@ const PanicButton = () => {
             disabled={disabled}
             aria-label="Botón de pánico: detener el robot"
             title={disabled ? 'Sin conexión con el robot' : 'Detener y volver a la posición por defecto (Esc)'}
-            className="flex h-14 w-full shrink-0 flex-col items-center justify-center rounded-[25px] border-none text-white transition-[filter,opacity] duration-200 enabled:cursor-pointer enabled:hover:brightness-90 enabled:active:brightness-75 disabled:cursor-not-allowed disabled:opacity-40"
+            className={`flex shrink-0 flex-col items-center justify-center border-none text-white transition-[filter,opacity] duration-200 enabled:cursor-pointer enabled:hover:brightness-90 enabled:active:brightness-75 disabled:cursor-not-allowed disabled:opacity-40 ${
+                compact ? 'h-11 min-w-[104px] rounded-[16px] px-3' : 'h-14 w-full rounded-[25px]'
+            }`}
             style={{ backgroundColor: COLORS.ROJO, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL }}
         >
-            <span className="text-base font-black leading-tight">{triggered ? 'DETENIDO' : '⏹ PÁNICO'}</span>
-            <span className="text-[11px] font-bold leading-tight opacity-80">{triggered ? 'Volviendo a posición base' : 'Esc'}</span>
+            <span className={`${compact ? 'text-sm' : 'text-base'} font-black leading-tight`}>
+                {triggered ? 'DETENIDO' : '⏹ PÁNICO'}
+            </span>
+            {!compact && (
+                <span className="text-[11px] font-bold leading-tight opacity-80">{triggered ? 'Volviendo a posición base' : 'Esc'}</span>
+            )}
         </button>
     );
 };
