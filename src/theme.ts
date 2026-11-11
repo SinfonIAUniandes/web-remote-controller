@@ -215,7 +215,7 @@ const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>>
         rosa: {
             label: 'Rosa',
             colors: {
-                CELESTE_PRINCIPAL: '#FFB6C1', // rosa muy claro
+                CELESTE_PRINCIPAL: '#ffc7d0', // rosa muy claro
                 AZUL_PRINCIPAL: '#4A0E2B',    // ciruela: menú, texto sobre claro
                 AZUL_SECUNDARIO: '#FF7FA6',   // rosa: acento
                 ROJO: '#D61F52',              // carmesí
@@ -233,7 +233,8 @@ const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>>
         oscuro: {
             label: 'Modo oscuro',
             colors: {
-                FONDO_PAGINA: '#14070D',      // negro rosado: la página, oscura
+                FONDO_PAGINA: '#903962',      // color mas clarito, pinche claude que no sabe (el original es el de abajo, no lo usen)
+                // FONDO_PAGINA: '#14070D',      // negro rosado: la página, oscura
                 CELESTE_PRINCIPAL: '#FFE9F0', // rosa pálido: superficies claras (píldoras, campos)
                 AZUL_PRINCIPAL: '#3A1226',    // vino oscuro: menú, texto sobre claro, diálogos
                 BORDE_TABLERO: '#FF5C93',     // rosa vivo: borde y barra de scroll
@@ -309,7 +310,7 @@ const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>>
             },
             // Todas las tarjetas llevan la bandera completa, en pastel, de arriba abajo. El tono es el de lo que va dentro
             // (píldoras oscuras con letra crema); el degradado se pinta encima del fondo
-            cards: [{ fondo: '#FFF4DC', tinta: '#2B1B54' }],
+            cards: [{ fondo: '#FFF4DC', tinta: '#29174dab' }],
             cardGradient: [
                 '#FF9AA2', // rojo
                 '#FFC48A', // naranja
