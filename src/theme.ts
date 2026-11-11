@@ -1,5 +1,5 @@
 // src/theme.ts
-import { THEMES, type ThemeName } from './components/SinfoniaLogo';
+import { OUTLINES, THEMES, type Outlines, type Palette as LogoPalette, type ThemeName } from './components/SinfoniaLogo';
 
 /*
  * Paleta global.
@@ -134,7 +134,16 @@ export type CardTone = { fondo: string; tinta: string };
 // tono (ver CardTone.tsx e index.css). La tinta de las tarjetas tiene que leerse sobre cada uno de sus colores.
 // `cardOutline`: color CSS de un contorno fino que se dibuja alrededor de todas las tarjetas (para que se distingan de una
 // página de tono parecido); si no se define, las tarjetas no llevan contorno.
-type PaletteVariant = { label: string; colors: Partial<Palette>; cards?: CardTone[]; cardGradient?: string[]; cardOutline?: string };
+// `logoOutlines`: contornos de las letras del logo propios de esta paleta (mismo formato que OUTLINES en SinfoniaLogo.tsx). Se
+// aplican encima de los del tema, y `all: false` los quita todos: sirve cuando el menú de la paleta no es del color que
+// esperan los del tema (p. ej. un menú oscuro en un tema cuyos contornos son para menú claro).
+// `logoGradient`: colores de un degradado para el fondo del menú lateral (donde va el logo), encima de LOGO_FONDO, que queda de
+// respaldo. Sirve cuando no hay un color liso que quede bien (p. ej. el arcoíris). Los contornos del logo tienen que
+// leerse sobre todos sus colores (ver `logoOutlines`).
+// `logoColors`: colores de las letras del logo propios de esta paleta (mismo orden que THEMES en SinfoniaLogo.tsx: S, I, N, F,
+// O, N, i, A, estrella). Si no los define, se usan los del tema. Sirve para que dos paletas del mismo tema lleven el
+// logo distinto (p. ej. de un solo color sobre un fondo en degradado, o en colores sobre un fondo oscuro).
+type PaletteVariant = { label: string; colors: Partial<Palette>; cards?: CardTone[]; cardGradient?: string[]; cardOutline?: string; logoOutlines?: Outlines; logoGradient?: string[]; logoColors?: LogoPalette };
 
 const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>> = {
     // Las tres paletas de Navidad tienen cada una su identidad, no solo otros tonos:
@@ -286,27 +295,33 @@ const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>>
             cards: [
                 { fondo: '#4A2A7A', tinta: '#F1E4D0' }, // morado hechizo
                 { fondo: '#1F4A1B', tinta: '#F1E4D0' }, // verde pantano
-                { fondo: '#F1E4D0', tinta: '#2B1646' }, // hueso
-                { fondo: '#7A3A12', tinta: '#F1E4D0' }, // marrón calabaza
+                // { fondo: '#F1E4D0', tinta: '#2B1646' }, // hueso
+                // { fondo: '#7A3A12', tinta: '#F1E4D0' }, // marrón calabaza
             ],
         },
     },
+    // Orgullo: dos paletas con el logo distinto. Arcoíris: logo de un solo color sobre un menú en degradado. Medianoche:
+    // las letras de colores del tema sobre un menú oscuro
     pride: {
         arcoiris: {
             label: 'Arcoíris',
             colors: {
-                CELESTE_PRINCIPAL: '#ffe9f5', // blanco rosado
-                AZUL_PRINCIPAL: '#2B1B54',    // índigo: texto sobre claro
-                // Las tarjetas ya llevan la bandera, así que el acento y los colores de estado salen de ella: son los mismos
-                // tonos de la bandera, más profundos para destacar sobre los pasteles (y no ajenos a ellos)
-                AZUL_SECUNDARIO: '#5B7FE8',   // azul de la bandera: acento
+                // Teoría del color: las tarjetas ya recorren toda la rueda (el arcoíris), así que son lo único colorido y el resto
+                // es neutro. Los neutros llevan un matiz frío de la misma familia que el índigo, y se distinguen por valor
+                // (luminosidad), no por color: página más clara, menú un paso más oscuro, píldoras blancas. Un solo acento
+                // análogo al índigo (periwinkle) y el índigo, complementario del amarillo, como ancla oscura.
+                FONDO_PAGINA: '#efe3ff',      // lavanda casi blanca: la página (lo más claro, para que las tarjetas destaquen)
+                CELESTE_PRINCIPAL: '#FFFFFF', // blanco: píldoras y campos
+                AZUL_PRINCIPAL: '#33235a',    // índigo: ancla oscura (texto, borde del tablero, diálogos)
+                AZUL_SECUNDARIO: '#8A82F5',   // periwinkle: el único acento (pestaña activa, tiradores); análogo al índigo
+                // Los estados son los tonos de la bandera, más profundos para leerse sobre los pasteles
                 ROJO: '#C92D4B',              // rojo de la bandera: alertas, desconectado, botón de pánico
                 ROJO_SUAVE: '#DC4660',        // rojo más claro: botones de detener / borrar
                 AMARILLO: '#D99A00',          // amarillo de la bandera: avisos
                 VERDE: '#238A5A',             // verde de la bandera: conectado, interruptores activos
-                // Las letras del logo van de amarillo claro a azul, violeta y marrón oscuros: ningún fondo liso las deja todas
-                // legibles. Un violeta muy oscuro es lo más alegre que las equilibra (el negro era algo mejor, pero muy triste)
-                LOGO_FONDO: '#1b0a3ce2',
+                // Menú: ningún color liso quedaba bien, así que lleva la bandera en degradado (`logoGradient`, abajo); este color
+                // queda de respaldo. El logo de esta paleta es de un solo color (índigo) y se lee sobre todas las franjas
+                LOGO_FONDO: '#efe3ff',
             },
             // Todas las tarjetas llevan la bandera completa, en pastel, de arriba abajo. El tono es el de lo que va dentro
             // (píldoras oscuras con letra crema); el degradado se pinta encima del fondo
@@ -319,8 +334,58 @@ const THEME_PALETTES: Partial<Record<ThemeName, Record<string, PaletteVariant>>>
                 '#9CC9FF', // azul
                 '#C9A8F0', // violeta
             ],
-            // Los pasteles se parecen al rosa de la página: un contorno índigo fino los separa
+            // Los pasteles son claros como la página: un contorno índigo fino los separa
             cardOutline: 'rgba(43, 27, 84, 0.6)',
+            // El fondo del menú lleva la bandera en pastel (el mismo degradado que las tarjetas, repetido aquí)
+            logoGradient: [
+                '#FF9AA2', // rojo
+                '#FFC48A', // naranja
+                '#FFE98A', // amarillo
+                '#A8E6B4', // verde
+                '#9CC9FF', // azul
+                '#C9A8F0', // violeta
+            ],
+            // Logo de un solo color (índigo): se lee sobre todas las franjas del degradado, sin contornos
+            logoColors: Array<string>(9).fill('#33235A'),
+        },
+        // La bandera de noche, en negro y oro. Teoría del color: las tarjetas (el arcoíris en tonos joya) ya recorren toda la
+        // rueda, así que lo demás es neutro: negro y azul-negro con un matiz índigo, separados por valor. Un solo acento
+        // cálido, el oro, que es el complementario del índigo y el compañero clásico de los tonos joya sobre negro; lo usan
+        // el acento, el borde y los avisos.
+        medianoche: {
+            label: 'Medianoche',
+            colors: {
+                FONDO_PAGINA: '#0B0A16',      // casi negro con matiz índigo: la página
+                CELESTE_PRINCIPAL: '#F4EEFF', // lila casi blanco: píldoras, campos y texto sobre lo oscuro
+                AZUL_PRINCIPAL: '#1D1838',    // azul-negro: menú, diálogos y texto sobre claro (un paso por encima de la página)
+                BORDE_TABLERO: '#F5C45E',     // oro: borde y barra de scroll
+                AZUL_SECUNDARIO: '#F5C45E',   // oro: el único acento (pestaña activa, tiradores)
+                ROJO: '#FF5C6C',              // rojo coral: alertas, desconectado, botón de pánico
+                ROJO_SUAVE: '#FF8FA3',        // rosa coral: botones de detener / borrar
+                AMARILLO: '#FFD166',          // oro claro: avisos
+                VERDE: '#4ADE80',             // verde: conectado, interruptores activos
+                TEXTO_SOBRE_ROJO: '#1D1838',  // sobre el coral se lee mejor la tinta oscura que el blanco
+            },
+            // El tono es el de lo que va dentro (píldoras lilas con letra índigo); el degradado se pinta encima
+            cards: [{ fondo: '#241552', tinta: '#F4EEFF' }],
+            cardGradient: [
+                '#9B1B30', // rojo
+                '#A5500E', // naranja
+                '#7A6600', // amarillo
+                '#0F6B3C', // verde
+                '#1E40AF', // azul
+                '#5B21B6', // violeta
+            ],
+            // Las tarjetas oscuras se parecen a la página oscura: un contorno dorado tenue las separa
+            cardOutline: 'rgba(245, 196, 94, 0.35)',
+            // Menú oscuro: el azul, el violeta y el marrón de la estrella casi no se ven. Esas tres letras llevan un halo del
+            // color del menú pero más claro, para que se fundan con él en vez de recortarse en blanco. El logo conserva los
+            // colores del tema (el arcoíris)
+            logoOutlines: {
+                O: { color: '#7A6EDB', size: 1 },
+                N2: { color: '#7A6EDB', size: 1 },
+                star: { color: '#7A6EDB', size: 1 },
+            },
         },
     },
 };
@@ -348,6 +413,20 @@ export const themeCardTones = (theme: ThemeName, paletteId?: string): CardTone[]
 
 // Color del contorno de las tarjetas de una paleta (undefined si no tiene)
 const themeCardOutline = (theme: ThemeName, paletteId?: string): string | undefined => resolveVariant(theme, paletteId)?.cardOutline;
+
+// Colores de las letras del logo propios de una paleta (undefined si no los define: se usan los del tema)
+export const themeLogoColors = (theme: ThemeName, paletteId?: string): LogoPalette | undefined => resolveVariant(theme, paletteId)?.logoColors;
+
+// Contornos del logo propios de una paleta (undefined si no tiene)
+export const themeLogoOutlines = (theme: ThemeName, paletteId?: string): Outlines | undefined => resolveVariant(theme, paletteId)?.logoOutlines;
+
+// Estilo del fondo del menú lateral para una paleta: solo añade `backgroundImage` si la paleta tiene `logoGradient`. Se usa
+// junto a `backgroundColor: COLORS.LOGO_FONDO`, que queda debajo. `angle`: dirección del degradado (180 = de arriba abajo;
+// 90 = de izquierda a derecha, para una barra baja y ancha).
+export const themeLogoPlate = (theme: ThemeName, paletteId?: string, angle = 180): { backgroundImage?: string } => {
+    const colors = resolveVariant(theme, paletteId)?.logoGradient;
+    return colors?.length ? { backgroundImage: `linear-gradient(${angle}deg, ${colors.join(', ')})` } : {};
+};
 
 // Colores del degradado de las tarjetas de una paleta (vacío si no tiene)
 export const themeCardGradient = (theme: ThemeName, paletteId?: string): string[] => resolveVariant(theme, paletteId)?.cardGradient ?? [];
@@ -411,15 +490,39 @@ const contrastRatio = (a: string, b: string) => {
     return (light + 0.05) / (dark + 0.05);
 };
 
+// Slots del logo, en el mismo orden que las letras de THEMES (S, I, N, F, O, N, i, A, estrella)
+const LOGO_SLOTS = ['S', 'I', 'N1', 'F', 'O', 'N2', 'i', 'A', 'star'] as const;
+// Color que usa SinfoniaLogo.tsx para un contorno que no define el suyo
+const DEFAULT_LOGO_OUTLINE_COLOR = '#FFFFFF';
+
+// Color del contorno de una letra del logo; undefined si no lo tiene. Mismo orden que SinfoniaLogo.tsx: la entrada de la
+// letra y luego `all` de la paleta, y lo mismo del tema; un `false` (o un tamaño 0) quita el contorno de esa letra
+const logoOutlineColor = (theme: ThemeName, paletteId: string | undefined, slot: (typeof LOGO_SLOTS)[number]): string | undefined => {
+    const levels = [themeLogoOutlines(theme, paletteId), OUTLINES[theme]];
+    for (const outlines of levels) {
+        if (!outlines) continue;
+        for (const entry of [outlines[slot], outlines.all]) {
+            if (entry === false) return undefined;
+            if (!entry) continue;
+            return entry.size !== undefined && entry.size <= 0 ? undefined : entry.color ?? DEFAULT_LOGO_OUTLINE_COLOR;
+        }
+    }
+    return undefined;
+};
+
 const warnLogoContrast = () => {
     (Object.keys(THEMES) as ThemeName[]).forEach((theme) => {
-        const letters: readonly (string | null | undefined)[] = THEMES[theme];
+        const themeLetters: readonly (string | null | undefined)[] = THEMES[theme];
         const paletteIds: (string | undefined)[] = themePaletteOptions(theme).map((option) => option.id);
         (paletteIds.length ? paletteIds : [undefined]).forEach((paletteId) => {
             const background = themePalette(theme, paletteId).LOGO_FONDO;
             if (!isHex(background)) return;
+            const letters = themeLogoColors(theme, paletteId) ?? themeLetters;
             letters.forEach((color, i) => {
                 if (!isHex(color)) return;
+                // Si la letra tiene contorno y este contrasta con el fondo, se lee aunque ella no contraste
+                const outline = logoOutlineColor(theme, paletteId, LOGO_SLOTS[i]);
+                if (outline && isHex(outline) && contrastRatio(outline, background) >= MIN_LOGO_CONTRAST) return;
                 const ratio = contrastRatio(color, background);
                 if (ratio < MIN_LOGO_CONTRAST) {
                     console.warn(

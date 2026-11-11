@@ -81,6 +81,37 @@ export const THEMES = {
 
 export type ThemeName = keyof typeof THEMES;
 
+export type Slot = (typeof SLOTS)[number];
+
+/**
+ * Outline of one slot (a letter or the star).
+ *  - color: any CSS color.
+ *  - size:  thickness in logo units, measured outside the edge (the logo is 311 units wide, so 1 unit is 1px when it
+ *           is drawn 311px wide; it scales together with the logo).
+ */
+export interface LogoOutline {
+  color: string;
+  size?: number;
+}
+
+/** A (partial) outline, or `false` for "no outline here". Missing parts come from a weaker level, then from the defaults. */
+export type OutlineSpec = Partial<LogoOutline> | false;
+
+/** Outlines per slot. `all` applies to every slot that has no entry of its own. */
+export type Outlines = Partial<Record<Slot | "all", OutlineSpec>>;
+
+const DEFAULT_OUTLINE_SIZE = 1.2;
+const DEFAULT_OUTLINE_COLOR = "#FFFFFF";
+
+/**
+ * Hardcoded outlines of each theme. By default none has one (the palettes of a theme can set their own with
+ * `logoOutlines` in theme.ts, e.g. Pride's Medianoche).
+ * Keys are the slots (S, I, N1, F, O, N2, i, A, star) or `all`. Examples:
+ *   christmas: { I: { color: "#0B3D2E", size: 0.8 } },                    // only the 2nd letter
+ *   halloween: { all: { color: "#1B1035", size: 0.6 }, star: false },     // everything but the star
+ */
+export const OUTLINES: Partial<Record<ThemeName, Outlines>> = {};
+
 // The SVG is 98 units tall but the lettering itself only 47.2 (the rest is the star and ring above it),
 // so a requested text height is drawn at TEXT_TO_LOGO_HEIGHT times that.
 const VIEWBOX_HEIGHT = 98;
@@ -110,12 +141,50 @@ export interface SinfoniaLogoProps extends Omit<SVGProps<SVGSVGElement>, "ref"> 
    * so a sparse array works: [, , , , , , , "hotpink"]
    */
   colors?: Palette;
+  /**
+   * Outline of the whole logo (shorthand for `outlines.all`). `false` removes every outline, the theme's included;
+   * an object sets it: `{ color: "#fff", size: 1.5 }`. Without a color it is white.
+   */
+  outline?: OutlineSpec;
+  /**
+   * Outline per slot, on top of the theme's (see OUTLINES): `{ I: { color: "#000", size: 1 } }` outlines only the
+   * 2nd letter; `{ A: false }` removes the outline of one slot.
+   */
+  outlines?: Outlines;
 }
+
+
+/**
+ * Outline of every slot that has one. For each slot the levels are, strongest first: this call's entry for the slot,
+ * this call's `all`, the theme's entry for the slot, the theme's `all`. They merge field by field (a stronger color or
+ * size wins), and a `false` stops the search: that slot, and the weaker levels, get no outline.
+ */
+function resolveOutlines(theme: ThemeName, call: Outlines): Partial<Record<Slot, Required<LogoOutline>>> {
+  const fromTheme = OUTLINES[theme] ?? {};
+  const result: Partial<Record<Slot, Required<LogoOutline>>> = {};
+  for (const slot of SLOTS) {
+    const merged: Partial<LogoOutline> = {};
+    let found = false;
+    for (const level of [call[slot], call.all, fromTheme[slot], fromTheme.all]) {
+      if (level === false) break;
+      if (!level) continue;
+      found = true;
+      if (merged.color === undefined) merged.color = level.color;
+      if (merged.size === undefined) merged.size = level.size;
+    }
+    const size = merged.size ?? DEFAULT_OUTLINE_SIZE;
+    if (found && size > 0) result[slot] = { color: merged.color ?? DEFAULT_OUTLINE_COLOR, size };
+  }
+  return result;
+}
+
 
 export default function SinfoniaLogo({
   theme = "default",
   colors,
   size,
+  outline,
+  outlines,
   style,
   ...rest
 }: SinfoniaLogoProps) {
@@ -126,6 +195,19 @@ export default function SinfoniaLogo({
     const color = colors?.[i] ?? base[i];
     if (color) vars[`--c-${slot}`] = color;
   });
+
+  // Each outlined slot gets --o-<slot>-color and --o-<slot>-size (the SVG draws nothing for a slot without them).
+  // The outline sticks out of the viewBox, so the SVG must not clip it.
+  const resolved = resolveOutlines(theme, { ...outlines, all: outline ?? outlines?.all });
+  let hasOutline = false;
+  SLOTS.forEach((slot) => {
+    const o = resolved[slot];
+    if (!o) return;
+    hasOutline = true;
+    vars[`--o-${slot}-color`] = o.color;
+    vars[`--o-${slot}-size`] = `${o.size}px`;
+  });
+  const outlineStyle: CSSProperties | undefined = hasOutline ? { overflow: "visible" } : undefined;
 
   const sizeStyle: CSSProperties | undefined =
     size === undefined
@@ -140,11 +222,12 @@ export default function SinfoniaLogo({
 
   return (
     <SinfoniaSvg
-      style={{ ...(vars as CSSProperties), ...sizeStyle, ...style }}
+      style={{ ...(vars as CSSProperties), ...outlineStyle, ...sizeStyle, ...style }}
       {...rest}
     />
   );
 }
+
 
 /*
  * Usage
@@ -153,8 +236,17 @@ export default function SinfoniaLogo({
  *   <SinfoniaLogo size={24} />                        // lettering 24px tall (like font-size: 24px)
  *   <SinfoniaLogo size="1.5rem" theme="halloween" />  // any CSS length
  *   <SinfoniaLogo theme="christmas" colors={[, , , , , , , "#fff"]} />
+ *   <SinfoniaLogo outlines={{ I: { color: "#1B2A4A", size: 1 } }} />      // outline only the 2nd letter
+ *   <SinfoniaLogo outlines={{ I: { color: "#000" }, A: { color: "#fff", size: 2 } }} />
+ *   <SinfoniaLogo theme="pride" outline={{ color: "#000", size: 2 }} />   // whole logo, own color / thickness
+ *   <SinfoniaLogo theme="pride" outlines={{ star: false }} />             // theme outline, but not on the star
+ *   <SinfoniaLogo theme="pride" outline={false} />                        // no outline at all
  *   <SinfoniaLogo colors={["#e11d48", "#f97316", "#eab308", "#16a34a",
  *                          "#0ea5e9", "#6366f1", "#000", "#a21caf", "#14b8a6"]} />
+ *
+ * Outline slots: S, I, N1, F, O, N2, i, A, star (N1 / N2 = first / second N, i = the stem of the i).
+ * The size is in logo units and measured outside the letter. Keep it under ~3: the closest letters (the i stem and
+ * the A) are about 3 units apart, and bigger outlines start covering the neighbour.
  *
  * Notes
  *  - The SVG must be imported as a React component (inline <svg>), not as an

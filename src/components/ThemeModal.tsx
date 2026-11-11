@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { COLORS, defaultPaletteId, themeCardGradient, themeCardTones, themePalette, themePaletteOptions } from '../theme';
+import { COLORS, defaultPaletteId, themeCardGradient, themeCardTones, themeLogoColors, themeLogoOutlines, themeLogoPlate, themePalette, themePaletteOptions } from '../theme';
 import type { ThemeSelection } from '../services/useTheme';
 import CustomScrollbar from './CustomScrollbar';
 import SinfoniaLogo, { THEMES, THEME_LABELS, type ThemeName } from './SinfoniaLogo';
@@ -65,7 +65,8 @@ const ThemeDialog = ({ currentTheme, currentPalette, onClose, onSelect }: ThemeD
                         const selected = name === pending.theme;
                         const palettes = themePaletteOptions(name);
                         // El logo se ve sobre el color de menú (LOGO_FONDO) de la paleta que tendría ese tema (la elegida, o la de por defecto)
-                        const logoBackground = themePalette(name, selected ? pending.palette : defaultPaletteId(name)).LOGO_FONDO;
+                        const logoPalette = selected ? pending.palette : defaultPaletteId(name);
+                        const logoBackground = themePalette(name, logoPalette).LOGO_FONDO;
                         return (
                             <div
                                 key={name}
@@ -83,8 +84,8 @@ const ThemeDialog = ({ currentTheme, currentPalette, onClose, onSelect }: ThemeD
                                     className="flex w-full cursor-pointer flex-col items-center border-none bg-transparent p-0 font-[Nunito]"
                                 >
                                     {/* Cabecera con el color del menú lateral de ese tema: así se verá el logo */}
-                                    <span className="flex w-full justify-center px-3 py-4" style={{ backgroundColor: logoBackground }}>
-                                        <SinfoniaLogo theme={name} className="block h-auto w-full max-w-[240px]" />
+                                    <span className="flex w-full justify-center px-3 py-4" style={{ backgroundColor: logoBackground, ...themeLogoPlate(name, logoPalette, 90) }}>
+                                        <SinfoniaLogo theme={name} colors={themeLogoColors(name, logoPalette)} outlines={themeLogoOutlines(name, logoPalette)} className="block h-auto w-full max-w-[240px]" />
                                     </span>
                                     <span className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3 py-2">
                                         <span className="text-sm font-extrabold text-[var(--celeste)]">{THEME_LABELS[name]}</span>

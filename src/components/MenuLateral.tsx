@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Bot, ChevronDown, House, Megaphone, type LucideIcon } from "lucide-react";
-import { COLORS } from "../theme";
+import { COLORS, themeLogoColors, themeLogoOutlines, themeLogoPlate } from "../theme";
 import { useIpStatus } from "../services/useIpStatus";
 import { useTheme, type ThemeSelection } from "../services/useTheme";
 import BatteryIcon from "./BatteryIcon";
@@ -125,7 +125,7 @@ export default function LateralMenu({ activeTab, setActiveTab }: LateralMenuProp
             title="Cambiar tema"
             className="mb-3 cursor-pointer border-none bg-transparent p-0 transition-transform duration-200 hover:scale-105"
         >
-            <SinfoniaLogo theme={theme} className="block h-auto w-[370px] desk:w-[200px]" />
+            <SinfoniaLogo theme={theme} colors={themeLogoColors(theme, palette)} outlines={themeLogoOutlines(theme, palette)} className="block h-auto w-[370px] desk:w-[200px]" />
         </button>
     );
 
@@ -135,7 +135,7 @@ export default function LateralMenu({ activeTab, setActiveTab }: LateralMenuProp
             <div
                 ref={fullMenuRef}
                 className="flex min-h-[220px] w-full flex-col items-center justify-between rounded-[25px] p-3 sm:min-h-[250px] md:min-h-0 md:flex-row md:gap-6 md:px-6 desk:h-full desk:flex-1 desk:flex-col desk:justify-center desk:gap-10 desk:p-5 desk:w-[220px]"
-                style={{ backgroundColor: COLORS.LOGO_FONDO }}
+                style={{ backgroundColor: COLORS.LOGO_FONDO, ...themeLogoPlate(theme, palette) }}
             >
                 {logoButton}
 
@@ -162,7 +162,7 @@ export default function LateralMenu({ activeTab, setActiveTab }: LateralMenuProp
             >
                 <div
                     className="flex items-center gap-2 px-3 shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
-                    style={{ height: COMPACT_BAR_HEIGHT, backgroundColor: COLORS.LOGO_FONDO }}
+                    style={{ height: COMPACT_BAR_HEIGHT, backgroundColor: COLORS.LOGO_FONDO, ...themeLogoPlate(theme, palette, 90) }}
                 >
                     <div className="hidden min-[420px]:block">
                         <BatteryIcon />
@@ -205,7 +205,7 @@ export default function LateralMenu({ activeTab, setActiveTab }: LateralMenuProp
                     <div
                         id="menu-dropdown"
                         className="flex max-h-[calc(100dvh-4.5rem)] flex-col items-center gap-4 overflow-y-auto overscroll-contain rounded-b-[25px] p-4 shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
-                        style={{ backgroundColor: COLORS.LOGO_FONDO }}
+                        style={{ backgroundColor: COLORS.LOGO_FONDO, ...themeLogoPlate(theme, palette) }}
                     >
                         <div className="flex shrink-0 items-center justify-center gap-3">
                             <BatteryIcon />
