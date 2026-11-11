@@ -1,34 +1,34 @@
 import { useState } from "react";
 
-import Cameras from "./components/Cameras";
-import PostureControl from "./components/PostureControl";
-import ScriptsCreator from "./components/ScriptsCreator";
-import Texto from "./components/Texto";
-import ControlSeguridad from "./components/ControlSeguridad";
-import LateralMenu from "./components/MenuLateral";
-import Animations from "./components/Animations";
-import WebService from "./components/WebService";
+import Cameras from "./components/principal/Cameras";
+import PostureControl from "./components/principal/PostureControl";
+import ScriptsCreator from "./components/scripts/ScriptsCreator";
+import Texto from "./components/principal/Texto";
+import ControlSeguridad from "./components/principal/ControlSeguridad";
+import LateralMenu from "./components/layout/MenuLateral";
+import Animations from "./components/principal/Animations";
+import WebService from "./components/servicios/WebService";
 import "./fonts.css";
-import Led from "./components/Led";
+import Led from "./components/principal/leds/Led";
 import { COLORS } from "./theme";
-import PictureService from "./components/PictureService";
-import AudioService from "./components/AudioService";
-import BreathingBodyControl from "./components/BreathingBodyControl";
-import Movement from "./components/Movement";
-import HeadMovement from "./components/HeadMovement";
-import AutonomousLife from "./components/AutonomousLife";
-import Tracker from "./components/Tracker";
-import TabletVisibility from "./components/TabletVisibility";
+import PictureService from "./components/servicios/PictureService";
+import AudioService from "./components/servicios/AudioService";
+import BreathingBodyControl from "./components/servicios/BreathingBodyControl";
+import Movement from "./components/servicios/Movement";
+import HeadMovement from "./components/servicios/HeadMovement";
+import AutonomousLife from "./components/servicios/AutonomousLife";
+import Tracker from "./components/servicios/Tracker";
+import TabletVisibility from "./components/servicios/TabletVisibility";
 import completePepper from "./assets/uwu3.png";
-import HotWords from "./components/HotWords";
-import QuickAction from "./components/QuickAction";
-import PanicButton from "./components/PanicButton";
-import CustomScrollbar from "./components/CustomScrollbar";
-import BoardBorderPills from "./components/BoardBorderPills";
-import ScrollFade from "./components/ScrollFade";
-import CardTone from "./components/CardTone";
-import { useScrollHints } from "./services/useScrollHints";
-import { useThemeImage } from "./services/useThemeImage";
+import HotWords from "./components/scripts/HotWords";
+import QuickAction from "./components/scripts/QuickAction";
+import PanicButton from "./components/status/PanicButton";
+import CustomScrollbar from "./components/layout/CustomScrollbar";
+import BoardBorderPills from "./components/layout/BoardBorderPills";
+import ScrollFade from "./components/layout/ScrollFade";
+import CardTone from "./components/layout/CardTone";
+import { useScrollHints } from "./hooks/useScrollHints";
+import { useThemeImage } from "./theme/useThemeImage";
 
 const App = () => {
     // Pestaña visible: 'principal', 'servicios' o 'scripts' (la cambia el menú lateral)
@@ -41,7 +41,7 @@ const App = () => {
     // Indicadores de scroll: desenfoque arriba/abajo del marco cuando hay más contenido en esa dirección
     const { scrollRef, canScrollUp, canScrollDown, onScroll } = useScrollHints();
 
-    // Pepper grande de Servicios: la imagen del tema actual (ver themeImages.ts), o la de por defecto
+    // Pepper grande de Servicios: la imagen del tema actual (ver theme/images.ts), o la de por defecto
     const pepperImage = useThemeImage("pepperServicios", completePepper);
 
     // Los tres tableros están apilados en el mismo sitio: solo el de la pestaña activa se ve y recibe clics

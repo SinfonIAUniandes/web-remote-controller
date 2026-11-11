@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.js'
 import { RosProvider } from './contexts/RosContext.js';
-import { applyTheme } from './theme.js';
-import { loadTheme } from './services/useTheme.js';
+import { applyTheme } from './theme/index.js';
+import { loadTheme } from './theme/useTheme.js';
 
 // La paleta del tema guardado se aplica antes del primer render para que no haya un destello con los colores originales
 const { theme, palette } = loadTheme();
