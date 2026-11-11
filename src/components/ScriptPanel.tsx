@@ -29,6 +29,7 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }: ScriptPanelProps) => {
         <div
             style={themeVars}
             // className="relative mt-5 box-border h-[230px] w-[630px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]"
+            data-card-surface=""
             className="relative mt-5 box-border h-[230px] max-w-full overflow-hidden rounded-[25px] bg-[var(--azul)]"
         >
             {/* Etiqueta título */}
@@ -55,7 +56,7 @@ const ScriptPanel = ({ scripts, onSelect, activeIdx }: ScriptPanelProps) => {
                                 className={`box-border flex h-[60px] cursor-pointer flex-col justify-between rounded-[10px] border border-solid p-2.5 transition-all duration-200 ease-[ease] ${
                                     isActive
                                         ? 'border-[var(--celeste)] bg-[var(--azul-sec)]'
-                                        : 'border-transparent bg-[rgba(207,221,252,0.08)] hover:bg-[rgba(143,138,249,0.15)]'
+                                        : 'border-transparent bg-celeste/8 hover:bg-lila/15'
                                 }`}
                             >
                                 <div className={`overflow-hidden text-ellipsis whitespace-nowrap text-xs font-bold ${textColor}`}>

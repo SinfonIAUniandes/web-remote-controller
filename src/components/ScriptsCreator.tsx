@@ -315,9 +315,9 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
     };
 
     return (
-        <div className="flex flex-col gap-0">
+        <div data-card-passthrough="" className="flex flex-col gap-0">
         {/* <div style={themeVars} className="relative box-border flex min-h-[450px] w-[630px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]"> */}
-        <div style={themeVars} className="relative box-border flex min-h-[450px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]">
+        <div style={themeVars} data-card-surface="" className="relative box-border flex min-h-[450px] max-w-full flex-col overflow-visible rounded-[25px] bg-[var(--azul)]">
 
             {/* Título */}
             <div className="absolute left-0 top-5 z-[2] flex h-[30px] w-[min(200px,90%)] items-center justify-center rounded-r-[25px] bg-[var(--celeste)]">
@@ -352,15 +352,15 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
             </div>
 
             {/* Tabla de pasos */}
-            <div className="mx-5 mt-3 h-[235px] shrink-0 overflow-y-auto rounded-[10px] bg-[rgba(207,221,252,0.03)]">
+            <div className="mx-5 mt-3 h-[235px] shrink-0 overflow-y-auto rounded-[10px] bg-celeste/3">
                 {steps.length === 0 ? (
-                    <div className="m-[5px] box-border flex h-full items-center justify-center rounded-[10px] border-2 border-dashed border-[rgba(207,221,252,0.15)] text-sm text-[var(--celeste)] opacity-60 font-[family-name:var(--font)]">
+                    <div className="m-[5px] box-border flex h-full items-center justify-center rounded-[10px] border-2 border-dashed border-celeste/15 text-sm text-[var(--celeste)] opacity-60 font-[family-name:var(--font)]">
                         Sin pasos. Haz clic en "+ Agregar Paso" para comenzar.
                     </div>
                 ) : (
                     <table className="w-full border-collapse text-[var(--celeste)] font-[family-name:var(--font)]">
                         <thead className="sticky top-0 z-[5] bg-[var(--azul)]">
-                            <tr className="border-b border-solid border-[rgba(207,221,252,0.2)]">
+                            <tr className="border-b border-solid border-celeste/20">
                                 <th className="w-[45px] p-2.5 text-center text-xs">#</th>
                                 <th className="p-2.5 text-left text-xs">ACCIÓN</th>
                                 <th className="w-[100px] p-2.5 text-center text-xs">PANTALLA</th>
@@ -378,8 +378,8 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
                                     ? 'border-b-2 border-dashed border-[var(--celeste)]'
                                     : dropAbove
                                         ? 'border-t-2 border-b-0 border-dashed border-[var(--celeste)]'
-                                        : 'border-b border-solid border-[rgba(207,221,252,0.05)]';
-                                const rowBg = isCurrent ? 'bg-[rgba(143,138,249,0.15)]' : (isDragOver ? 'bg-[rgba(255,255,255,0.05)]' : 'bg-transparent');
+                                        : 'border-b border-solid border-celeste/5';
+                                const rowBg = isCurrent ? 'bg-lila/15' : (isDragOver ? 'bg-[rgba(255,255,255,0.05)]' : 'bg-transparent');
                                 return (
                                     <tr
                                         key={i} draggable={!isExecuting} onDragStart={(e) => handleDragStart(e, i)} onDragOver={(e) => handleDragOver(e, i)} onDrop={(e) => handleDrop(e, i)} onDragEnd={handleDragEnd}
@@ -402,7 +402,7 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
                                             <div className="flex justify-center gap-1.5">
                                                 <button onClick={() => openModal(i)} className="h-[26px] w-[26px] cursor-pointer rounded-[5px] border-none bg-[var(--azul-sec)] text-xs font-bold text-[var(--azul)]">✎</button>
                                                 <button onClick={() => handleExecuteStep(i)} className="h-[26px] w-[26px] cursor-pointer rounded-[5px] border-none bg-[var(--celeste)] text-[10px] text-[var(--azul)]">▶</button>
-                                                <button onClick={(e) => deleteStep(e, i)} className="h-[26px] w-[26px] cursor-pointer rounded-[5px] border-none bg-[rgba(220,53,69,0.8)] text-sm text-white">×</button>
+                                                <button onClick={(e) => deleteStep(e, i)} className="h-[26px] w-[26px] cursor-pointer rounded-[5px] border-none bg-[color-mix(in_srgb,var(--c-rojo-fuerte)_80%,transparent)] text-sm text-[var(--c-texto-sobre-rojo)]">×</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -426,7 +426,7 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
                     ) : (
                         <button
                             onClick={handleStopAll}
-                            className="h-9 cursor-pointer rounded-[90px] border-none bg-[#E88B93] px-[25px] text-xs font-bold text-[var(--azul)] transition-colors duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-[#b3154d]"
+                            className="h-9 cursor-pointer rounded-[90px] border-none bg-[var(--c-rojo-suave)] px-[25px] text-xs font-bold text-[var(--azul)] transition-colors duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-[#b3154d]"
                         >DETENER TODO</button>
                     )}
                 </div>
@@ -524,7 +524,7 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
                         <div className="mt-[35px] flex flex-wrap justify-center gap-5">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="h-9 w-[160px] cursor-pointer rounded-[90px] border border-solid border-[var(--celeste)] bg-transparent text-[13px] font-bold text-[var(--celeste)] transition-all duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-[rgba(207,221,252,0.1)]"
+                                className="h-9 w-[160px] cursor-pointer rounded-[90px] border border-solid border-[var(--celeste)] bg-transparent text-[13px] font-bold text-[var(--celeste)] transition-all duration-200 ease-[ease] font-[family-name:var(--font)] hover:bg-celeste/10"
                             >CANCELAR</button>
                             <button
                                 onClick={saveModalStep}
@@ -538,7 +538,7 @@ const ScriptsCreator = ({ sessionScripts, setSessionScripts }: ScriptsCreatorPro
 
             {/* Alerta de ejecución de paso único */}
             {singleStepIndex !== null && (
-                <div className="absolute bottom-[60px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-[15px] whitespace-nowrap rounded-[90px] bg-[rgba(143,138,249,0.95)] px-4 py-1.5 text-xs font-bold text-[var(--azul)] shadow-[0_4px_10px_rgba(0,0,0,0.3)] font-[family-name:var(--font)]">
+                <div className="absolute bottom-[60px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-[15px] whitespace-nowrap rounded-[90px] bg-lila/95 px-4 py-1.5 text-xs font-bold text-[var(--azul)] shadow-[0_4px_10px_rgba(0,0,0,0.3)] font-[family-name:var(--font)]">
                     EJECUTANDO PASO {singleStepIndex + 1}...
                     <span onClick={(e) => { e.stopPropagation(); handleStopSingleStep(); }} className="cursor-pointer rounded-[90px] bg-[rgba(0,0,0,0.15)] px-2.5 py-1 text-white">PARAR</span>
                 </div>

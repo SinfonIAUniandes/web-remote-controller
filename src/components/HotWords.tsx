@@ -312,7 +312,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
                                 <div
                                     key={lang}
                                     onClick={(e) => { e.stopPropagation(); setLanguage(lang); setShowLangDropdown(false); }}
-                                    className={`cursor-pointer px-3 py-1 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)] ${lang === language ? 'bg-[rgba(0,33,75,0.12)]' : 'bg-transparent'}`}
+                                    className={`cursor-pointer px-3 py-1 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)] ${lang === language ? 'bg-azul/12' : 'bg-transparent'}`}
                                 >{lang}</div>
                             ))}
                         </div>
@@ -326,11 +326,11 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
 
             {/* Banner de script ejecutándose */}
             {executingScriptId !== null && (
-                <div className="mx-5 flex items-center gap-2.5 rounded-lg border border-solid border-[var(--amarillo)] bg-[#fff8e1] px-3 py-1.5 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)]">
+                <div className="mx-5 flex items-center gap-2.5 rounded-lg border border-solid border-[var(--amarillo)] bg-[var(--c-amarillo-suave)] px-3 py-1.5 text-xs font-bold text-[var(--azul)] font-[family-name:var(--font)]">
                     ▶ Ejecutando script...
                     <button
                         onClick={handleStopScript}
-                        className="ml-auto cursor-pointer rounded border-none bg-[var(--rojo)] px-2.5 py-0.5 text-[11px] text-white"
+                        className="ml-auto cursor-pointer rounded border-none bg-[var(--rojo)] px-2.5 py-0.5 text-[11px] text-[var(--c-texto-sobre-rojo)]"
                     >
                         Detener
                     </button>
@@ -374,7 +374,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
             </div>
 
             {/* Tabla de Palabras */}
-            <div className="mx-5 min-h-0 flex-1 overflow-y-auto rounded-[10px] bg-[rgba(207,221,252,0.05)]">
+            <div className="mx-5 min-h-0 flex-1 overflow-y-auto rounded-[10px] bg-celeste/5">
                 <table className="w-full border-collapse text-[var(--celeste)] font-['Nunito']">
                     <thead>
                         <tr className="border-b border-solid border-[var(--celeste)]">
@@ -391,7 +391,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
                                 <tr
                                     key={item.id}
                                     onClick={() => openConfigModal(idx)}
-                                    className="cursor-pointer border-b border-solid border-[rgba(207,221,252,0.1)] bg-transparent hover:bg-[rgba(207,221,252,0.1)]"
+                                    className="cursor-pointer border-b border-solid border-celeste/10 bg-transparent hover:bg-celeste/10"
                                 >
                                     <td className="p-2.5 text-[13px] font-bold">{item.word}</td>
                                     <td className="p-2.5 text-xs opacity-80">{scriptName}</td>
@@ -471,7 +471,7 @@ const HotWords = ({ scripts = [] }: HotWordsProps) => {
                                 {editingIndex !== null && (
                                     <button
                                         onClick={handleDeleteWord}
-                                        className="h-8 w-[180px] cursor-pointer rounded-[90px] border-none bg-[#E88B93] text-xs font-bold text-[var(--azul)] transition-all duration-200 ease-[ease] font-[family-name:var(--font)]"
+                                        className="h-8 w-[180px] cursor-pointer rounded-[90px] border-none bg-[var(--c-rojo-suave)] text-xs font-bold text-[var(--azul)] transition-all duration-200 ease-[ease] font-[family-name:var(--font)]"
                                     >ELIMINAR PALABRA</button>
                                 )}
                             </div>

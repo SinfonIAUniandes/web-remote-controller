@@ -25,7 +25,7 @@ const BreathingBodyControl = () => {
     const [isHoveredDesactivar, setIsHoveredDesactivar] = useState(false);
 
     // Color activo especial según tu diseño
-    const COLOR_ACTIVO = '#D91A5D';
+    const COLOR_ACTIVO = COLORS.ROJO;
 
     // --- LÓGICA DE ROS ---
     const toggleBreathing = (enable: boolean) => {
@@ -163,7 +163,7 @@ const BreathingBodyControl = () => {
                         background: breathingState === "True" ? COLOR_ACTIVO : (isHoveredActivar && ros ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL),
                         cursor: ros ? 'pointer' : 'not-allowed',
                         opacity: ros ? 1 : 0.6,
-                        color: breathingState === "True" ? '#FFFFFF' : COLORS.AZUL_PRINCIPAL,
+                        color: breathingState === "True" ? COLORS.TEXTO_SOBRE_ROJO : COLORS.AZUL_PRINCIPAL,
                     }}
                 >
                     ACTIVAR
@@ -180,7 +180,7 @@ const BreathingBodyControl = () => {
                         background: breathingState === "False" ? COLOR_ACTIVO : (isHoveredDesactivar && ros ? COLORS.AZUL_SECUNDARIO : COLORS.CELESTE_PRINCIPAL),
                         cursor: ros ? 'pointer' : 'not-allowed',
                         opacity: ros ? 1 : 0.6,
-                        color: breathingState === "False" ? '#FFFFFF' : COLORS.AZUL_PRINCIPAL,
+                        color: breathingState === "False" ? COLORS.TEXTO_SOBRE_ROJO : COLORS.AZUL_PRINCIPAL,
                     }}
                 >
                     DESACTIVAR

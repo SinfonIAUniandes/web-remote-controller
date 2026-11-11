@@ -224,7 +224,7 @@ const Movement = () => {
     //                 className="flex h-[45px] w-[45px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.Q) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">Q</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-azul">Q</div>
     //             </div>
     //             {/* Tecla W */}
     //             <div 
@@ -234,7 +234,7 @@ const Movement = () => {
     //                 className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.W) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">W</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">W</div>
     //             </div>
     //             {/* Tecla E */}
     //             <div 
@@ -244,7 +244,7 @@ const Movement = () => {
     //                 className="flex h-[45px] w-[45px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.E) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">E</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-azul">E</div>
     //             </div>
     //         </div>
 
@@ -257,7 +257,7 @@ const Movement = () => {
     //                 className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.A) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">A</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">A</div>
     //             </div>
     //             {/* Tecla S */}
     //             <div 
@@ -267,7 +267,7 @@ const Movement = () => {
     //                 className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.S) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">S</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">S</div>
     //             </div>
     //             {/* Tecla D */}
     //             <div 
@@ -277,7 +277,7 @@ const Movement = () => {
     //                 className="flex h-[55px] w-[55px] cursor-pointer touch-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
     //                 style={{ background: getKeyBackground(KEYS.D) }}
     //             >
-    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">D</div>
+    //                 <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">D</div>
     //             </div>
     //         </div>
     //     </div>
@@ -312,7 +312,7 @@ const Movement = () => {
                     className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.Q) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">Q</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-azul">Q</div>
                 </div>
                 {/* Tecla W */}
                 <div 
@@ -323,7 +323,7 @@ const Movement = () => {
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.W) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">W</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">W</div>
                 </div>
                 {/* Tecla E */}
                 <div 
@@ -334,7 +334,7 @@ const Movement = () => {
                     className="flex h-[45px] w-[45px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.E) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-[#00214B]">E</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-xl font-black text-azul">E</div>
                 </div>
             </div>
 
@@ -348,7 +348,7 @@ const Movement = () => {
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.A) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">A</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">A</div>
                 </div>
                 {/* Tecla S */}
                 <div 
@@ -359,7 +359,7 @@ const Movement = () => {
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.S) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">S</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">S</div>
                 </div>
                 {/* Tecla D */}
                 <div 
@@ -370,7 +370,7 @@ const Movement = () => {
                     className="flex h-[55px] w-[55px] cursor-pointer touch-none select-none flex-col items-center justify-center gap-2.5 rounded-[15px] transition-colors duration-100"
                     style={{ background: getKeyBackground(KEYS.D) }}
                 >
-                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-[#00214B]">D</div>
+                    <div className="flex flex-col justify-center self-stretch text-center font-['Nunito'] text-2xl font-black text-azul">D</div>
                 </div>
             </div>
             </div>

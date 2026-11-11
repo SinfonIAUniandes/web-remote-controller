@@ -1,35 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useRos } from '../contexts/RosContext';
-import * as ROSLIB from 'roslib';
 import { COLORS, TYPOGRAPHY } from '../theme';
+import { useBatteryLevel } from '../services/useBatteryLevel';
 
 //Componente que permite ver la bateria actual del robot
 const BatteryIcon = () => {
 
-    const { ros } = useRos(); //Acceder a la conexión ROS
-    const [level, setLevel] = useState(100);
+    const level = useBatteryLevel();
 
-    useEffect(() => {
-        if (ros) {
-            // Crear el cliente (o suscriptor) del servicio para obtener el nivel de batería
-            const batteryService = new ROSLIB.Service({
-                ros: ros, // Conexión ROS 
-                name: '/pytoolkit/ALBatteryService/get_porcentage', // Nombre del servicio
-                serviceType: 'robot_toolkit_msgs/BatteryPercentageService' // Tipo de retorno del servicio ??
-            });
+    // Sin lectura (sin conexión con el robot): no se muestra nada en vez de un valor falso
+    if (level === null) return null;
 
-            // Crear una solicitud vacía
-            const request = {};
-
-            // Llamar al servicio y tener la rta
-            batteryService.callService(request, (result) => {
-                console.log('Respuesta del servicio de bateria:', result);
-                const batteryResult = result as { porcentage: number | string };
-                setLevel(Number(batteryResult.porcentage)); // Actualizar el nivel de batería
-            });
-        }
-    }, [ros]);
-    
     // Validar que el nivel sea un número
     if (typeof level !== 'number' || isNaN(level)) {
         console.warn('BatteryIcon: level debe ser un número');

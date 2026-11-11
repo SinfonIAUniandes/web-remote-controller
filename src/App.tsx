@@ -19,304 +19,189 @@ import HeadMovement from "./components/HeadMovement";
 import AutonomousLife from "./components/AutonomousLife";
 import Tracker from "./components/Tracker";
 import TabletVisibility from "./components/TabletVisibility";
-import completePepper from "./assets/complete_pepper.png";
+import completePepper from "./assets/uwu3.png";
 import HotWords from "./components/HotWords";
 import QuickAction from "./components/QuickAction";
 import PanicButton from "./components/PanicButton";
-
-// Función de hash "pesada" con Key Stretching (500 rondas) y Salt
-const hashPassword = (password: string) => {
-    const salt = "SinfonIA_Robot_2024_Salt";
-    let currentStr = password + salt;
-    let h = 2166136261; // Offset FNV
-
-    // Key Stretching: Ejecutamos 500 rondas de hashing
-    for (let i = 0; i < 500; i++) {
-        for (let j = 0; j < currentStr.length; j++) {
-            h ^= currentStr.charCodeAt(j);
-            h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
-        }
-        h = h | 0;
-        currentStr = h.toString(16); // Alimentamos el hash a la siguiente ronda
-    }
-    return (h >>> 0).toString(16);
-};
-
-const TARGET_HASH = "ad5ac8e6";
-
-// Función para verificar si la red es local (localhost o rangos privados)
-const isLocalNetwork = () => {
-    const hostname = window.location.hostname;
-    return /(^127\.)|(^10\.)|(^172\.(1[6-9]|2[0-9]|3[0-1])\.)|(^192\.168\.)|(^157\.253\.)|(^localhost$)|(^0\.0\.0\.0$)/.test(
-        hostname,
-    );
-};
+import CustomScrollbar from "./components/CustomScrollbar";
+import BoardBorderPills from "./components/BoardBorderPills";
+import ScrollFade from "./components/ScrollFade";
+import CardTone from "./components/CardTone";
+import { useScrollHints } from "./services/useScrollHints";
+import { useThemeImage } from "./services/useThemeImage";
 
 const App = () => {
-    // NUEVO ESTADO: Controla qué pestaña está visible ('principal' o 'servicios')
+    // Pestaña visible: 'principal', 'servicios' o 'scripts' (la cambia el menú lateral)
     const [activeTab, setActiveTab] = useState("principal");
 
     const [sessionScripts, setSessionScripts] = useState<
         React.ComponentProps<typeof ScriptsCreator>["sessionScripts"]
     >([]);
 
-    // SEGURIDAD: Estado de autorización
-    // @ts-expect-error - intentionally unused for build context
-    const [isAuthorized, setIsAuthorized] = useState(
-        localStorage.getItem("auth_token") === "true",
-    );
-    const [passInput, setPassInput] = useState("");
-    // @ts-expect-error - intentionally unused for build context
-    const [onCorrectNetwork] = useState(isLocalNetwork());
+    // Indicadores de scroll: desenfoque arriba/abajo del marco cuando hay más contenido en esa dirección
+    const { scrollRef, canScrollUp, canScrollDown, onScroll } = useScrollHints();
 
-    // @ts-expect-error - intentionally unused for build context
-    const handleLogin = () => {
-        // Eliminamos espacios en blanco accidentales
-        const hashedInput = hashPassword(passInput.trim());
-        // setIsAuthorized(true);
-        // localStorage.setItem("auth_token", "true");
-        if (hashedInput === TARGET_HASH) {
-            setIsAuthorized(true);
-            localStorage.setItem("auth_token", "true");
-        } else {
-            alert("Contraseña incorrecta");
-            setPassInput("");
-        }
+    // Pepper grande de Servicios: la imagen del tema actual (ver themeImages.ts), o la de por defecto
+    const pepperImage = useThemeImage("pepperServicios", completePepper);
+
+    // Los tres tableros están apilados en el mismo sitio: solo el de la pestaña activa se ve y recibe clics
+    const boardVisibility = (tab: string) => {
+        const active = activeTab === tab;
+        return {
+            position: active ? "relative" : "hidden",
+            style: { opacity: active ? 1 : 0, pointerEvents: active ? "auto" : "none" } as React.CSSProperties,
+        };
     };
-
-    // Pantalla de bloqueo (Por contraseña o por red no segura)
-    // if (!isAuthorized || !onCorrectNetwork) {
-    //     return (
-    //         <div
-    //             className="flex h-screen items-center justify-center"
-    //             style={{ background: COLORS.AZUL_PRINCIPAL, fontFamily: "Nunito" }}
-    //         >
-    //             <div
-    //                 className="rounded-[20px] p-10 text-center shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-    //                 style={{ background: COLORS.CELESTE_PRINCIPAL }}
-    //             >
-    //                 <h1 className="mb-5" style={{ color: COLORS.AZUL_PRINCIPAL }}>
-    //                     Acceso SinfonIA
-    //                 </h1>
-
-    //                 {!onCorrectNetwork && (
-    //                     <div
-    //                         className="mb-5 rounded-[10px] border-2 p-2.5 font-bold"
-    //                         style={{ color: COLORS.ROJO, borderColor: COLORS.ROJO }}
-    //                     >
-    //                         ADVERTENCIA: No estás en la red local del robot.
-    //                     </div>
-    //                 )}
-
-    //                 <input
-    //                     type="password"
-    //                     placeholder={onCorrectNetwork ? "Contraseña" : "Red no permitida"}
-    //                     disabled={!onCorrectNetwork}
-    //                     value={passInput}
-    //                     onChange={(e) => setPassInput(e.target.value)}
-    //                     onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-    //                     className="mb-5 w-[200px] rounded-[10px] border-0 p-3 text-center outline-none"
-    //                 />
-    //                 <br />
-    //                 <button
-    //                     onClick={handleLogin}
-    //                     disabled={!onCorrectNetwork}
-    //                     className="cursor-pointer rounded-[10px] border-0 px-[30px] py-2.5 font-bold text-white"
-    //                     style={{ background: COLORS.AZUL_PRINCIPAL }}
-    //                 >
-    //                     ENTRAR
-    //                 </button>
-    //             </div>
-    //         </div>
-    //     );
-    // }
-
+    const principal = boardVisibility("principal");
+    const servicios = boardVisibility("servicios");
+    const scripts = boardVisibility("scripts");
 
     return (
         <div
-            className="flex min-h-screen w-full flex-col items-center overflow-x-hidden"
-            style={{ backgroundColor: COLORS.CELESTE_PRINCIPAL }}
+            className="flex min-h-screen w-full flex-col items-center overflow-x-hidden desk:h-screen desk:min-h-0 desk:overflow-hidden"
+            style={{ backgroundColor: COLORS.FONDO_PAGINA }}
         >
             <main
-                className="flex w-full flex-col items-center overflow-x-hidden px-3 py-5 sm:px-5"
+                className="flex w-full flex-col items-center overflow-x-hidden px-3 py-5 sm:px-5 desk:h-full desk:min-h-0"
             >
                 <div
-                    className="flex w-full max-w-[1340px] flex-col gap-5"
+                    className="flex w-full max-w-[1340px] flex-col gap-5 desk:h-full desk:min-h-0"
                 >
                     <div
-                        className="flex w-full flex-col items-stretch gap-5 lg:flex-row lg:items-start"
+                        className="flex w-full flex-col items-stretch gap-5 desk:h-full desk:min-h-0 desk:flex-row"
                     >
                         {/* ── MENÚ LATERAL ── */}
-                        {/* El sticky va en el contenedor para que menú y botón de pánico siempre queden a la vista */}
-                        <div className="flex w-full shrink-0 flex-col gap-3 lg:sticky lg:top-0 lg:w-[220px]">
-                            <aside className="w-full shrink-0 overflow-hidden">
-                                {/* ¡OJO AQUÍ! Pasamos la función setActiveTab para que el menú cambie de vista */}
+                        {/* Desde `desk` (1360px) la pantalla es de alto fijo: el menú ocupa todo el alto a la izquierda y no se mueve; por debajo va arriba a todo el ancho */}
+                        <div className="flex w-full shrink-0 flex-col gap-3 desk:h-full desk:min-h-0 desk:w-[220px]">
+                            <aside className="w-full shrink-0 overflow-hidden desk:flex desk:min-h-0 desk:flex-1 desk:flex-col">
                                 <LateralMenu activeTab={activeTab} setActiveTab={setActiveTab} />
                             </aside>
 
                             <PanicButton />
                         </div>
 
-                        {/* ── CONTENEDOR APILADO PARA AMBOS TABLEROS ── */}
+                        {/* ── TABLEROS (uno por pestaña, apilados) ── */}
+                        {/* El borde azul es el "marco" fijo del alto de la pantalla; lo que scrollea es el contenido de adentro */}
                         <div
-                            className="relative min-h-0 w-full min-w-0 flex-1 overflow-hidden rounded-[25px] border-[5px] lg:h-[950px] lg:min-h-[950px] lg:w-[1084px]"
-                            style={{ borderColor: COLORS.AZUL_PRINCIPAL }}
+                            className="relative min-h-0 w-full min-w-0 flex-1 rounded-[25px] border-[5px] mt-4 desk:mt-3 desk:h-full desk:w-[1084px]"
+                            style={{ borderColor: COLORS.BORDE_TABLERO }}
                         >
-                            {/* TABLERO 1: PRINCIPAL */}
-                            <section
-                                className={`${activeTab === "principal" ? "relative" : "hidden"} flex w-full flex-col gap-6 p-4 transition-opacity duration-300 ease-in-out sm:p-6 lg:absolute lg:left-0 lg:top-0 lg:flex lg:h-full lg:flex-row lg:flex-wrap lg:content-between lg:justify-between lg:gap-0 lg:p-[30px]`}
-                                style={{
-                                    opacity: activeTab === "principal" ? 1 : 0,
-                                    pointerEvents: activeTab === "principal" ? "auto" : "none",
-                                }}
+                            {/* Sin overflow-hidden en el marco para que las píldoras del borde puedan salirse de él; el recorte redondeado (radio interno 25-5=20px) lo hace el contenedor que scrollea */}
+                            <div
+                                ref={scrollRef}
+                                onScroll={onScroll}
+                                className="no-native-scrollbar overflow-hidden rounded-[20px] desk:h-full desk:overflow-y-auto"
                             >
-                                <div
-                                    className="flex w-full basis-[400px] flex-col gap-6 lg:h-full lg:justify-around"
-                                >
-                                    <ControlSeguridad />
-                                    <Animations />
-                                    <Texto />
-                                    <Led />
-                                </div>
-                                <div
-                                    className="flex w-full basis-[580px] flex-col gap-6 lg:h-full lg:justify-around"
-                                >
-                                    <Cameras visible={activeTab === "principal"} />
-                                    <PostureControl />
-                                </div>
-                            </section>
-
-                            {/* TABLERO 2: SERVICIOS */}
-                            <section
-                                className={`${activeTab === "servicios" ? "relative" : "hidden"} grid w-full grid-cols-1 gap-6 p-4 transition-opacity duration-300 ease-in-out sm:p-6 lg:absolute lg:left-0 lg:top-0 lg:grid lg:h-full lg:grid-cols-4 lg:grid-rows-[190px_190px_190px_240px] lg:gap-x-11 lg:gap-y-5 lg:p-[30px]`}
-                                style={{
-                                    opacity: activeTab === "servicios" ? 1 : 0,
-                                    pointerEvents: activeTab === "servicios" ? "auto" : "none",
-                                }}
-                            >
-                                <div
-                                    className="h-full w-full lg:col-[1/3] lg:row-[1]"
-                                >
-                                    <WebService />
-                                </div>
-                                <div
-                                    className="h-full w-full col-span-1 lg:col-span-4 lg:row-2"
-                                >
-                                    <AudioService />
-                                </div>
-                                <div
-                                    className="flex h-full w-full items-start lg:col-[1/3] lg:row-[3]"
-                                >
-                                    <BreathingBodyControl />
-                                </div>
-                                {/* Alineamos los componentes de movimiento al final de su celda (bottom) */}
-                                <div
-                                    className="z-[2] flex h-full w-full items-end lg:col-[1/2] lg:row-[4]"
-                                >
-                                    {/* Este componente nunca se desmonta, por lo que presionar "w" funcionará siempre */}
-                                    <Movement />
-                                </div>
-                                <div
-                                    className="flex h-full w-full items-end lg:col-[2/3] lg:row-[4]"
-                                >
-                                    <HeadMovement />
-                                </div>
-                                <div
-                                    className="h-full w-full lg:col-[3/5] lg:row-[1]"
-                                >
-                                    <PictureService />
-                                </div>
-
-                                {/* CONTENEDOR DERECHA UNIFICADO (Dividido en 3 partes iguales) */}
-                                <div
-                                    className="flex h-full flex-col gap-6 lg:col-[3/5] lg:row-[3/5]"
-                                >
-                                    <div
-                                        className="flex flex-1 items-center"
+                                {/* Alto de diseño mínimo 950px: los tableros son absolutos y se estiran al alto del marco si es mayor */}
+                                <div className="relative mt-5 desk:h-full desk:mt-3 desk:min-h-[950px]">
+                                    {/* TABLERO 1: PRINCIPAL */}
+                                    <section
+                                        className={`${principal.position} flex w-full flex-row flex-wrap items-start gap-6 p-4 pt-7 transition-opacity duration-300 ease-in-out sm:p-6 desk:absolute desk:left-0 desk:top-0 desk:flex desk:h-full desk:flex-row desk:flex-wrap desk:content-between desk:items-stretch desk:justify-between desk:gap-0 desk:p-[30px]`}
+                                        style={principal.style}
                                     >
-                                        <AutonomousLife />
-                                    </div>
-                                    <div
-                                        className="flex flex-1 items-center"
-                                    >
-                                        <Tracker />
-                                    </div>
-                                    <div
-                                        className="flex flex-1 items-center"
-                                    >
-                                        <TabletVisibility />
-                                    </div>
-                                </div>
+                                        {/* Debajo de `desk` las columnas crecen y bajan a otra línea cuando no caben juntas */}
+                                        <div
+                                            className="flex min-w-0 grow basis-[400px] flex-col gap-6 desk:h-full desk:grow-0 desk:justify-around"
+                                        >
+                                            <CardTone index={0}><ControlSeguridad /></CardTone>
+                                            <CardTone index={1}><Animations /></CardTone>
+                                            <CardTone index={2}><Texto /></CardTone>
+                                            <CardTone index={3}><Led /></CardTone>
+                                        </div>
+                                        <div
+                                            className="flex min-w-0 grow basis-[580px] flex-col gap-6 desk:h-full desk:grow-0 desk:justify-around"
+                                        >
+                                            <CardTone index={5}><Cameras visible={activeTab === "principal"} /></CardTone>
+                                            <CardTone index={4}><PostureControl /></CardTone>
+                                        </div>
+                                    </section>
 
-                                <img
-                                    className="pointer-events-none absolute bottom-[30px] left-[780px] z-[1] hidden h-[420px] w-[212px] lg:block"
-                                    src={completePepper}
-                                    alt="Complete Pepper"
-                                />
-                            </section>
-                            <section
-                                className={`${activeTab === "scripts" ? "relative" : "hidden"} flex w-full flex-col gap-[30px] p-4 transition-opacity duration-300 ease-in-out sm:p-6 lg:absolute lg:left-0 lg:top-0 lg:flex lg:h-full lg:p-[30px]`}
-                                style={{
-                                    opacity: activeTab === "scripts" ? 1 : 0,
-                                    pointerEvents: activeTab === "scripts" ? "auto" : "none",
-                                }}
-                            >
-                                <QuickAction />
-                                <div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:justify-between">
-                                    <HotWords scripts={sessionScripts} />
-                                    <ScriptsCreator
-                                        sessionScripts={sessionScripts}
-                                        setSessionScripts={setSessionScripts}
-                                    />
+                                    {/* TABLERO 2: SERVICIOS */}
+                                    <section
+                                        className={`${servicios.position} grid w-full grid-cols-1 gap-6 p-4 transition-opacity duration-300 ease-in-out sm:p-6 md:grid-cols-2 desk:absolute desk:left-0 desk:top-0 desk:grid desk:h-full desk:grid-cols-4 desk:grid-rows-[190px_190px_190px_240px] desk:gap-x-11 desk:gap-y-5 desk:p-[30px]`}
+                                        style={servicios.style}
+                                    >
+                                        <CardTone index={0} className="h-full w-full md:col-start-1 md:row-start-1 desk:col-[1/3] desk:row-[1]">
+                                            <WebService />
+                                        </CardTone>
+                                        <CardTone index={2} className="h-full w-full col-span-1 md:col-span-2 desk:col-span-4 desk:row-2">
+                                            <AudioService />
+                                        </CardTone>
+                                        <CardTone index={3} className="flex h-full w-full items-start md:col-span-2 desk:col-[1/3] desk:row-[3]">
+                                            <BreathingBodyControl />
+                                        </CardTone>
+                                        {/* Alineamos los componentes de movimiento al final de su celda (bottom). En tablet (md) van apilados en la columna izquierda y Pepper de pie ocupa la derecha */}
+                                        <CardTone index={2} className="z-[2] flex h-full w-full items-end md:col-start-1 md:row-start-4 desk:col-[1/2] desk:row-[4]">
+                                            {/* Este componente nunca se desmonta, por lo que presionar "w" funcionará siempre */}
+                                            <Movement />
+                                        </CardTone>
+                                        <CardTone index={1} className="flex h-full w-full items-end md:col-start-1 md:row-start-5 desk:col-[2/3] desk:row-[4]">
+                                            <HeadMovement />
+                                        </CardTone>
+                                        <CardTone index={1} className="h-full w-full md:col-start-2 md:row-start-1 desk:col-[3/5] desk:row-[1]">
+                                            <PictureService />
+                                        </CardTone>
+
+                                        {/* CONTENEDOR DERECHA UNIFICADO (Dividido en 3 partes iguales) */}
+                                        <div
+                                            className="flex h-full flex-col gap-6 md:col-span-2 desk:col-[3/5] desk:row-[3/5]"
+                                        >
+                                            <CardTone index={4} className="flex flex-1 items-center">
+                                                <AutonomousLife />
+                                            </CardTone>
+                                            <CardTone index={5} className="flex flex-1 items-center">
+                                                <Tracker />
+                                            </CardTone>
+                                            <CardTone index={0} className="flex flex-1 items-center">
+                                                <TabletVisibility />
+                                            </CardTone>
+                                        </div>
+
+                                        {/* Pepper de pie. Móvil: al final de la pestaña, centrado y con su sombra en el suelo. Tablet (md): en la
+                                            columna derecha, junto a los dos componentes de movimiento. Escritorio: suelto en el tablero, sin sombra */}
+                                        <div className="pointer-events-none flex flex-col items-center justify-self-center md:col-start-2 md:row-[4/6] md:self-end desk:absolute desk:bottom-[30px] desk:left-[790px] desk:z-[1] desk:col-auto desk:row-auto desk:block desk:self-auto">
+                                            <img
+                                                className="block h-[300px] w-auto md:h-[480px]"
+                                                src={pepperImage}
+                                                alt="Complete Pepper"
+                                            />
+                                            {/* Sombra en el suelo: el robot "se apoya" en el final de la pestaña */}
+                                            <div aria-hidden="true" className="-mt-2 h-3 w-40 rounded-full bg-[var(--c-borde-tablero)]/20 blur-[3px] desk:hidden" />
+                                        </div>
+                                    </section>
+
+                                    {/* TABLERO 3: SCRIPTS */}
+                                    <section
+                                        className={`${scripts.position} flex w-full flex-col gap-[30px] p-4 transition-opacity duration-300 ease-in-out sm:p-6 desk:absolute desk:left-0 desk:top-0 desk:flex desk:h-full desk:p-[30px]`}
+                                        style={scripts.style}
+                                    >
+                                        <CardTone index={0}><QuickAction /></CardTone>
+                                        <div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:justify-between">
+                                            <CardTone index={1}><HotWords scripts={sessionScripts} /></CardTone>
+                                            <CardTone index={2}>
+                                                <ScriptsCreator
+                                                    sessionScripts={sessionScripts}
+                                                    setSessionScripts={setSessionScripts}
+                                                />
+                                            </CardTone>
+                                        </div>
+                                    </section>
                                 </div>
-                            </section>
+                            </div>
+
+                            {/* Bordes difuminados: solo en escritorio (ahí es donde scrollea el marco) y solo si hay más contenido */}
+                            <ScrollFade edge="top" visible={canScrollUp} />
+                            <ScrollFade edge="bottom" visible={canScrollDown} />
+
+                            <CustomScrollbar scrollRef={scrollRef} />
+
+                            <BoardBorderPills />
                         </div>
                     </div>
                 </div>
-                
-                {/* ── PARTE INFERIOR INTACTA ── 
-                <section
-                    className="seccion-extra"
-                    style={{ width: "100%", maxWidth: "1084px", marginTop: "60px" }}
-                >
-                    <Leds />
-                    <h2>Servicios Web</h2>
-                    <Navegador />
-                    <h2>Imagen en la tablet</h2>
-                    <Imagen />
-                    <h2>Robot base</h2>
-                    <Base />
-                    <h2>Activar seguridad</h2>
-                    <EnableRobotSecurity />
-                    <h2>Desactivar seguridad</h2>
-                    <DisableRobotSecurity />
-                    <h2>Batería</h2>
-                    <Battery />
-                    <h2>Volumen</h2>
-                    <Volumen />
-                    <h2>Control de Respiración</h2>
-                    <BreathingControl />
-                    <h2>Modo Autónomo</h2>
-                    <AutonomousLifeControl />
-                    <h2>Control del Tracker</h2>
-                    <TrackerControl />
-                    <h2>Mostrar texto en tablet</h2>
-                    <ShowWordsTablet />
-                    <h2>Audio</h2>
-                    <Audio />
-                    <h2>Cabeza</h2>
-                    <Cabeza />
-                    <h2>Ocultar pantalla tablet</h2>
-                    <HideTabletScreen />
-                    <h2>Acciones rápidas</h2>
-                    <QuickAction />
-                </section>
-                */}
             </main>
         </div>
     );
-
 };
 
-
-export default App
+export default App;

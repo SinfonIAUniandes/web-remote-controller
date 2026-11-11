@@ -1,1 +1,96 @@
 @import "tailwindcss";
+
+/*
+ * `desk`: ancho mínimo para el layout de escritorio de píxeles fijos
+ * (menú 220 + gap 20 + tablero ≥ 1050 + márgenes 40 + barra de scroll 15 = 1345,
+ * con un poco de holgura). Por debajo se usa el layout fluido: menú arriba y
+ * tablero a todo el ancho.
+ *
+ * Va en rem (85rem = 1360px) porque Tailwind solo ordena bien los breakpoints
+ * si usan la misma unidad que los predeterminados; en px quedaría antes de `md`
+ * en el CSS generado y `md:` pisaría a `desk:`.
+ */
+@theme {
+    --breakpoint-desk: 85rem;
+}
+
+/*
+ * Colores de marca como utilidades de Tailwind (text-azul, bg-celeste/20, border-lila...).
+ * Apuntan a las variables que pone el tema activo (ver theme.ts), así cambian con el tema.
+ * `inline` hace que las clases usen directamente `var(--c-...)`.
+ */
+@theme inline {
+    --color-celeste: var(--c-celeste-principal);
+    --color-azul: var(--c-azul-principal);
+    --color-lila: var(--c-azul-secundario);
+}
+
+/*
+ * Contenedores con scrollbar propia (components/CustomScrollbar.tsx): se oculta la nativa
+ * pero el contenedor sigue siendo scrolleable (rueda, teclado, táctil).
+ */
+.no-native-scrollbar {
+    scrollbar-width: none;
+}
+
+.no-native-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/*
+ * Degradado de las tarjetas (`cardGradient` de la paleta, ver theme.ts). Se pinta como imagen de fondo sobre el color de
+ * cada tarjeta; así los componentes no cambian y el color liso queda de respaldo. La tarjeta es el hijo directo de su
+ * <CardTone>, salvo en los componentes que la envuelven en otro elemento: ese lleva `data-card-passthrough` (no se pinta)
+ * y la tarjeta de dentro `data-card-surface`. `!important` porque muchas tarjetas fijan `background` en línea, que si no
+ * pisaría la imagen.
+ */
+:root[data-card-gradient] [data-card-tone] > :not([data-card-passthrough]),
+:root[data-card-gradient] [data-card-surface] {
+    background-image: var(--c-card-gradient) !important;
+}
+
+/* Contorno fino de las tarjetas (`cardOutline` de la paleta). Mismas tarjetas que el degradado; `outline` no ocupa
+   espacio ni choca con las sombras que algunas tarjetas ya llevan */
+:root[data-card-outline] [data-card-tone] > :not([data-card-passthrough]),
+:root[data-card-outline] [data-card-surface] {
+    outline: 1.5px solid var(--c-card-outline);
+}
+
+/*
+ * Botón de pánico (components/PanicButton.tsx): aspecto de botón físico.
+ * Cara con degradado, borde inferior grueso (--edge) y brillo interior; al pulsar (o mientras muestra
+ * "DETENIDO") la cara baja hasta tapar el borde. Los colores salen de las variantes del rojo del tema (theme.ts).
+ */
+.panic-btn {
+    --edge: 6px;
+    background: linear-gradient(to bottom, var(--c-rojo-brillo) 0%, var(--c-rojo) 55%, var(--c-rojo-sombra) 100%);
+    box-shadow:
+        0 var(--edge) 0 var(--c-rojo-oscuro),
+        0 calc(var(--edge) + 4px) 14px rgba(0, 0, 0, 0.35),
+        inset 0 2px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+    transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 150ms ease-out;
+}
+
+.panic-btn-compact {
+    --edge: 3px;
+}
+
+.panic-btn:enabled:hover {
+    filter: brightness(1.07);
+}
+
+.panic-btn:enabled:active,
+.panic-btn[data-pressed="true"] {
+    transform: translateY(calc(var(--edge) - 2px));
+    box-shadow:
+        0 2px 0 var(--c-rojo-oscuro),
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.panic-btn:disabled {
+    filter: grayscale(0.45) brightness(0.9);
+    opacity: 0.5;
+}

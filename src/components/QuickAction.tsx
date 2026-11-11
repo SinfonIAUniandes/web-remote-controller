@@ -145,7 +145,7 @@ const QuickAction = () => {
                     onClick={handleStop}
                     className="absolute right-5 top-[21px] z-[5] flex h-[30px] w-[120px] cursor-pointer items-center justify-center rounded-[10px] bg-[var(--rojo)] transition-all duration-200 ease-[ease] hover:bg-[#b3154d]"
                 >
-                    <div className="font-['Nunito'] text-sm font-bold text-white">
+                    <div className="font-['Nunito'] text-sm font-bold text-[var(--c-texto-sobre-rojo)]">
                         DETENER
                     </div>
                 </div>

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { Power, VideoOff } from 'lucide-react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
-import { COLORS, TYPOGRAPHY } from '../theme';
+import { COLORS, TYPOGRAPHY, withAlpha } from '../theme';
 
 const CAMERA_RESOLUTION = 2;
 const CAMERA_FRAME_RATE = 20;
@@ -25,6 +26,10 @@ const themeVars = {
     '--font-main': TYPOGRAPHY.FONT_FAMILY_PRINCIPAL || 'Nunito',
 } as React.CSSProperties;
 
+// Hueco de cada cámara en la tarjeta: ocupa el ancho disponible (menos el margen lateral) con proporción 16:10, que es
+// lo que da la imagen de la cámara. El alto sale de la proporción, no de un porcentaje.
+const MEDIA_BOX = 'mx-8 aspect-[16/10] self-stretch sm:mx-12';
+
 // Icono de pantalla completa reutilizable
 const FullScreenIcon = ({ onClick }: { onClick: React.MouseEventHandler<SVGSVGElement> }) => (
     <svg
@@ -44,7 +49,7 @@ const PowerIcon = ({ onClick, enabled }: { onClick: React.MouseEventHandler<SVGS
         onClick={onClick}
         className="cursor-pointer"
         width="20" height="20" viewBox="0 0 24 24"
-        fill="none" stroke={enabled ? COLORS.CELESTE_PRINCIPAL : '#ff5c5c'}
+        fill="none" stroke={enabled ? COLORS.CELESTE_PRINCIPAL : COLORS.ROJO_CLARO}
         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
     >
         <title>{enabled ? 'Apagar cámara' : 'Encender cámara'}</title>
@@ -60,8 +65,9 @@ const CameraHeader = ({ label, enabled, onToggle, onFullScreen }: {
     onToggle: () => void;
     onFullScreen: () => void;
 }) => (
-    <div className="flex items-center justify-between self-stretch h-[4.41%]">
-        <div className="flex items-center justify-center overflow-hidden w-[40%] -ml-[12.889%] h-full bg-[var(--celeste)] rounded-r-[25px]">
+    <div className="flex h-9 items-center justify-between pr-8 sm:pr-12">
+        {/* Etiqueta pegada al borde izquierdo de la tarjeta; mide al menos lo de una etiqueta normal y crece si el texto no cabe */}
+        <div className="flex w-fit min-w-44 shrink-0 items-center self-stretch justify-center overflow-hidden rounded-r-[25px] bg-[var(--celeste)] px-4">
             <div className="text-center text-[16px] font-bold whitespace-nowrap text-[var(--azul)] font-[family-name:var(--font-main)]">{label}</div>
         </div>
         <div className="flex items-center gap-2 p-[3px]">
@@ -123,10 +129,63 @@ const useCameraStream = (
     }, [ros, enabled, cameraName, topicName]);
 };
 
-// Placeholder mostrado cuando la cámara está apagada
-const CameraOff = () => (
-    <div className="flex items-center justify-center self-stretch h-[41.765%] rounded-[10px] bg-black/40 text-[var(--celeste)] font-bold font-[family-name:var(--font-main)]">
-        Cámara apagada
+// Placeholder mostrado cuando la cámara está apagada. Pareja visual de NoSignal, pero "apagado":
+// insignia hueca con anillos tenues en vez del círculo relleno, y un botón para volver a encenderla.
+const CameraOff = ({ label, onTurnOn }: { label: string; onTurnOn: () => void }) => (
+    <div className={`${MEDIA_BOX} flex flex-col items-center justify-center gap-2 overflow-hidden rounded-[20px] bg-black/30 font-[family-name:var(--font-main)] sm:gap-3`}>
+        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-16 sm:w-16">
+            {/* Anillos concéntricos muy tenues, como el eco de algo que se apagó */}
+            <span aria-hidden="true" className="absolute -inset-2 rounded-full border border-solid border-[var(--celeste)]/15" />
+            <span aria-hidden="true" className="absolute -inset-4 rounded-full border border-solid border-[var(--celeste)]/[0.07]" />
+            <span className="relative flex flex-1 items-center justify-center self-stretch rounded-full border-2 border-solid border-[var(--celeste)]/40 text-[var(--celeste)]/60">
+                <Power aria-hidden="true" size={26} strokeWidth={2.25} />
+            </span>
+        </div>
+
+        <div className="rounded-full border-2 border-solid border-[var(--celeste)]/40 px-4 py-0.5 text-sm font-extrabold text-[var(--celeste)]/80">
+            CÁMARA APAGADA
+        </div>
+
+        <button
+            type="button"
+            onClick={onTurnOn}
+            aria-label={`Encender cámara ${label}`}
+            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border-none px-4 font-[family-name:var(--font-main)] text-xs font-extrabold text-[var(--azul)] transition-transform duration-150 hover:scale-105 active:scale-95"
+            style={{ backgroundColor: COLORS.AZUL_SECUNDARIO }}
+        >
+            <Power aria-hidden="true" size={14} strokeWidth={3} />
+            ENCENDER
+        </button>
+    </div>
+);
+
+// Pantalla de "sin señal" cuando no hay conexión con el robot.
+// `className` define el tamaño; por defecto ocupa el mismo hueco que la imagen de la cámara.
+// Usa los mismos elementos que el resto de la app: círculo celeste con icono azul, etiqueta en píldora y acento morado.
+const NoSignal = ({ className = `${MEDIA_BOX} rounded-[20px]` }: { className?: string }) => (
+    <div
+        role="status"
+        aria-label="Sin señal: sin conexión con el robot"
+        className={`flex flex-col items-center justify-center gap-3 bg-black/30 font-[family-name:var(--font-main)] ${className}`}
+    >
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+            {/* Pulso suave en el morado de acento */}
+            <span
+                aria-hidden="true"
+                className="absolute inset-0 animate-ping rounded-full motion-reduce:animate-none"
+                style={{ backgroundColor: withAlpha(COLORS.AZUL_SECUNDARIO, 40) }}
+            />
+            <span className="relative flex flex-1 items-center justify-center self-stretch rounded-full bg-[var(--celeste)] text-[var(--azul)]">
+                <VideoOff aria-hidden="true" size={30} strokeWidth={2.25} />
+            </span>
+        </div>
+
+        <div className="rounded-full bg-[var(--celeste)] px-5 py-1 text-base font-extrabold text-[var(--azul)]">SIN SEÑAL</div>
+
+        <div className="flex items-center gap-1.5 px-4 text-center text-xs font-bold text-[var(--celeste)]/70">
+            <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS.ROJO }} />
+            Sin conexión con el robot
+        </div>
     </div>
 );
 
@@ -145,7 +204,7 @@ const usePageVisible = () => {
 
 // `visible`: false cuando el usuario está en otra pestaña de la app (las cámaras se apagan)
 const Cameras = ({ visible = true }: { visible?: boolean }) => {
-    const { ros } = useRos();
+    const { ros, isConnected } = useRos();
 
     // Estado para el modal de pantalla completa ('front', 'bottom' o null)
     const [fullScreenCamera, setFullScreenCamera] = useState<String | null>(null);
@@ -170,39 +229,34 @@ const Cameras = ({ visible = true }: { visible?: boolean }) => {
 
     return (
         <>
-            {/* Tamaño base 560x770; escala proporcionalmente en pantallas pequeñas */}
-            {/* <div style={themeVars} className="relative w-full max-w-[560px] aspect-[560/770]"> */}
-            <div style={themeVars} className="relative w-full aspect-[560/770]">
-                {/* Fondos decorativos */}
-                <div className="absolute left-[1.071%] top-0 w-[98.929%] h-full bg-[var(--azul)] rounded-[20px]" />
-                <div className="absolute left-[5.536%] top-[4.026%] w-[89.107%] h-[91.948%] bg-[var(--azul)] rounded-[20px]" />
-
-                {/* Contenedor Principal */}
-                <div className="absolute left-[10.357%] top-[5.974%] w-[80.357%] h-[88.312%] flex flex-col items-center justify-between">
-
-                    {/* --- CÁMARA FRONTAL --- */}
+            {/* La tarjeta es una columna: cada cámara con su encabezado y su hueco; el alto sale del contenido */}
+            <div style={themeVars} className="flex w-full flex-col gap-6 rounded-[20px] bg-[var(--azul)] py-10">
+                {/* --- CÁMARA FRONTAL --- */}
+                <div className="flex flex-col gap-3">
                     <CameraHeader label="Cámara frontal" enabled={frontEnabled} onToggle={() => setFrontEnabled((v) => !v)} onFullScreen={() => setFullScreenCamera('front')} />
 
-                    {frontEnabled ? (
+                    {!frontEnabled ? <CameraOff label="frontal" onTurnOn={() => setFrontEnabled(true)} /> : !isConnected ? <NoSignal /> : (
                         <img
-                        id="front_camera"
-                        ref={frontCameraRef}
-                        alt="Cámara Frontal"
-                        className="self-stretch h-[41.765%] object-contain [image-rendering:auto]"
-                    />
-                    ) : <CameraOff />}
+                            id="front_camera"
+                            ref={frontCameraRef}
+                            alt="Cámara Frontal"
+                            className={`${MEDIA_BOX} object-contain [image-rendering:auto]`}
+                        />
+                    )}
+                </div>
 
-                    {/* --- CÁMARA INFERIOR --- */}
+                {/* --- CÁMARA INFERIOR --- */}
+                <div className="flex flex-col gap-3">
                     <CameraHeader label="Cámara inferior" enabled={bottomEnabled} onToggle={() => setBottomEnabled((v) => !v)} onFullScreen={() => setFullScreenCamera('bottom')} />
 
-                    {bottomEnabled ? (
+                    {!bottomEnabled ? <CameraOff label="inferior" onTurnOn={() => setBottomEnabled(true)} /> : !isConnected ? <NoSignal /> : (
                         <img
-                        id="bottom_camera"
-                        ref={bottomCameraRef}
-                        alt="Cámara Inferior"
-                        className="self-stretch h-[41.765%] object-contain [image-rendering:auto]"
-                    />
-                    ) : <CameraOff />}
+                            id="bottom_camera"
+                            ref={bottomCameraRef}
+                            alt="Cámara Inferior"
+                            className={`${MEDIA_BOX} object-contain [image-rendering:auto]`}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -211,6 +265,7 @@ const Cameras = ({ visible = true }: { visible?: boolean }) => {
                 <div
                     onClick={() => setFullScreenCamera(null)}
                     style={themeVars}
+                    data-card-passthrough=""
                     className="fixed inset-0 z-[10000] flex items-center justify-center bg-[rgba(0,21,56,0.9)] backdrop-blur-[5px]"
                 >
                     <div
@@ -225,17 +280,22 @@ const Cameras = ({ visible = true }: { visible?: boolean }) => {
                             ✕
                         </button>
 
-                        {/* Imágenes del modal */}
-                        <img
-                            ref={modalFrontCameraRef}
-                            className={`${fullScreenCamera === 'front' ? 'block' : 'hidden'} w-full h-full object-contain [image-rendering:auto]`}
-                            alt="Cámara Frontal Fullscreen"
-                        />
-                        <img
-                            ref={modalBottomCameraRef}
-                            className={`${fullScreenCamera === 'bottom' ? 'block' : 'hidden'} w-full h-full object-contain [image-rendering:auto]`}
-                            alt="Cámara Inferior Fullscreen"
-                        />
+                        {/* Sin conexión (también si se pierde con el modal abierto): "sin señal" en lugar de las imágenes */}
+                        {!isConnected ? <NoSignal className="flex-1 self-stretch" /> : (
+                            <>
+                                {/* Imágenes del modal */}
+                                <img
+                                    ref={modalFrontCameraRef}
+                                    className={`${fullScreenCamera === 'front' ? 'block' : 'hidden'} min-w-0 flex-1 self-stretch object-contain [image-rendering:auto]`}
+                                    alt="Cámara Frontal Fullscreen"
+                                />
+                                <img
+                                    ref={modalBottomCameraRef}
+                                    className={`${fullScreenCamera === 'bottom' ? 'block' : 'hidden'} min-w-0 flex-1 self-stretch object-contain [image-rendering:auto]`}
+                                    alt="Cámara Inferior Fullscreen"
+                                />
+                            </>
+                        )}
                     </div>
                 </div>
             )}

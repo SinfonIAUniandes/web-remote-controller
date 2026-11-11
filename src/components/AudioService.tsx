@@ -118,10 +118,10 @@ const AudioService = () => {
                     onMouseLeave={() => setIsHoveredStop(false)}
                     className="h-[32px] w-full rounded-[90px] border-0 font-['Nunito'] text-xs font-bold transition-colors sm:ml-auto sm:w-[calc(50%-10px)]"
                     style={{
-                        background: (isHoveredStop && stopAudioService) ? '#DC3545' : '#E88B93',
+                        background: (isHoveredStop && stopAudioService) ? COLORS.ROJO_FUERTE : COLORS.ROJO_SUAVE,
                         cursor: stopAudioService ? 'pointer' : 'not-allowed',
                         opacity: stopAudioService ? 1 : 0.6,
-                        color: (isHoveredStop && stopAudioService) ? '#FFFFFF' : COLORS.AZUL_PRINCIPAL,
+                        color: (isHoveredStop && stopAudioService) ? COLORS.TEXTO_SOBRE_ROJO : COLORS.AZUL_PRINCIPAL,
                     }}
                 >
                     DETENER

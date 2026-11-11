@@ -1,27 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { useRos } from "../contexts/RosContext";
-import { createService } from "../services/RosManager";
-import { COLORS, TYPOGRAPHY } from "../theme";
+import { Bot, ChevronDown, House, Megaphone, type LucideIcon } from "lucide-react";
+import { COLORS } from "../theme";
+import { useIpStatus } from "../services/useIpStatus";
+import { useTheme, type ThemeSelection } from "../services/useTheme";
 import BatteryIcon from "./BatteryIcon";
-import IpModal from "./IpModal";
-import { isValidIpv4 } from "../utils/ip";
-import logoSinfonia from "../assets/SinfonIA-Logo.png";
-import IconoHome from "../assets/Home.svg";
-import IconoServicios from "../assets/robot_icon.svg";
-import IconoScripts from "../assets/megaphone_icon.svg";
-import IconoVolumen from "../assets/sound_icon.svg";
-import IconoSpeed from "../assets/movement_icon.svg";
+import RobotSliders from "./RobotSliders";
+import SinfoniaLogo from "./SinfoniaLogo";
+import ThemeModal from "./ThemeModal";
 import PanicButton from "./PanicButton";
 
-type parameters = {
+type LateralMenuProps = {
     activeTab: string
     setActiveTab: (tab: string) => void
 }
 
-const TABS = [
-    { id: 'principal', label: 'Principal', icon: IconoHome },
-    { id: 'servicios', label: 'Servicios', icon: IconoServicios },
-    { id: 'scripts', label: 'Scripts', icon: IconoScripts },
+const TABS: { id: string; label: string; icon: LucideIcon }[] = [
+    { id: 'principal', label: 'Principal', icon: House },
+    { id: 'servicios', label: 'Servicios', icon: Bot },
+    { id: 'scripts', label: 'Scripts', icon: Megaphone },
 ];
 
 // Alto de la barra compacta (h-14 = 56px). Se usa también para saber cuándo mostrarla.
@@ -30,6 +26,7 @@ const COMPACT_BAR_HEIGHT = 56;
 type NavButtonsProps = {
     activeTab: string
     onSelect: (tab: string) => void
+    // 'full': el menú completo (columna en escritorio, fila en móvil); 'dropdown': el desplegable de la barra compacta
     variant: 'full' | 'dropdown'
 }
 
@@ -37,10 +34,10 @@ function NavButtons({ activeTab, onSelect, variant }: NavButtonsProps) {
     const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
     const containerClass = variant === 'full'
-        ? "grid h-auto w-full grid-cols-3 items-center justify-items-center gap-2 py-2 lg:flex lg:h-[450px] lg:w-[125px] lg:flex-col lg:justify-around lg:gap-0 lg:py-0"
+        ? "grid h-auto w-full grid-cols-3 items-center justify-items-center gap-2 py-2 md:w-auto md:gap-4 md:py-0 desk:flex desk:py-4 desk:w-[125px] desk:flex-col desk:justify-center desk:gap-2"
         : "grid w-full grid-cols-3 gap-2";
     const buttonClass = variant === 'full'
-        ? "inline-flex h-[28vw] w-[28vw] max-h-[125px] max-w-[125px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[30px] border-none p-0 sm:h-[110px] sm:w-[110px] lg:h-[125px] lg:w-[125px]"
+        ? "inline-flex h-[28vw] w-[28vw] max-h-[105px] max-w-[125px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[30px] border-none p-0 sm:h-[110px] sm:w-[110px] desk:h-[125px] desk:w-[125px]"
         : "inline-flex h-[88px] w-full cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[24px] border-none p-0";
 
     return (
@@ -64,98 +61,25 @@ function NavButtons({ activeTab, onSelect, variant }: NavButtonsProps) {
                     >
                         {tab.label}
                     </div>
-                    <div className="relative h-[35px] w-[35px] overflow-hidden">
-                        <img src={tab.icon} alt={`Icono ${tab.label}`} className="h-full w-full object-cover" />
-                    </div>
+                    {/* El nombre ya está en el texto del botón: el icono es decorativo */}
+                    <tab.icon aria-hidden="true" size={35} strokeWidth={2} style={{ color: COLORS.AZUL_PRINCIPAL }} />
                 </button>
             ))}
         </nav>
     );
 }
 
-type SliderRowProps = {
-    icon: string
-    alt: string
-    value: number
-    onChange: (value: number) => void
-}
+// Menú lateral: logo (abre el selector de tema), pestañas y, solo en móvil / tablet, volumen y velocidad.
+// En móvil / tablet, al hacer scroll aparece una barra compacta fija con un desplegable con todo el menú.
+export default function LateralMenu({ activeTab, setActiveTab }: LateralMenuProps) {
+    const { connected } = useIpStatus();
+    const { theme, palette, changeTheme } = useTheme();
+    const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
-// Pointer events + touch-action: none para que arrastrar el slider no haga scroll de la página en móvil
-function SliderRow({ icon, alt, value, onChange }: SliderRowProps) {
-    const trackRef = useRef<HTMLDivElement>(null);
-
-    const updateFromPointer = (event: React.PointerEvent<HTMLDivElement>) => {
-        const rect = trackRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        onChange(Math.round(((event.clientX - rect.left) / rect.width) * 100));
-    };
-
-    return (
-        <div className="flex w-[180px] items-center justify-center gap-[5px]">
-            <img src={icon} alt={alt} className="h-5 w-5" />
-
-            <div
-                ref={trackRef}
-                onPointerDown={(event) => {
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    updateFromPointer(event);
-                }}
-                onPointerMove={(event) => {
-                    if (event.currentTarget.hasPointerCapture(event.pointerId)) updateFromPointer(event);
-                }}
-                className="relative flex h-7 w-[120px] cursor-pointer touch-none items-center"
-            >
-                <div
-                    className="h-[10px] w-full rounded-[90px] border-2"
-                    style={{
-                        background: COLORS.AZUL_PRINCIPAL,
-                        borderColor: COLORS.CELESTE_PRINCIPAL,
-                    }}
-                />
-                <div
-                    className="absolute top-1/2 h-[14px] w-[14px] rounded-full shadow-[0_0_4px_rgba(0,0,0,0.70)]"
-                    style={{
-                        left: `${value}%`,
-                        transform: `translate(-${value}%, -50%)`,
-                        background: COLORS.CELESTE_PRINCIPAL,
-                    }}
-                />
-            </div>
-
-            <div
-                className="w-10 text-left font-['Nunito'] text-xs font-black"
-                style={{ color: COLORS.CELESTE_PRINCIPAL }}
-            >
-                {value}%
-            </div>
-        </div>
-    );
-}
-
-// 1. AÑADIMOS activeTab y setActiveTab A LAS PROPS DEL COMPONENTE
-export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
-    const { ros, ipAddress, setIpAddress, baseSpeed, setBaseSpeed, isConnected } = useRos();
-    const [isIpModalOpen, setIsIpModalOpen] = useState(false);
-    const [volume, setVolume] = useState(50);
-    const [speed, setSpeed] = useState(Math.round(baseSpeed * 100));
-
-    // Móvil: el menú completo queda en el flujo de la página; al salir de vista aparece una barra compacta fija
+    // Móvil: el menú completo queda en el flujo de la página; al salir de vista aparece la barra compacta fija
     const fullMenuRef = useRef<HTMLDivElement>(null);
     const [isCompact, setIsCompact] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-    // --- Efecto para inicializar el volumen en 50 ---
-    useEffect(() => {
-        if (ros) {
-            const volumeService = createService(ros, '/pytoolkit/ALAudioDevice/set_output_volume_srv', 'robot_toolkit_msgs/set_output_volume_srv');
-            const request = { volume: 50 };
-            volumeService.callService(
-                request,
-                (result: unknown) => { console.log('Volumen inicial establecido en 50:', result); },
-                (error: unknown) => { console.error('Error al establecer el volumen inicial:', error); }
-            );
-        }
-    }, [ros]);
 
     // --- Detecta cuándo el menú completo salió de la vista (scroll hacia abajo) ---
     useEffect(() => {
@@ -174,87 +98,35 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
         return () => observer.disconnect();
     }, []);
 
-    // --- Update volume state & ROS Service ---
-    const updateVolume = (newVolume: number) => {
-        const clampedVolume = Math.max(0, Math.min(150, newVolume));
-        setVolume(clampedVolume);
-
-        if (ros) {
-            const volumeService = createService(
-                ros,
-                "/pytoolkit/ALAudioDevice/set_output_volume_srv",
-                "robot_toolkit_msgs/set_output_volume_srv",
-            );
-            const request = { volume: clampedVolume };
-            volumeService.callService(
-                request,
-                () => { /* console.log('Volumen actualizado:', result); */ },
-                (error : unknown) => { console.error('Error al actualizar volumen:', error); }
-            );
-        }
-    };
-
-    // --- Update speed state for Base movement ---
-    const updateSpeed = (newSpeed : number) => {
-        const clampedSpeed = Math.max(0, Math.min(100, newSpeed));
-        setSpeed(clampedSpeed);
-
-        setBaseSpeed(clampedSpeed / 100.0);
-    };
-
-    useEffect(() => {
-        setSpeed(Math.round(baseSpeed * 100));
-    }, [baseSpeed]);
-
-    const handleIpSave = (newIp: string) => {
-        setIpAddress(newIp);
-        setIsIpModalOpen(false);
-    };
-
     const handleSelectTabFromDropdown = (tab: string) => {
         setActiveTab(tab);
         setIsDropdownOpen(false);
     };
 
-    const openIpModal = () => {
+    const openThemeModal = () => {
         setIsDropdownOpen(false);
-        setIsIpModalOpen(true);
+        setIsThemeModalOpen(true);
     };
 
-    // Rojo: IP válida pero sin conexión; amarillo: IP aún incompleta; celeste: conectado
-    const isIpValid = isValidIpv4(ipAddress);
-    const ipColor = !isIpValid ? COLORS.AMARILLO : isConnected ? COLORS.CELESTE_PRINCIPAL : COLORS.ROJO;
+    const handleSelectTheme = (selection: ThemeSelection) => {
+        changeTheme(selection);
+        setIsThemeModalOpen(false);
+    };
 
     const activeTabInfo = TABS.find((tab) => tab.id === activeTab) ?? TABS[0];
+    const ActiveTabIcon = activeTabInfo.icon;
 
-    const slidersAndIp = (containerClass: string) => (
-        <div className={containerClass}>
-            <SliderRow icon={IconoVolumen} alt="Icono Volumen" value={volume} onChange={updateVolume} />
-            <SliderRow icon={IconoSpeed} alt="Icono Velocidad" value={speed} onChange={updateSpeed} />
-            <button
-                type="button"
-                onClick={openIpModal}
-                className="flex cursor-pointer flex-col items-center border-none bg-transparent p-0 font-['Nunito']"
-                style={{ fontWeight: TYPOGRAPHY.FONT_WEIGHT_BLACK }}
-            >
-                <span
-                    className={`text-base ${isIpValid ? '' : 'animate-pulse'}`}
-                    style={{ color: ipColor }}
-                >
-                    {ipAddress}
-                </span>
-                {!isIpValid && (
-                    <span className="text-[11px]" style={{ color: COLORS.AMARILLO }}>
-                        Toca para ingresar la IP del robot
-                    </span>
-                )}
-                {isIpValid && !isConnected && (
-                    <span className="text-[11px]" style={{ color: COLORS.ROJO }}>
-                        Sin conexión
-                    </span>
-                )}
-            </button>
-        </div>
+    // El logo es un botón: al hacer clic abre el selector de tema (logo y colores de toda la app)
+    const logoButton = (
+        <button
+            type="button"
+            onClick={openThemeModal}
+            aria-label="Cambiar tema"
+            title="Cambiar tema"
+            className="mb-3 cursor-pointer border-none bg-transparent p-0 transition-transform duration-200 hover:scale-105"
+        >
+            <SinfoniaLogo theme={theme} className="block h-auto w-[370px] desk:w-[200px]" />
+        </button>
     );
 
     return (
@@ -262,44 +134,35 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
             {/* ── MENÚ COMPLETO (en el flujo de la página) ── */}
             <div
                 ref={fullMenuRef}
-                className="flex min-h-[220px] w-full flex-col items-center justify-between rounded-[25px] p-3 sm:min-h-[250px] lg:h-full lg:flex-1 lg:min-h-0 lg:w-[220px] lg:p-5"
-                style={{ backgroundColor: COLORS.AZUL_PRINCIPAL }}
+                className="flex min-h-[220px] w-full flex-col items-center justify-between rounded-[25px] p-3 sm:min-h-[250px] md:min-h-0 md:flex-row md:gap-6 md:px-6 desk:h-full desk:flex-1 desk:flex-col desk:justify-center desk:gap-10 desk:p-5 desk:w-[220px]"
+                style={{ backgroundColor: COLORS.LOGO_FONDO }}
             >
-                <div
-                    className="flex h-20 w-[120px] shrink-0 flex-col items-center justify-center"
-                >
-                    <BatteryIcon />
-                    <img
-                        src={logoSinfonia}
-                        alt="Logo Sinfonia"
-                        className="h-[39px] w-[120px]"
-                    />
-                </div>
+                {logoButton}
 
                 <NavButtons activeTab={activeTab} onSelect={setActiveTab} variant="full" />
 
-                {/*Sliders and IP container*/}
-                {slidersAndIp("flex w-full flex-row flex-wrap items-center justify-center gap-3 lg:w-[180px] lg:flex-col lg:gap-[15px]")}
+                {/* Volumen y velocidad: en escritorio van sobre el borde del tablero (BoardBorderPills); aquí solo en móvil / tablet */}
+                <RobotSliders className="flex w-full flex-row flex-wrap items-center justify-center gap-3 md:w-auto md:flex-col md:flex-nowrap desk:hidden" />
             </div>
 
-            {/* ── BARRA COMPACTA + DROPDOWN (solo móvil / tablet) ── */}
+            {/* ── BARRA COMPACTA + DESPLEGABLE (solo móvil / tablet) ── */}
             {/* El fondo va fuera de la barra: un ancestro con translate cambiaría el "fixed" de sus hijos */}
             {isDropdownOpen && (
                 <button
                     type="button"
                     aria-label="Cerrar menú"
                     onClick={() => setIsDropdownOpen(false)}
-                    className="fixed inset-0 z-30 cursor-default border-none bg-black/40 p-0 lg:hidden"
+                    className="fixed inset-0 z-30 cursor-default border-none bg-black/40 p-0 desk:hidden"
                 />
             )}
             <div
-                className={`fixed inset-x-0 top-0 z-40 transition-[transform,visibility] duration-200 lg:hidden ${
+                className={`fixed inset-x-0 top-0 z-40 transition-[transform,visibility] duration-200 desk:hidden ${
                     isCompact ? 'translate-y-0' : '-translate-y-full invisible'
                 }`}
             >
                 <div
                     className="flex items-center gap-2 px-3 shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
-                    style={{ height: COMPACT_BAR_HEIGHT, backgroundColor: COLORS.AZUL_PRINCIPAL }}
+                    style={{ height: COMPACT_BAR_HEIGHT, backgroundColor: COLORS.LOGO_FONDO }}
                 >
                     <div className="hidden min-[420px]:block">
                         <BatteryIcon />
@@ -311,32 +174,27 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
                         aria-expanded={isDropdownOpen}
                         aria-controls="menu-dropdown"
                         className="flex h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-[16px] border-none px-3"
-                        style={{ background: COLORS.CELESTE_PRINCIPAL }}
+                        style={{ background: COLORS.CELESTE_PRINCIPAL, color: COLORS.AZUL_PRINCIPAL }}
                     >
-                        <img src={activeTabInfo.icon} alt="" className="h-6 w-6 shrink-0" />
+                        <ActiveTabIcon aria-hidden="true" size={24} strokeWidth={2} className="shrink-0" />
                         <span
                             className="truncate font-['Nunito'] text-sm font-bold"
                             style={{ color: COLORS.AZUL_PRINCIPAL }}
                         >
                             {activeTabInfo.label}
                         </span>
+                        {/* Estado de la conexión: verde si hay conexión; rojo si no la hay o falta la IP (la IP se edita en IpPill) */}
                         <span
                             aria-hidden="true"
-                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${isIpValid ? '' : 'animate-pulse'}`}
-                            style={{ background: !isIpValid ? COLORS.AMARILLO : isConnected ? COLORS.VERDE : COLORS.ROJO }}
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ background: connected ? COLORS.VERDE : COLORS.ROJO }}
                         />
-                        <svg
+                        <ChevronDown
                             aria-hidden="true"
-                            viewBox="0 0 24 24"
-                            className={`ml-auto h-5 w-5 shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
-                            fill="none"
-                            stroke={COLORS.AZUL_PRINCIPAL}
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
+                            size={20}
+                            strokeWidth={3}
+                            className={`ml-auto shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        />
                     </button>
 
                     {/* Esc ya lo escucha el botón de pánico principal; aquí no se duplica */}
@@ -347,25 +205,26 @@ export default function LateralMenu({ activeTab, setActiveTab } : parameters) {
                     <div
                         id="menu-dropdown"
                         className="flex max-h-[calc(100dvh-4.5rem)] flex-col items-center gap-4 overflow-y-auto overscroll-contain rounded-b-[25px] p-4 shadow-[0_8px_16px_rgba(0,0,0,0.4)]"
-                        style={{ backgroundColor: COLORS.AZUL_PRINCIPAL }}
+                        style={{ backgroundColor: COLORS.LOGO_FONDO }}
                     >
                         <div className="flex shrink-0 items-center justify-center gap-3">
                             <BatteryIcon />
-                            <img src={logoSinfonia} alt="Logo Sinfonia" className="h-[39px] w-[120px]" />
+                            {logoButton}
                         </div>
 
                         <NavButtons activeTab={activeTab} onSelect={handleSelectTabFromDropdown} variant="dropdown" />
 
-                        {slidersAndIp("flex w-full flex-col items-center gap-3")}
+                        <RobotSliders className="flex w-full flex-col items-center gap-3" />
                     </div>
                 )}
             </div>
 
-            <IpModal
-                isOpen={isIpModalOpen}
-                currentIp={ipAddress}
-                onClose={() => setIsIpModalOpen(false)}
-                onSave={handleIpSave}
+            <ThemeModal
+                isOpen={isThemeModalOpen}
+                currentTheme={theme}
+                currentPalette={palette}
+                onClose={() => setIsThemeModalOpen(false)}
+                onSelect={handleSelectTheme}
             />
         </>
     );

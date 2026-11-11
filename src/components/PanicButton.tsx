@@ -3,7 +3,8 @@ import { useRos } from '../contexts/RosContext';
 import { createService, createTopic } from '../services/RosManager';
 import { stopSpeech } from '../services/scriptExecutor';
 import { triggerPanic } from '../services/panic';
-import { COLORS, TYPOGRAPHY } from '../theme';
+import { OctagonX } from 'lucide-react';
+import { TYPOGRAPHY } from '../theme';
 
 const STOP_REPEATS = 5;
 const STOP_INTERVAL_MS = 50;
@@ -85,24 +86,31 @@ const PanicButton = ({ compact = false, enableHotkey = true }: PanicButtonProps)
     }, []);
 
     const disabled = !ros || !isConnected;
+    // const disabled = false
 
+    // Aspecto de botón físico: los estilos (degradado, borde inferior grueso que se "hunde" al pulsar) están en index.css (.panic-btn)
     return (
         <button
             type="button"
             onClick={handlePanic}
             disabled={disabled}
+            data-pressed={triggered}
             aria-label="Botón de pánico: detener el robot"
             title={disabled ? 'Sin conexión con el robot' : 'Detener y volver a la posición por defecto (Esc)'}
-            className={`flex shrink-0 flex-col items-center justify-center border-none text-white transition-[filter,opacity] duration-200 enabled:cursor-pointer enabled:hover:brightness-90 enabled:active:brightness-75 disabled:cursor-not-allowed disabled:opacity-40 ${
-                compact ? 'h-11 min-w-[104px] rounded-[16px] px-3' : 'h-14 w-full rounded-[25px]'
+            className={`panic-btn flex shrink-0 flex-col items-center justify-center border-none text-[var(--c-texto-sobre-rojo)] enabled:cursor-pointer disabled:cursor-not-allowed ${
+                compact ? 'panic-btn-compact h-11 min-w-[104px] rounded-[16px] px-3' : 'h-14 w-full rounded-[25px]'
             }`}
-            style={{ backgroundColor: COLORS.ROJO, fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL }}
+            style={{ fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL }}
         >
-            <span className={`${compact ? 'text-sm' : 'text-base'} font-black leading-tight`}>
-                {triggered ? 'DETENIDO' : '⏹ PÁNICO'}
+            <span className={`flex items-center gap-1.5 font-black leading-tight [text-shadow:0_1px_0_rgba(0,0,0,0.35)] ${compact ? 'text-sm' : 'text-base'}`}>
+                <OctagonX aria-hidden="true" size={compact ? 16 : 20} strokeWidth={2.75} className="shrink-0" />
+                {triggered ? 'DETENIDO' : 'PÁNICO'}
             </span>
             {!compact && (
-                <span className="text-[11px] font-bold leading-tight opacity-80">{triggered ? 'Volviendo a posición base' : 'Esc'}</span>
+                triggered
+                    ? <span className="text-[11px] font-bold leading-tight opacity-90">Volviendo a posición base</span>
+                    // Tecla Esc dibujada como keycap: es el atajo del botón
+                    : <kbd className="mt-0.5 rounded-[5px] border border-solid border-[var(--c-texto-sobre-rojo)]/50 bg-black/15 px-1.5 py-px font-[inherit] text-[10px] font-bold leading-none">Esc</kbd>
             )}
         </button>
     );

@@ -90,7 +90,7 @@ const IpModal = ({ isOpen, currentIp, onClose, onSave }: IpModalProps) => {
                     />
                 </div>
 
-                {error && <div className="text-center text-xs font-bold text-[#E88B93] font-[Nunito]">{error}</div>}
+                {error && <div className="text-center text-xs font-bold text-[var(--c-rojo-suave)] font-[Nunito]">{error}</div>}
 
                 <div className="flex flex-col items-center w-full gap-2.5">
                     <button onClick={handleSave} className={buttonClass}>CONECTAR</button>

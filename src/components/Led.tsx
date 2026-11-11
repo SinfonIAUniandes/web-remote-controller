@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
 import { useRos } from '../contexts/RosContext';
 import { createTopic, createService } from '../services/RosManager';
 import { COLORS, TYPOGRAPHY } from '../theme';
-import iconoOjos from '../assets/Ojos.svg';
-import iconoOrejas from '../assets/Orejas.svg';
-import iconoPecho from '../assets/Pecho.svg';
-import iconoTodo from '../assets/Cara.svg';
+import IconoOjos from '../assets/Ojos.svg?react';
+import IconoOrejas from '../assets/Orejas.svg?react';
+import IconoPecho from '../assets/Pecho.svg?react';
+import IconoTodo from '../assets/Cara.svg?react';
 import { hexToRgb } from './InteractiveColorWheel';
 
 import FaceModal from './FaceModal';
@@ -88,7 +88,8 @@ const Led = () => {
         setIsAllModalOpen(false);
     };
 
-    const LedIcon = ({ onClick, src, alt }: { onClick: () => void; src: string; alt: string }) => (
+    // Los iconos son SVG en línea con `currentColor`: toman el color de texto del contenedor, así siguen el tema
+    const LedIcon = ({ onClick, icon: Icon, alt }: { onClick: () => void; icon: ComponentType<SVGProps<SVGSVGElement>>; alt: string }) => (
         <div
             onClick={onClick}
             className="flex h-[46px] w-[46px] shrink-0 cursor-pointer items-center justify-center rounded-full text-center transition-colors duration-200"
@@ -96,7 +97,7 @@ const Led = () => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.AZUL_SECUNDARIO}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.CELESTE_PRINCIPAL}
         >
-            {src ? <img src={src} alt={alt} className="h-[26px] w-[26px]" /> : <span>{alt}</span>}
+            <Icon role="img" aria-label={alt} className="h-[26px] w-[26px]" />
         </div>
     );
 
@@ -119,10 +120,10 @@ const Led = () => {
             </div>
 
             <div className="mt-10 flex w-[calc(100%_-_50px)] items-center justify-around mx-[25px]">
-                <LedIcon onClick={() => setIsFaceModalOpen(true)} src={iconoOjos} alt="Ojos" />
-                <LedIcon onClick={() => setIsEarModalOpen(true)} src={iconoOrejas} alt="Orejas" />
-                <LedIcon onClick={() => setIsChestModalOpen(true)} src={iconoPecho} alt="Pecho" />
-                <LedIcon onClick={() => setIsAllModalOpen(true)} src={iconoTodo} alt="Todo" />
+                <LedIcon onClick={() => setIsFaceModalOpen(true)} icon={IconoOjos} alt="Ojos" />
+                <LedIcon onClick={() => setIsEarModalOpen(true)} icon={IconoOrejas} alt="Orejas" />
+                <LedIcon onClick={() => setIsChestModalOpen(true)} icon={IconoPecho} alt="Pecho" />
+                <LedIcon onClick={() => setIsAllModalOpen(true)} icon={IconoTodo} alt="Todo" />
             </div>
 
             <FaceModal isOpen={isFaceModalOpen} onClose={() => setIsFaceModalOpen(false)} onSave={handleFaceSave} initialState={faceState} />

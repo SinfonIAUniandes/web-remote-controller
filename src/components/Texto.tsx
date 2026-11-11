@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRos } from '../contexts/RosContext';
-import { COLORS, TYPOGRAPHY } from '../theme';
+import { COLORS, TYPOGRAPHY, withAlpha } from '../theme';
 import { createTopic, createService } from '../services/RosManager';
 
 const LANGUAGES = ['ES', 'EN'] as const;
@@ -84,7 +84,7 @@ const Texto = () => {
                                 style={{
                                     fontFamily: TYPOGRAPHY.FONT_FAMILY_PRINCIPAL,
                                     color: COLORS.AZUL_PRINCIPAL,
-                                    background: lang === language ? 'rgba(0,33,75,0.12)' : 'transparent',
+                                    background: lang === language ? withAlpha(COLORS.AZUL_PRINCIPAL, 12) : 'transparent',
                                 }}
                             >
                                 {lang}
